@@ -1,0 +1,45 @@
+name: Build and test
+run-name: Building ${{github.head_ref}}
+
+on:
+  push:
+
+jobs:
+  dv-test:
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Fetch and build aws-lambda-cpp
+        run: |
+          git clone https://github.com/awslabs/aws-lambda-cpp.git
+          cd aws-lambda-cpp
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_COMPILER=g++
+          make
+          sudo make install
+
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+        with:
+          path: digitalvenue
+
+      - name: Build lambda-test
+        uses: threeal/cmake-action@v1.3.0
+        with:
+          run-build: true
+          source-dir: digitalvenue/lambda-test
+          build-dir: digitalvenue/lambda-test/build
+
+      - name: Package lambda
+        run: cmake --build digitalvenue/lambda-test/build --target aws-lambda-package-hello
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-test-${{github.sha}}.zip
+          path: digitalvenue/lambda-test/build/hello.zip
