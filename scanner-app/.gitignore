@@ -1,0 +1,14 @@
+logs
+*.log
+npm-debug.log*
+node_modules
+.DS_Store
+dist
+.env
+public/bundle.js
+public/bundle.js.map
+public/bundle.css
+public/service-worker.js
+public/service-worker.js.map
+public/workbox-*.js
+public/workbox-*.js.map
