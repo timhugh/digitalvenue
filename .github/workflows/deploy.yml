@@ -1,0 +1,57 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  dv-test:
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      # TODO: can probably use cmake action for this
+      - name: Fetch and build aws-lambda-cpp
+        run: |
+          git clone https://github.com/awslabs/aws-lambda-cpp.git
+          cd aws-lambda-cpp
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_COMPILER=g++
+          make
+          sudo make install
+
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+
+      - name: Build lambda-test
+        uses: threeal/cmake-action@v1.3.0
+        with:
+          run-build: true
+          source-dir: lambda-test
+          build-dir: lambda-test/build
+
+      - name: Package lambda
+        run: cmake --build lambda-test/build --target aws-lambda-package-hello
+
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /tmp/awscliv2.zip
+          unzip -q /tmp/awscliv2.zip -d /tmp
+          rm /tmp/awscliv2.zip
+          sudo /tmp/aws/install --update
+          rm -rf /tmp/aws/
+
+      - name: Configure aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-west-2
+
+      - name: Deploy to AWS Lambda
+        run: aws lambda update-function-code --function-name dv-test-function --zip-file fileb://lambda-test/build/hello.zip
