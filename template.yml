@@ -3,10 +3,15 @@ Transform: AWS::Serverless-2016-10-31
 Parameters:
   BuilderVersion:
     Type: String
+  AwsRegion:
+    Type: String
+  AwsAccountId:
+    Type: String
 
 Resources:
   TestLambda:
     Type: AWS::Serverless::Function
+    FunctionName: testLambda
     Properties:
       PackageType: Image
       Architectures:
@@ -22,4 +27,4 @@ Resources:
       DockerContext: lambda-test
       DockerTag: !Sub ${Version}
       DockerBuildArgs:
-        BUILDER: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/digitalvenue-builder:${BuilderVersion}
+        BUILDER: !Sub ${AwsAccountId}.dkr.ecr.${AwsRegion}.amazonaws.com/digitalvenue-builder:${BuilderVersion}
