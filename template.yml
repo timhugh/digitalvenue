@@ -1,0 +1,26 @@
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  BuilderVersion:
+    Type: String
+    Default: latest
+
+Resources:
+  TestLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - arm64
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /test
+            Method: get
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: lambda-test
+      DockerTag: !Sub ${Version}
+      DockerBuildArgs:
+        BUILDER: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/digitalvenue-builder:${BuilderVersion}

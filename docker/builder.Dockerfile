@@ -1,5 +1,9 @@
 FROM amazonlinux:2
 
+ARG VERSION
+
+RUN echo $VERSION > /version && echo "Building version $VERSION"
+
 RUN yum -y groupinstall "Development Tools"
 RUN yum -y install gcc-c++ libcurl-devel cmake3 git
 
