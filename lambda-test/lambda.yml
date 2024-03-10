@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  LambdaTestECRStackname:
+    Type: String
+    Description: The name of the stack that contains the LambdaTest ECR
+  LambdaRoleStackname:
+    Type: String
+    Description: The name of the stack that contains the LambdaRole
+
+Resources:
+
+  LambdaTest:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambdaTest
+      Code:
+        ImageUri:
+          Fn::Sub:
+            - '${LambdaTestECRUri}:latest'
+            - LambdaTestECRUri:
+                Fn::ImportValue: !Sub '${LambdaTestECRStackname}-LambdaTestECRUri'
+      PackageType: Image
+      Role:
+        Fn::ImportValue: !Sub '${LambdaRoleStackname}-LambdaRoleArn'
+      Architectures:
+        - arm64
+      Timeout: 30
+
+Outputs:
+  LambdaTestArn:
+    Value: !GetAtt LambdaTest.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaTestArn'
+  LambdaTest:
+    Value: !Ref LambdaTest
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaTest'

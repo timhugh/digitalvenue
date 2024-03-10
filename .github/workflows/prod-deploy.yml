@@ -6,22 +6,21 @@ env:
   AWS_DEFAULT_REGION: us-west-2
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - main
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        options:
+          - prod
+          - stage
 
 jobs:
-  deployProduction:
+  buildAndDeployInfra:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo "BUILDER_VERSION=$(cat docker/builder-version.txt)" >> $GITHUB_ENV
-
-      - uses: aws-actions/setup-sam@v2
-        with:
-          use-installer: true
+      - uses: actions/checkout@v4
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -29,10 +28,82 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
-      - run: sam build \
-          --parameter-overrides BuilderVersion=${{ env.BUILDER_VERSION }} AwsRegion=${{ env.AWS_DEFAULT_REGION }} AwsAccountId=${{ secrets.AWS_ACCOUNT_ID }}
+      - name: deploy lambda IAM role
+        run: aws cloudformation deploy --template-file .cloudformation/lambda-role.yml \
+          --stack-name digitalvenue-${{ github.event.inputs.environment }}-lambda-role \
+          --capabilities CAPABILITY_NAMED_IAM
 
-      - name: Deploy AWS SAM
-        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
-            --stack-name digitalvenue-prod --resolve-s3 --resolve-image-repos --capabilities CAPABILITY_IAM \
-            --parameter-overrides BuilderVersion=${{ env.BUILDER_VERSION }} AwsRegion=${{ env.AWS_DEFAULT_REGION }} AwsAccountId=${{ secrets.AWS_ACCOUNT_ID }}
+      - run: deploy lambda api gateway 
+          aws cloudformation deploy --template-file .cloudformation/lambda-gateway.yml \
+          --stack-name digitalvenue-${{ github.event.inputs.environment }}-lambda-gateway
+
+  buildAndDeployLambdas:
+    needs: buildAndDeployInfra
+
+    strategy:
+      matrix:
+        lambdas:
+          - lambda-test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # TODO: get builder version for this specific lambda
+      - run: echo "BUILDER_VERSION=$(cat docker/builder-version.txt)" >> $GITHUB_ENV
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: deploy ${{ matrix.lambdas }} ECR
+        run: aws cloudformation deploy --template-file ${{ matrix.lambdas }}/ecr.yml \
+          --stack-name digitalvenue-${{ github.event.inputs.environment }}-${{ matrix.lambdas}}-ecr
+
+      - uses: docker/setup-buildx-action@v3
+
+      - run: docker buildx build --platform linux/arm64 \
+          -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/${{ matrix.lambdas }}:${{ github.sha }} \
+          --build-arg BUILDER_VERSION=${{ env.BUILDER_VERSION }} \
+          ${{ matrix.lambdas }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - run: docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/${{ matrix.lambdas }}:${{ github.sha }}
+
+      - name: deploy ${{ matrix.lambdas }} lambda
+        run: aws cloudformation deploy --template-file ${{ matrix.lambdas }}/lambda.yml \
+          --stack-name digitalvenue-${{ github.event.inputs.environment }}-${{ matrix.lambdas}} \
+          --parameter-overrides \
+          LambdaTestECRStackname=digitalvenue-${{ github.event.inputs.environment }}-${{ matrix.lambdas}}-ecr \
+          LambdaRoleStackname=digitalvenue-${{ github.event.inputs.environment }}-lambda-role
+
+      - name: deploy ${{ matrix.lambdas }} api
+        run: aws cloudformation deploy --template-file ${{matrix.lambdas }}/api.yml \
+          --stack-name digitalvenue-${{ github.event.inputs.environment }}-${{ matrix.lambdas}}-api \
+          --parameter-overrides \
+          LambdaTestStackname=digitalvenue-${{ github.event.inputs.environment }}-${{ matrix.lambdas}} \
+          LambdaGatewayStackname=digitalvenue-${{ github.event.inputs.environment }}-lambda-gateway
+
+  deployApiGateway:
+    needs: [ buildAndDeployInfra, buildAndDeployLambdas ]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: deploy api gateway
+        run: aws cloudformation deploy --template-file .cloudformation/api-gateway.yml \
+          --stack-name digitalvenue-${{ github.event.inputs.environment }}-api-gateway \
+          --parameter-overrides \
+          LambdaGatewayStackname=digitalvenue-${{ github.event.inputs.environment }}-lambda-gateway

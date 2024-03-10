@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+
+  LambdaTestECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: digitalvenue/lambda-test
+      ImageScanningConfiguration:
+        scanOnPush: true
+      ImageTagMutability: IMMUTABLE
+      EmptyOnDelete: true
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - ecr:BatchCheckLayerAvailability
+
+Outputs:
+  TestLambdaECRUri:
+    Value: !GetAtt LambdaTestECR.RepositoryUri
+    Export:
+      Name: !Sub "${AWS::StackName}-LambdaTestECRUri"

@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  LambdaGatewayStackName:
+    Type: String
+    Description: The name of the stack that contains the Lambda API Gateway
+  LambdaTestStackName:
+    Type: String
+    Description: The name of the stack that contains the LambdaTest function
+
+Resources:
+
+  LambdaTestApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      OperationName: LambdaTest
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub:
+            - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaTestArn}/invocations
+            - LambdaTestArn:
+                Fn::ImportValue: !Sub '${LambdaTestStackName}-LambdaTestArn'
+      ResourceId:
+        Fn::ImportValue: !Sub '${LambdaGatewayStackName}-EventsApiResource'
+      RestApiId:
+        Fn::ImportValue: !Sub '${LambdaGatewayStackName}-LambdaGatewayRestApi'
+
+  LambdaTestApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::ImportValue: !Sub '${LambdaTestStackName}-LambdaTest'
+      Principal: apigateway.amazonaws.com

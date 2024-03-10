@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+
+  LambdaGatewayRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: digitalvenue-api
+      Description: Digital Venue API
+      ApiKeySourceType: HEADER
+      EndpointConfiguration:
+        Types:
+          - EDGE
+
+  LambdaGatewayModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: application/json
+      RestApiId: !Ref LambdaGatewayRestApi
+
+  EventsApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt LambdaGatewayRestApi.RootResourceId
+      PathPart: events
+      RestApiId: !Ref LambdaGatewayRestApi
+
+Outputs:
+    LambdaGatewayRestApi:
+        Value: !Ref LambdaGatewayRestApi
+        Export:
+            Name: !Sub ${AWS::StackName}-LambdaGatewayRestApi
+    EventsApiResource:
+        Value: !Ref EventsApiResource
+        Export:
+            Name: !Sub ${AWS::StackName}-EventsApiResource
