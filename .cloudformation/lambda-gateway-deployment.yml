@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-    LambdaGatewayStackName:
-        Type: String
-        Description: The name of the stack that contains the Lambda API Gateway
+  LambdaGatewayStackName:
+    Type: String
+    Description: The name of the stack that contains the Lambda API Gateway
 
 Resources:
 

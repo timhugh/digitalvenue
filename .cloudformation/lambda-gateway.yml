@@ -26,11 +26,11 @@ Resources:
       RestApiId: !Ref LambdaGatewayRestApi
 
 Outputs:
-    LambdaGatewayRestApi:
-        Value: !Ref LambdaGatewayRestApi
-        Export:
-            Name: !Sub ${AWS::StackName}-LambdaGatewayRestApi
-    EventsApiResource:
-        Value: !Ref EventsApiResource
-        Export:
-            Name: !Sub ${AWS::StackName}-EventsApiResource
+  LambdaGatewayRestApi:
+    Value: !Ref LambdaGatewayRestApi
+    Export:
+      Name: !Sub ${AWS::StackName}-LambdaGatewayRestApi
+  EventsApiResource:
+    Value: !Ref EventsApiResource
+    Export:
+      Name: !Sub ${AWS::StackName}-EventsApiResource

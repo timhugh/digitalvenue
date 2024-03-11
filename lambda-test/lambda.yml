@@ -1,12 +1,15 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  LambdaTestECRStackname:
+  LambdaTestECRStackName:
     Type: String
     Description: The name of the stack that contains the LambdaTest ECR
-  LambdaRoleStackname:
+  LambdaRoleStackName:
     Type: String
     Description: The name of the stack that contains the LambdaRole
+  ImageVersion:
+    Type: String
+    Description: The version of the image to use
 
 Resources:
 
@@ -17,12 +20,12 @@ Resources:
       Code:
         ImageUri:
           Fn::Sub:
-            - '${LambdaTestECRUri}:latest'
+            - '${LambdaTestECRUri}:${ImageVersion}'
             - LambdaTestECRUri:
-                Fn::ImportValue: !Sub '${LambdaTestECRStackname}-LambdaTestECRUri'
+                Fn::ImportValue: !Sub '${LambdaTestECRStackName}-LambdaTestECRUri'
       PackageType: Image
       Role:
-        Fn::ImportValue: !Sub '${LambdaRoleStackname}-LambdaRoleArn'
+        Fn::ImportValue: !Sub '${LambdaRoleStackName}-LambdaRoleArn'
       Architectures:
         - arm64
       Timeout: 30
