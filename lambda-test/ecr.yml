@@ -8,7 +8,7 @@ Resources:
       RepositoryName: digitalvenue/lambda-test
       ImageScanningConfiguration:
         scanOnPush: true
-      ImageTagMutability: IMMUTABLE
+      ImageTagMutability: MUTABLE
       EmptyOnDelete: true
       RepositoryPolicyText:
         Version: "2012-10-17"

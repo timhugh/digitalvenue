@@ -1,11 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 
+Parameters:
+  Environment:
+    Type: String
+    Description: The environment to deploy to
+
 Resources:
 
   LambdaGatewayRestApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: digitalvenue-api
+      Name: !Sub digitalvenue-${Environment}-lambda-gateway
       Description: Digital Venue API
       ApiKeySourceType: HEADER
       EndpointConfiguration:
