@@ -1,7 +1,6 @@
-FROM amazonlinux:2023
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023.3.20240304.0
 
-RUN yum -y groupinstall "Development Tools"
-RUN yum -y install gcc-c++ libcurl-devel cmake3 git
+RUN dnf -y install gcc-c++ libcurl-devel cmake3 git
 
 RUN git clone https://github.com/awslabs/aws-lambda-cpp.git && \
     cd aws-lambda-cpp && mkdir build && cd build && \

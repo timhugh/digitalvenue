@@ -1,4 +1,4 @@
-name: prod-deploy
+name: deploy-env
 
 env:
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
@@ -19,6 +19,48 @@ on:
           - dev
 
 jobs:
+  baseImages:
+    strategy:
+      matrix:
+        image:
+          - builder
+          - runner
+
+    name: build and push ${{ matrix.image }} image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - run: echo "VERSION=$(cat docker/${{ matrix.image }}-version.txt)" >> $GITHUB_ENV
+      - run: echo "IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/${{ matrix.image }}" >> $GITHUB_ENV
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - run: aws cloudformation deploy --template-file .cloudformation/base-ecr.yml --stack-name digitalvenue-${{ matrix.image }}-ecr --paramater-overrides Image=${{ matrix.image }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-buildx-action@v3
+
+      # try pulling existing image to use as cache
+      - run: docker pull ${{ env.IMAGE }}:${{ env.VERSION }} || true
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/${{ matrix.image }}.Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.IMAGE }}:${{ env.VERSION }}
+          provenance: false
+          cache-from: ${{ env.IMAGE }}:${{ env.VERSION }}
+
   buildAndDeployInfra:
     runs-on: ubuntu-latest
 
@@ -52,9 +94,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # TODO: get builder version for this specific lambda
+      # TODO: get builder and runner versions for this specific lambda
       - run: echo "BUILDER_VERSION=$(cat docker/builder-version.txt)" >> $GITHUB_ENV
+      - run: echo "RUNNER_VERSION=$(cat docker/runner-version.txt)" >> $GITHUB_ENV
       - run: echo "BUILDER_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/builder:${{ env.BUILDER_VERSION }}" >> $GITHUB_ENV
+      - run: echo "RUNNER_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/runner:${{ env.RUNNER_VERSION }}" >> $GITHUB_ENV
       - run: echo "LAMBDA_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/${{ matrix.lambdas }}:${{ github.sha }}" >> $GITHUB_ENV
       - run: echo "STACK_PREFIX=digitalvenue-${{ github.event.inputs.environment }}" >> $GITHUB_ENV
 
@@ -78,7 +122,7 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ env.LAMBDA_IMAGE }}
-          build-args: BUILDER=${{ env.BUILDER_IMAGE }}
+          build-args: BUILDER=${{ env.BUILDER_IMAGE }} RUNNER=${{ env.RUNNER_IMAGE }}
           provenance: false
 
       - name: deploy ${{ matrix.lambdas }} lambda

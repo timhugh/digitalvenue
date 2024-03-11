@@ -1,11 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 
+Parameters:
+  Image:
+    Type: String
+    Description: The name of the docker image
+
 Resources:
 
-  BuilderECR:
+  ECR:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: digitalvenue/builder
+      RepositoryName: !Sub 'digitalvenue/${Image}'
       ImageScanningConfiguration:
         scanOnPush: true
       ImageTagMutability: IMMUTABLE
