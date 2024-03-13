@@ -1,5 +1,10 @@
 AWSTemplateFormatVersion: 2010-09-09
 
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: The prefix for the stack
+
 Resources:
 
   LambdaRole:
@@ -28,4 +33,4 @@ Outputs:
   LambdaRoleArn:
     Value: !GetAtt LambdaRole.Arn
     Export:
-      Name: !Sub ${AWS::StackName}-LambdaRoleArn
+      Name: !Sub '${StackPrefix}-lambda-role-LambdaRoleArn'

@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  LambdaGatewayStackName:
+  StackPrefix:
     Type: String
-    Description: The name of the stack that contains the Lambda API Gateway
+    Description: The prefix for the stack
 
 Resources:
 
@@ -11,4 +11,4 @@ Resources:
     Type: AWS::ApiGateway::Deployment
     Properties:
       RestApiId:
-        Fn::ImportValue: !Sub '${LambdaGatewayStackName}-LambdaGatewayRestApi'
+        Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-LambdaGatewayRestApi'

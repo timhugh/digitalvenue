@@ -23,8 +23,8 @@ jobs:
     strategy:
       matrix:
         image:
-          - builder
-          - runner
+          - build
+          - runtime
 
     name: build and push ${{ matrix.image }} image
     runs-on: ubuntu-latest
@@ -33,7 +33,6 @@ jobs:
         with:
           fetch-depth: 2
 
-      - run: echo "VERSION=$(cat docker/${{ matrix.image }}-version.txt)" >> $GITHUB_ENV
       - run: echo "IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/${{ matrix.image }}" >> $GITHUB_ENV
 
       - uses: aws-actions/configure-aws-credentials@v4
@@ -48,11 +47,11 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      # All images are tagged with the current SHA, but we use the latest tag for build caching
+      - name: push ${{ env.IMAGE }}:latest
+        run: docker buildx build --push --provenance false --platform linux/arm64 -t ${{ env.IMAGE }}:latest --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from "type=registry,ref=${{ env.IMAGE }}:latest-cache" --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ env.IMAGE }}:latest-cache" --file docker/${{ matrix.image }}.Dockerfile .
       - name: push ${{ env.IMAGE }}:${{ github.sha }}
-        run: docker buildx build --push --provenance false --platform linux/arm64 -t ${{ env.IMAGE }}:${{ github.sha }} --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from "type=registry,ref=${{ env.IMAGE }}:${{ env.VERSION }}-cache" --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ env.IMAGE }}:${{ env.VERSION }}-cache" --file docker/${{ matrix.image }}.Dockerfile .
-      # it's okay if this fails, b/c tags are immutable and it might already exist
-      - name: push ${{ env.IMAGE }}:${{ env.VERSION }}
-        run: docker buildx build --push --provenance false --platform linux/arm64 -t ${{ env.IMAGE }}:${{ env.VERSION }} --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from "type=registry,ref=${{ env.IMAGE }}:${{ env.VERSION }}-cache" --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ env.IMAGE }}:${{ env.VERSION }}-cache" --file docker/${{ matrix.image }}.Dockerfile . || true
+        run: docker buildx build --push --provenance false --platform linux/arm64 -t ${{ env.IMAGE }}:${{ github.sha }} --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from "type=registry,ref=${{ env.IMAGE }}:latest-cache" --file docker/${{ matrix.image }}.Dockerfile .
 
   buildAndDeployInfra:
     runs-on: ubuntu-latest
@@ -69,10 +68,10 @@ jobs:
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
       - name: deploy lambda IAM role
-        run: aws cloudformation deploy --template-file .cloudformation/lambda-role.yml --stack-name ${{ env.STACK_PREFIX }}-lambda-role --capabilities CAPABILITY_IAM
+        run: aws cloudformation deploy --template-file .cloudformation/lambda-role.yml --stack-name ${{ env.STACK_PREFIX }}-lambda-role --capabilities CAPABILITY_IAM --parameter-overrides StackPrefix=${{ env.STACK_PREFIX }}
 
       - name: deploy lambda api gateway
-        run: aws cloudformation deploy --template-file .cloudformation/lambda-gateway.yml --stack-name ${{ env.STACK_PREFIX }}-lambda-gateway --parameter-overrides Environment=${{ github.event.inputs.environment }}
+        run: aws cloudformation deploy --template-file .cloudformation/lambda-gateway.yml --stack-name ${{ env.STACK_PREFIX }}-lambda-gateway --parameter-overrides StackPrefix=${{ env.STACK_PREFIX }}
 
   buildAndDeployLambdas:
     needs: [baseImages, buildAndDeployInfra]
@@ -88,10 +87,8 @@ jobs:
       - uses: actions/checkout@v4
 
       # TODO: get builder and runner versions for this specific lambda
-      - run: echo "BUILDER_VERSION=$(cat docker/builder-version.txt)" >> $GITHUB_ENV
-      - run: echo "RUNNER_VERSION=$(cat docker/runner-version.txt)" >> $GITHUB_ENV
-      - run: echo "BUILDER_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/builder:${{ env.BUILDER_VERSION }}" >> $GITHUB_ENV
-      - run: echo "RUNNER_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/runner:${{ env.RUNNER_VERSION }}" >> $GITHUB_ENV
+      - run: echo "BUILDER_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/build:${{ github.sha }}" >> $GITHUB_ENV
+      - run: echo "RUNNER_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/runtime:${{ github.sha }}" >> $GITHUB_ENV
       - run: echo "LAMBDA_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/digitalvenue/${{ matrix.lambdas }}:${{ github.sha }}" >> $GITHUB_ENV
       - run: echo "STACK_PREFIX=digitalvenue-${{ github.event.inputs.environment }}" >> $GITHUB_ENV
 
@@ -102,19 +99,19 @@ jobs:
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
       - name: deploy ${{ matrix.lambdas }} ECR
-        run: aws cloudformation deploy --template-file ${{ matrix.lambdas }}/ecr.yml --stack-name digitalvenue-${{ matrix.lambdas}}-ecr
+        run: aws cloudformation deploy --template-file .cloudformation/lambda-ecr.yml --stack-name digitalvenue-${{ matrix.lambdas}}-ecr --parameter-overrides LambdaName=${{ matrix.lambdas }}
 
       - uses: docker/setup-buildx-action@v3
 
       - uses: aws-actions/amazon-ecr-login@v2
 
-      - run: docker buildx build --push --provenance false --platform linux/arm64 -t ${{ env.LAMBDA_IMAGE }} --build-arg BUILDER=${{ env.BUILDER_IMAGE }} --build-arg RUNNER=${{ env.RUNNER_IMAGE }} ${{ matrix.lambdas }}
+      - run: docker buildx build --push --provenance false --platform linux/arm64 -t ${{ env.LAMBDA_IMAGE }} --build-arg BUILD=${{ env.BUILDER_IMAGE }} --build-arg RUNTIME=${{ env.RUNNER_IMAGE }} --build-arg LAMBDA=${{ matrix.lambdas }} --file docker/lambda.Dockerfile .
 
       - name: deploy ${{ matrix.lambdas }} lambda
-        run: aws cloudformation deploy --template-file ${{ matrix.lambdas }}/lambda.yml --stack-name ${{ env.STACK_PREFIX }}-${{ matrix.lambdas}} --parameter-overrides LambdaTestECRStackName=digitalvenue-${{ matrix.lambdas}}-ecr LambdaRoleStackName=${{ env.STACK_PREFIX }}-lambda-role ImageVersion=${{ github.sha }}
+        run: aws cloudformation deploy --template-file .cloudformation/lambda.yml --stack-name ${{ env.STACK_PREFIX }}-${{ matrix.lambdas}} --parameter-overrides StackPrefix=${{ env.STACK_PREFIX }} LambdaName=${{ matrix.lambdas }} ImageVersion=${{ github.sha }}
 
       - name: deploy ${{ matrix.lambdas }} api
-        run: aws cloudformation deploy --template-file ${{matrix.lambdas }}/api.yml --stack-name ${{ env.STACK_PREFIX }}-${{ matrix.lambdas}}-api --parameter-overrides LambdaTestStackName=${{ env.STACK_PREFIX }}-${{ matrix.lambdas}} LambdaGatewayStackName=${{ env.STACK_PREFIX }}-lambda-gateway
+        run: aws cloudformation deploy --template-file .cloudformation/lambda-api.yml --stack-name ${{ env.STACK_PREFIX }}-${{ matrix.lambdas}}-api --parameter-overrides StackPrefix=${{ env.STACK_PREFIX }} LambdaName=${{ matrix.lambdas }}
 
   deployApiGateway:
     needs: [ buildAndDeployInfra, buildAndDeployLambdas ]
@@ -133,4 +130,4 @@ jobs:
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
       - name: deploy api gateway
-        run: aws cloudformation deploy --template-file .cloudformation/lambda-gateway-deployment.yml --stack-name ${{ env.STACK_PREFIX }}-lambda-gateway-deployment --parameter-overrides LambdaGatewayStackName=${{ env.STACK_PREFIX }}-lambda-gateway
+        run: aws cloudformation deploy --template-file .cloudformation/lambda-gateway-deployment.yml --stack-name ${{ env.STACK_PREFIX }}-lambda-gateway-deployment --parameter-overrides StackPrefix=${{ env.STACK_PREFIX }}

@@ -1,0 +1,12 @@
+
+# ci cd files
+.cloudformation
+.github
+
+# build artifacts
+build/
+cmake-build-*/
+
+# might have to remove these later, but for now we're focusing on lambdas
+admin/
+scanner-app/

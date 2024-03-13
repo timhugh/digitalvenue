@@ -1,11 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 
+Parameters:
+  LambdaName:
+    Type: String
+    Description: The name of the Lambda function
+
 Resources:
 
-  LambdaTestECR:
+  ECR:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: digitalvenue/lambda-test
+      RepositoryName: !Sub digitalvenue/${LambdaName}
       ImageScanningConfiguration:
         scanOnPush: true
       ImageTagMutability: MUTABLE
@@ -22,7 +27,7 @@ Resources:
               - ecr:BatchCheckLayerAvailability
 
 Outputs:
-  TestLambdaECRUri:
-    Value: !GetAtt LambdaTestECR.RepositoryUri
+  ECRUri:
+    Value: !GetAtt ECR.RepositoryUri
     Export:
-      Name: !Sub "${AWS::StackName}-LambdaTestECRUri"
+      Name: !Sub "digitalvenue-${LambdaName}-ECRUri"

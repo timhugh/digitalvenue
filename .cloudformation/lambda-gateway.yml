@@ -1,16 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  Environment:
+  StackPrefix:
     Type: String
-    Description: The environment to deploy to
+    Description: The prefix for the stack
 
 Resources:
 
   LambdaGatewayRestApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: !Sub digitalvenue-${Environment}-lambda-gateway
+      Name: !Sub '${StackPrefix}-lambda-gateway'
       Description: Digital Venue API
       ApiKeySourceType: HEADER
       EndpointConfiguration:
@@ -34,8 +34,8 @@ Outputs:
   LambdaGatewayRestApi:
     Value: !Ref LambdaGatewayRestApi
     Export:
-      Name: !Sub ${AWS::StackName}-LambdaGatewayRestApi
+      Name: !Sub '${StackPrefix}-lambda-gateway-LambdaGatewayRestApi'
   EventsApiResource:
     Value: !Ref EventsApiResource
     Export:
-      Name: !Sub ${AWS::StackName}-EventsApiResource
+      Name: !Sub '${StackPrefix}-lambda-gateway-EventsApiResource'

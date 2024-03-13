@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  LambdaName:
+    Type: String
+    Description: The name of the Lambda function
+  StackPrefix:
+    Type: String
+    Description: The prefix to use for the stack names
+
+Resources:
+
+  LambdaApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      OperationName: !Sub ${LambdaName}
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub:
+            - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+            - LambdaArn:
+                Fn::ImportValue: !Sub '${StackPrefix}-${LambdaName}-Arn'
+      ResourceId:
+        Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-EventsApiResource'
+      RestApiId:
+        Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-LambdaGatewayRestApi'
+
+  LambdaApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::ImportValue: !Sub '${StackPrefix}-${LambdaName}'
+      Principal: apigateway.amazonaws.com

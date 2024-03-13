@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  LambdaName:
+    Type: String
+    Description: The name of the lambda
+  ImageVersion:
+    Type: String
+    Description: The version of the image to use
+  StackPrefix:
+    Type: String
+    Description: The prefix of the stack
+
+Resources:
+
+  Lambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${LambdaName}'
+      Code:
+        ImageUri:
+          Fn::Sub:
+            - '${ECRUri}:${ImageVersion}'
+            - ECRUri:
+                Fn::ImportValue: !Sub "digitalvenue-${LambdaName}-ECRUri"
+      PackageType: Image
+      Role:
+        Fn::ImportValue: !Sub '${StackPrefix}-lambda-role-LambdaRoleArn'
+      Architectures:
+        - arm64
+      Timeout: 30
+
+Outputs:
+  LambdaArn:
+    Value: !GetAtt Lambda.Arn
+    Export:
+      Name: !Sub '${StackPrefix}-${LambdaName}-Arn'
+  LambdaRef:
+    Value: !Ref Lambda
+    Export:
+      Name: !Sub '${StackPrefix}-${LambdaName}'
