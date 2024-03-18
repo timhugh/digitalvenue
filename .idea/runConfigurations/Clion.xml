@@ -4,6 +4,7 @@
       <settings>
         <option name="imageTag" value="digitalvenue/clion:latest" />
         <option name="buildOnly" value="true" />
+        <option name="contextFolderPath" value="." />
         <option name="sourceFilePath" value="docker/clion.Dockerfile" />
       </settings>
     </deployment>

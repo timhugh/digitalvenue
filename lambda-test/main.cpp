@@ -1,14 +1,16 @@
 #include <aws/lambda-runtime/runtime.h>
+#include <spdlog/spdlog.h>
 
 using namespace aws::lambda_runtime;
 
-invocation_response my_handler(invocation_request const& request)
+invocation_response event_handler(invocation_request const& request)
 {
-    return invocation_response::success("Hello, World!", "application/json");
+    spdlog::info("Request received '{}': '{}'", request.request_id, request.payload);
+    return invocation_response::success(request.payload, "application/json");
 }
 
 int main()
 {
-    run_handler(my_handler);
+    run_handler(event_handler);
     return 0;
 }

@@ -1,0 +1,12 @@
+[submodule "vendor/aws-lambda-cpp"]
+	path = vendor/aws-lambda-cpp
+	url = https://github.com/awslabs/aws-lambda-cpp
+[submodule "vendor/Catch2"]
+	path = vendor/Catch2
+	url = https://github.com/catchorg/Catch2
+[submodule "vendor/spdlog"]
+	path = vendor/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "vendor/aws-sdk-cpp"]
+	path = vendor/aws-sdk-cpp
+	url = https://github.com/aws/aws-sdk-cpp.git

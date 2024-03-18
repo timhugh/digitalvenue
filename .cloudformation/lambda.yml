@@ -30,6 +30,13 @@ Resources:
         - arm64
       Timeout: 30
 
+  LambdaApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref Lambda
+      Principal: apigateway.amazonaws.com
+
 Outputs:
   LambdaArn:
     Value: !GetAtt Lambda.Arn

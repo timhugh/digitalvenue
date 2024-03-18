@@ -17,17 +17,18 @@ Resources:
         Types:
           - EDGE
 
-  LambdaGatewayModel:
-    Type: AWS::ApiGateway::Model
-    Properties:
-      ContentType: application/json
-      RestApiId: !Ref LambdaGatewayRestApi
-
   EventsApiResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !GetAtt LambdaGatewayRestApi.RootResourceId
       PathPart: events
+      RestApiId: !Ref LambdaGatewayRestApi
+
+  TestApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt LambdaGatewayRestApi.RootResourceId
+      PathPart: test
       RestApiId: !Ref LambdaGatewayRestApi
 
 Outputs:
@@ -39,3 +40,7 @@ Outputs:
     Value: !Ref EventsApiResource
     Export:
       Name: !Sub '${StackPrefix}-lambda-gateway-EventsApiResource'
+  TestApiResource:
+    Value: !Ref TestApiResource
+    Export:
+      Name: !Sub '${StackPrefix}-lambda-gateway-TestApiResource'

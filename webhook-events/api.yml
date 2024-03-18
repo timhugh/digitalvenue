@@ -28,11 +28,3 @@ Resources:
         Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-EventsApiResource'
       RestApiId:
         Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-LambdaGatewayRestApi'
-
-  LambdaApiPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName:
-        Fn::ImportValue: !Sub '${StackPrefix}-${LambdaName}'
-      Principal: apigateway.amazonaws.com

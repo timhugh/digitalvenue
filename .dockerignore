@@ -1,4 +1,6 @@
 
+.git/
+
 # ci cd files
 .cloudformation
 .github
