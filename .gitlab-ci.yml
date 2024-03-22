@@ -1,0 +1,86 @@
+variables:
+    DOCKER_REGISTRY: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+    # TODO: eventually this will be a staged build, but right now we just run the whole pipeline per env
+    DEPLOY_ENVIRONMENT:
+        value: "dev"
+    STACK_PREFIX: digitalvenue-$DEPLOY_ENVIRONMENT
+
+stages:
+    - pre-build
+    - build
+    - deploy
+
+.configure_aws:
+    # install awscli
+    - pip install awscli
+    # configure awscli credentials
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_DEFAULT_REGION
+.configure_ecr:
+    # configure ECR login for docker
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+
+base-images:
+    stage: pre-build
+    image: docker:stable
+    services:
+        - docker:stable-dind
+    parallel:
+        matrix:
+            - IMAGE: [builder-base, runtime-base]
+    variables:
+        # builder-base requires recursing the aws-sdk-cpp submodule
+        GIT_SUBMODULE_STRATEGY: recursive
+        IMAGE_TAG: $DOCKER_REGISTRY:$IMAGE
+    before_script:
+        - docker info
+        - !reference [.configure_aws]
+        - !reference [.configure_ecr]
+    script:
+        - aws cloudformation deploy --template-file .cloudformation/base-ecr.yml --stack-name digitalvenue-$IMAGE-ecr --parameter-overrides Image=$IMAGE
+        - .ci/build-image $DEPLOY_ENVIRONMENT $CI_COMMIT_SHA $IMAGE $DOCKER_REGISTRY docker/$IMAGE.Dockerfile
+
+infra:
+    stage: pre-build
+    before_script:
+        - !reference [.configure_aws]
+    script:
+        - aws cloudformation deploy --template-file .cloudformation/lambda-role.yml --stack-name $STACK_PREFIX-lambda-role --capabilities CAPABILITY_IAM --parameter-overrides StackPrefix=STACK_PREFIX
+        - aws cloudformation deploy --template-file .cloudformation/certificate.yml --stack-name $STACK_PREFIX-certificate --parameter-overrides StackPrefix=$STACK_PREFIX HostedZoneId=$ROUTE_53_HOSTED_ZONE_ID Environment=$DEPLOY_ENVIRONMENT
+        - aws cloudformation deploy --template-file .cloudformation/lambda-gateway.yml --stack-name $STACK_PREFIX-lambda-gateway --parameter-overrides StackPrefix=STACK_PREFIX Environment=$DEPLOY_ENVIRONMENT HostedZoneId=$ROUTE_53_HOSTED_ZONE_ID
+
+build:
+    stage: build
+    image: docker:stable
+    services:
+        - docker:stable-dind
+    variables:
+        BUILDER_IMAGE: $DOCKER_REGISTRY/digitalvenue/builder-base:$CI_COMMIT_SHA
+    before_script:
+        - !reference [.configure_aws]
+        - !reference [.configure_ecr]
+    script:
+        - aws cloudformation deploy --template-file .cloudformation/base-ecr.yml --stack-name digitalvenue-lambda-build-ecr --parameter-overrides Image=lambda-build
+        - .ci/build-image $DEPLOY_ENVIRONMENT $CI_COMMIT_SHA lambda-build $DOCKER_REGISTRY docker/builder-base.Dockerfile "--build-arg BUILD=$BUILDER_IMAGE"
+
+deploy-lambdas:
+    stage: deploy
+    image: docker-stable
+    services:
+        - docker:stable-dind
+    parallel:
+        matrix:
+            - LAMBDA_NAME: [lambda-test, webhook-events]
+    variables:
+        BUILDER_IMAGE: $DOCKER_REGISTRY/digitalvenue/lambda-build:$CI_COMMIT_SHA
+        RUNTIME_BASE_IMAGE: $DOCKER_REGISTRY/digitalvenue/runtime-base:$CI_COMMIT_SHA
+        LAMBDA_IMAGE: $DOCKER_REGISTRY/digitalvenue/$LAMBDA_NAME
+    before_script:
+        - !reference [.configure_aws]
+        - !reference [.configure_ecr]
+    script:
+        - aws cloudformation deploy --template-file .cloudformation/lambda-ecr.yml --stack-name digitalvenue-$LAMBDA_NAME-ecr --parameter-overrides LambdaName=$LAMBDA_NAME
+        - .ci/build-image $DEPLOY_ENVIRONMENT $CI_COMMIT_SHA lambda-build $DOCKER_REGISTRY docker/lambda-runtime.Dockerfile "--build-arg BUILD=$BUILDER_IMAGE --build-arg RUNTIME=$RUNTIME_BASE_IMAGE --build-arg LAMBDA=$LAMBDA_NAME"
+        - aws cloudformation deploy --template-file .cloudformation/lambda.yml --stack-name $STACK_PREFIX-$LAMBDA_NAME --parameter-overrides StackPrefix=STACK_PREFIX LambdaName=$LAMBDA_NAME ImageVersion=$CI_COMMIT_SHA
+        - aws cloudformation deploy --template-file $LAMBDA_NAME/api.yml --stack-name $STACK_PREFIX-$LAMBDA_NAME-api --parameter-overrides StackPrefix=$STACK_PREFIX LambdaName=$LAMBDA_NAME
