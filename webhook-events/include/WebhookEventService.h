@@ -6,23 +6,25 @@
 #include "WebhookEventParser.h"
 #include "WebhookSignatureVerifier.h"
 
-struct WebhookEventServiceResult {
-    bool success;
-    std::string message;
-};
+namespace digitalvenue::webhook_events {
+    struct WebhookEventServiceResult {
+        bool success;
+        std::string message;
+    };
 
-class WebhookEventService {
-private:
-    IWebhookEventParser &eventParser;
-    IWebhookSignatureVerifier &signatureVerifier;
-    const std::string &notificationUrl;
+    class WebhookEventService {
+    private:
+        IWebhookEventParser &eventParser;
+        IWebhookSignatureVerifier &signatureVerifier;
+        const std::string &notificationUrl;
 
-public:
-    WebhookEventService(
-            IWebhookEventParser &eventParser,
-            IWebhookSignatureVerifier &signatureVerifier,
-            const std::string &notificationUrl
-    ) : eventParser(eventParser), signatureVerifier(signatureVerifier), notificationUrl(notificationUrl) {}
+    public:
+        WebhookEventService(
+                IWebhookEventParser &eventParser,
+                IWebhookSignatureVerifier &signatureVerifier,
+                const std::string &notificationUrl
+        ) : eventParser(eventParser), signatureVerifier(signatureVerifier), notificationUrl(notificationUrl) {}
 
-    WebhookEventServiceResult processPaymentCreatedEvent(const std::string &payload);
-};
+        WebhookEventServiceResult processPaymentCreatedEvent(const std::string &payload);
+    };
+}

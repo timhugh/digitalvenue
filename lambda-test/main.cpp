@@ -3,6 +3,7 @@
 #include "LambdaResponse.h"
 
 using namespace aws::lambda_runtime;
+using namespace digitalvenue::core::lambda;
 
 invocation_response event_handler(invocation_request const& request)
 {

@@ -5,6 +5,8 @@
 #include "LambdaResponse.h"
 
 using namespace aws::lambda_runtime;
+using namespace digitalvenue::webhook_events;
+using namespace digitalvenue::core::lambda;
 
 invocation_response event_handler(
         WebhookEventService &service,
