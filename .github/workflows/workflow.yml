@@ -18,7 +18,7 @@ jobs:
     steps:
       - id: getEnvironments
         run: |
-          if [ "${{ vars.GITHUB_REF_NAME }}" == "main" ]; then
+          if [ "${{ github.ref_name }}" == "main" ]; then
               echo "environments=['prod']" >> $GITHUB_OUTPUT
           else
               echo "environments=['stage']" >> $GITHUB_OUTPUT
