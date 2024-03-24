@@ -12,8 +12,7 @@ FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download
 FetchContent_MakeAvailable(json)
 
 add_library(${TARGET} main.cpp
-        src/Configuration.cpp
-        include/LambdaResponse.h
+        src/configuration/Configuration.cpp
 )
 target_link_libraries(${TARGET} PUBLIC
         nlohmann_json::nlohmann_json
@@ -29,6 +28,7 @@ if(BUILD_TESTING)
     find_package(Catch2 REQUIRED)
     add_executable(${TARGET}-test
             test/test.cpp
+            test/configuration/ConfigurationTest.cpp
     )
     target_compile_features(${TARGET}-test PUBLIC cxx_std_17)
     target_link_libraries(${TARGET}-test PUBLIC ${TARGET} Catch2::Catch2WithMain)

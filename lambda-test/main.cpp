@@ -1,6 +1,6 @@
 #include <aws/lambda-runtime/runtime.h>
 #include <spdlog/spdlog.h>
-#include "LambdaResponse.h"
+#include "lambda/LambdaResponse.h"
 
 using namespace aws::lambda_runtime;
 using namespace digitalvenue::core::lambda;

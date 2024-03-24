@@ -11,7 +11,7 @@ add_library(${TARGET}-lib
         src/WebhookEventService.cpp
         src/WebhookSignatureVerifier.cpp
         include/WebhookSignatureVerifier.h
-        ../lib-core/src/base64.cpp
+        ../lib-core/src/base64/base64.cpp
         include/WebhookEventsConfiguration.h
 )
 target_include_directories(${TARGET}-lib PUBLIC include)

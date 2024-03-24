@@ -1,4 +1,4 @@
-#include "Configuration.h"
+#include "configuration/Configuration.h"
 
 std::optional<std::string> digitalvenue::core::configuration::Environment::get(const std::string &key) {
     char* value = std::getenv(key.c_str());

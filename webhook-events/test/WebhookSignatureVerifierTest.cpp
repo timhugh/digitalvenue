@@ -3,6 +3,8 @@
 #include <catch2/catch_all.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 
+using namespace digitalvenue::webhook_events;
+
 TEST_CASE("verifies signatures") {
     WebhookSignatureVerifier verifier;
 

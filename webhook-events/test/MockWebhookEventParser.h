@@ -4,6 +4,8 @@
 
 #include <optional>
 
+using namespace digitalvenue::webhook_events;
+
 class MockWebhookEventParser: public IWebhookEventParser {
 private:
     std::optional<WebhookEventContainer> result;

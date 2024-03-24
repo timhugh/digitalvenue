@@ -1,8 +1,11 @@
 #include <aws/lambda-runtime/runtime.h>
+#include <aws/core/Aws.h>
+#include <aws/core/client/ClientConfiguration.h>
+#include <aws/dynamodb/DynamoDBClient.h>
 #include <spdlog/spdlog.h>
 #include "WebhookEventService.h"
 #include "WebhookEventsConfiguration.h"
-#include "LambdaResponse.h"
+#include "lambda/LambdaResponse.h"
 
 using namespace aws::lambda_runtime;
 using namespace digitalvenue::webhook_events;
@@ -32,6 +35,7 @@ int main() {
     spdlog::set_level(config.logLevel);
     WebhookEventParser parser;
     WebhookSignatureVerifier verifier;
+
     WebhookEventService service(parser, verifier, config.notificationUrl);
 
     auto handler = [&service](invocation_request const &request) {

@@ -5,7 +5,7 @@
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 
-#include "base64.h"
+#include "base64/base64.h"
 
 namespace digitalvenue::webhook_events {
     // https://stackoverflow.com/a/64570079/4467556

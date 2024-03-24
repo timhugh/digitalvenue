@@ -2,6 +2,9 @@
 
 #include "WebhookSignatureVerifier.h"
 
+using digitalvenue::webhook_events::IWebhookSignatureVerifier;
+using digitalvenue::webhook_events::WebhookSignatureVerifierResult;
+
 class MockWebhookSignatureVerifier : public IWebhookSignatureVerifier {
 private:
     const WebhookSignatureVerifierResult result;
@@ -30,7 +33,7 @@ public:
         return notificationUrl;
     }
 
-    const WebhookSignatureVerifierResult verify(
+    WebhookSignatureVerifierResult verify(
             const std::string &payload,
             const std::string &signature,
             const std::string &signature_key,

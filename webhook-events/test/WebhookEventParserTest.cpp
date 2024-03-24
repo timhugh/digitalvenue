@@ -8,6 +8,8 @@
 using Catch::Matchers::StartsWith;
 using Catch::Matchers::MessageMatches;
 
+using namespace digitalvenue::webhook_events;
+
 TEST_CASE("parses webhook event from square docs") {
     WebhookEventParser parser;
 
