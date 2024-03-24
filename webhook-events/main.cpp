@@ -1,8 +1,8 @@
 #include <aws/lambda-runtime/runtime.h>
 #include <spdlog/spdlog.h>
-#include <spdlog/cfg/env.h>
 #include "WebhookEventService.h"
 #include "WebhookEventsConfiguration.h"
+#include "LambdaResponse.h"
 
 using namespace aws::lambda_runtime;
 
@@ -12,9 +12,15 @@ invocation_response event_handler(
 ) {
     auto result = service.processPaymentCreatedEvent(request.payload);
     if (result.success) {
-        return invocation_response::success(std::string{}, "application/json");
+        LambdaResponse response{.statusCode = 200};
+        return invocation_response::success(
+                response.to_json(),
+                "application/json");
     } else {
-        return invocation_response::failure(result.message, "application/json");
+        LambdaResponse response{.statusCode = 400, .body = result.message};
+        return invocation_response::failure(
+                response.to_json(),
+                "application/json");
     }
 }
 

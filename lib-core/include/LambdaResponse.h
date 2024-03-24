@@ -15,7 +15,7 @@ struct LambdaResponse {
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(LambdaResponse, statusCode, body, headers, isBase64Encoded);
 
 public:
-    [[nodiscard]] std::string toString() const {
+    [[nodiscard]] std::string to_json() const {
         nlohmann::json j = *this;
         return j.dump();
     }

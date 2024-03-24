@@ -11,8 +11,8 @@ invocation_response event_handler(invocation_request const& request)
         .statusCode = 200,
         .body = request.payload,
     };
-    spdlog::info("Response '{}'", response.toString());
-    return invocation_response::success(response.toString(), "application/json");
+    spdlog::info("Response '{}'", response.to_json());
+    return invocation_response::success(response.to_json(), "application/json");
 }
 
 int main()
