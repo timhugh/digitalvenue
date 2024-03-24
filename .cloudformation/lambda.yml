@@ -35,7 +35,7 @@ Resources:
         Variables:
           WEBHOOK_NOTIFICATION_URL:
             Fn::Sub:
-              - '${ApiDomain}/events'
+              - 'https://${ApiDomain}/events'
               - ApiDomain:
                   Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-ApiDomain'
           LOG_LEVEL: !Ref LogLevel
