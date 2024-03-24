@@ -7,30 +7,30 @@ env:
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   configureBuild:
     runs-on: ubuntu-latest
 
     outputs:
-      environments: ${{ steps.getEnvironments.outputs.environments }}
+      environment: ${{ steps.getEnvironment.outputs.environment }}
 
     steps:
-      - id: getEnvironments
+      - id: getEnvironment
         run: |
           if [ "${{ github.ref_name }}" == "main" ]; then
-              echo "environments=['prod']" >> $GITHUB_OUTPUT
+              echo "environment=prod" >> $GITHUB_OUTPUT
           else
-              echo "environments=['stage']" >> $GITHUB_OUTPUT
+              echo "environment=stage" >> $GITHUB_OUTPUT
           fi
 
   deployInfra:
     runs-on: ubuntu-latest
     needs: configureBuild
 
-    strategy:
-      matrix:
-        environment: ${{ fromJson(needs.configureBuild.outputs.environments) }}
+    env:
+      ENVIRONMENT: ${{ needs.configureBuild.outputs.environment }}
 
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
-      - run: .ci/_infra ${{ matrix.environment }}
+      - run: .ci/_infra $ENVIRONMENT
 
   baseImages:
     runs-on: ubuntu-latest
@@ -86,12 +86,14 @@ jobs:
 
   deployLambdas:
     runs-on: ubuntu-latest
-    needs: [ build, configureBuild ]
+    needs: [ build, deployInfra, configureBuild ]
 
     strategy:
       matrix:
         lambda_name: [ lambda-test, webhook-events ]
-        environment: ${{ fromJson(needs.configureBuild.outputs.environments) }}
+
+    env:
+      ENVIRONMENT: ${{ needs.configureBuild.outputs.environment }}
 
     steps:
       - uses: actions/checkout@v4
@@ -106,4 +108,4 @@ jobs:
 
       - uses: aws-actions/amazon-ecr-login@v2
 
-      - run: .ci/_deploy-lambda ${{ matrix.lambda_name }} ${{ matrix.environment }} ${{ github.sha }}
+      - run: .ci/_deploy-lambda ${{ matrix.lambda_name }} $ENVIRONMENT ${{ github.sha }}
