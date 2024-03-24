@@ -1,0 +1,52 @@
+{
+  "resource": "/test",
+  "path": "/test",
+  "httpMethod": "POST",
+  "headers": {
+    "x-square-hmacsha256-signature": "abcdefg"
+  },
+  "multiValueHeaders": {
+    "x-square-hmacsha256-signature": [
+      "abcdefg"
+    ]
+  },
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "resourceId": "abcdefg",
+    "resourcePath": "/test",
+    "operationName": "lambda-test",
+    "httpMethod": "POST",
+    "extendedRequestId": "U1J6tGi7vHcFfJA=",
+    "requestTime": "18/Mar/2024:14:58:50 +0000",
+    "path": "/test",
+    "accountId": "1234567890",
+    "protocol": "HTTP/1.1",
+    "stage": "test-invoke-stage",
+    "domainPrefix": "testPrefix",
+    "requestTimeEpoch": 1710773930669,
+    "requestId": "92be9964-f058-458a-8214-88f129f34776",
+    "identity": {
+      "cognitoIdentityPoolId": null,
+      "cognitoIdentityId": null,
+      "apiKey": "test-invoke-api-key",
+      "principalOrgId": null,
+      "cognitoAuthenticationType": null,
+      "userArn": "arn:aws:iam::1234567890:root",
+      "apiKeyId": "test-invoke-api-key-id",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+      "accountId": "392387111634",
+      "caller": "392387111634",
+      "sourceIp": "test-invoke-source-ip",
+      "accessKey": "ABCDEFGHIJKLMN",
+      "cognitoAuthenticationProvider": null,
+      "user": "1234567890"
+    },
+    "domainName": "testPrefix.testDomainName",
+    "apiId": "abcdefg"
+  },
+  "body": "{\n  \"merchant_id\": \"6SSW7HV8K2ST5\",\n  \"type\": \"payment.created\",\n  \"event_id\": \"13b867cf-db3d-4b1c-90b6-2f32a9d78124\",\n  \"created_at\": \"2020-02-06T21:27:30.792Z\",\n  \"data\": {\n    \"type\": \"payment\",\n    \"id\": \"KkAkhdMsgzn59SM8A89WgKwekxLZY\",\n    \"object\": {\n      \"payment\": {\n        \"id\": \"hYy9pRFVxpDsO1FB05SunFWUe9JZY\",\n        \"created_at\": \"2020-11-22T21:16:51.086Z\",\n        \"updated_at\": \"2020-11-22T21:16:51.198Z\",\n        \"amount_money\": {\n          \"amount\": 100,\n          \"currency\": \"USD\"\n        },\n        \"status\": \"APPROVED\",\n        \"delay_duration\": \"PT168H\",\n        \"source_type\": \"CARD\",\n        \"card_details\": {\n          \"status\": \"AUTHORIZED\",\n          \"card\": {\n            \"card_brand\": \"MASTERCARD\",\n            \"last_4\": \"9029\",\n            \"exp_month\": 11,\n            \"exp_year\": 2022,\n            \"fingerprint\": \"sq-1-Tvruf3vPQxlvI6n0IcKYfBukrcv6IqWr8UyBdViWXU2yzGn5VMJvrsHMKpINMhPmVg\",\n            \"card_type\": \"CREDIT\",\n            \"prepaid_type\": \"NOT_PREPAID\",\n            \"bin\": \"540988\"\n          },\n          \"entry_method\": \"KEYED\",\n          \"cvv_status\": \"CVV_ACCEPTED\",\n          \"avs_status\": \"AVS_ACCEPTED\",\n          \"statement_description\": \"SQ *DEFAULT TEST ACCOUNT\",\n          \"card_payment_timeline\": {\n            \"authorized_at\": \"2020-11-22T21:16:51.198Z\"\n          }\n        },\n        \"location_id\": \"S8GWD5R9QB376\",\n        \"order_id\": \"03O3USaPaAaFnI6kkwB1JxGgBsUZY\",\n        \"risk_evaluation\": {\n          \"created_at\": \"2020-11-22T21:16:51.198Z\",\n          \"risk_level\": \"NORMAL\"\n        },\n        \"total_money\": {\n          \"amount\": 100,\n          \"currency\": \"USD\"\n        },\n        \"approved_money\": {\n          \"amount\": 100,\n          \"currency\": \"USD\"\n        },\n        \"capabilities\": [\n          \"EDIT_TIP_AMOUNT\",\n          \"EDIT_TIP_AMOUNT_UP\",\n          \"EDIT_TIP_AMOUNT_DOWN\"\n        ],\n        \"receipt_number\": \"hYy9\",\n        \"delay_action\": \"CANCEL\",\n        \"delayed_until\": \"2020-11-29T21:16:51.086Z\",\n        \"version_token\": \"FfQhQJf9r3VSQIgyWBk1oqhIwiznLwVwJbVVA0bdyEv6o\"\n      }\n    }\n  }\n}",
+  "isBase64Encoded": false
+}

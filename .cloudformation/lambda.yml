@@ -3,20 +3,23 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   LambdaName:
     Type: String
-    Description: The name of the lambda
+    Description: The name of the lambda (must correspond to the ECR)
   ImageVersion:
     Type: String
     Description: The version of the image to use
   StackPrefix:
     Type: String
-    Description: The prefix of the stack
+    Description: The stack prefix used to reference other stacks
+  LogLevel:
+    Type: String
+    Default: info
 
 Resources:
 
   Lambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub '${LambdaName}'
+      FunctionName: !Sub '${StackPrefix}-${LambdaName}'
       Code:
         ImageUri:
           Fn::Sub:
@@ -28,7 +31,14 @@ Resources:
         Fn::ImportValue: !Sub '${StackPrefix}-lambda-role-LambdaRoleArn'
       Architectures:
         - arm64
-      Timeout: 30
+      Environment:
+        Variables:
+          WEBHOOK_NOTIFICATION_URL:
+            Fn::Sub:
+              - '${ApiDomain}/events'
+              - ApiDomain:
+                  Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-ApiDomain'
+          LOG_LEVEL: !Ref LogLevel
 
   LambdaApiPermission:
     Type: AWS::Lambda::Permission

@@ -1,17 +1,16 @@
 #include <aws/lambda-runtime/runtime.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/cfg/env.h>
 #include "WebhookEventService.h"
+#include "WebhookEventsConfiguration.h"
 
 using namespace aws::lambda_runtime;
-
-static const std::string signatureHeaderKey = "X-Square-HmacSha256-Signature";
 
 invocation_response event_handler(
         WebhookEventService &service,
         invocation_request const &request
 ) {
-    std::string signature; // TODO: Get signature from request.headers
-
-    auto result = service.processPaymentCreatedEvent(request.payload, signature);
+    auto result = service.processPaymentCreatedEvent(request.payload);
     if (result.success) {
         return invocation_response::success(std::string{}, "application/json");
     } else {
@@ -20,9 +19,12 @@ invocation_response event_handler(
 }
 
 int main() {
+    const WebhookEventsConfiguration config;
+
+    spdlog::set_level(config.logLevel);
     WebhookEventParser parser;
     WebhookSignatureVerifier verifier;
-    WebhookEventService service(parser, verifier, "https://example.com/events");
+    WebhookEventService service(parser, verifier, config.notificationUrl);
 
     auto handler = [&service](invocation_request const &request) {
         return event_handler(service, request);

@@ -4,7 +4,7 @@
 
 class MockWebhookSignatureVerifier : public IWebhookSignatureVerifier {
 private:
-    const bool result;
+    const WebhookSignatureVerifierResult result;
 
     std::string payload;
     std::string signature;
@@ -12,7 +12,7 @@ private:
     std::string notificationUrl;
 
 public:
-    MockWebhookSignatureVerifier(bool result) : result(result) {}
+    MockWebhookSignatureVerifier(const WebhookSignatureVerifierResult result) : result(result) {}
 
     std::string getPayload() const {
         return payload;
@@ -30,7 +30,7 @@ public:
         return notificationUrl;
     }
 
-    bool verify(
+    const WebhookSignatureVerifierResult verify(
             const std::string &payload,
             const std::string &signature,
             const std::string &signature_key,

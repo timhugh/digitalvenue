@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+docker build --push -t registry.gitlab.com/timhugh/digitalvenue/gitlab-runner:latest --file docker/gitlab-runner.Dockerfile .

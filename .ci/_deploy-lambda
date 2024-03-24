@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+
+LAMBDA_NAME=$1
+DEPLOY_ENVIRONMENT=$2
+VERSION=$3
+
+ROOT=$(git rev-parse --show-toplevel)
+
+if [[ -z "$LAMBDA_NAME" || -z "$DEPLOY_ENVIRONMENT" ]]; then
+    echo "Usage: $0 <lambda_name> <deploy_environment> [version=latest]"
+    exit 1
+fi
+
+if [ -z "$VERSION" ]; then
+  echo "No version provided, using latest"
+  VERSION=latest
+fi
+
+DOCKER_REGISTRY=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+BUILDER_IMAGE=$DOCKER_REGISTRY/digitalvenue/lambda-build:$VERSION
+RUNTIME_BASE_IMAGE=$DOCKER_REGISTRY/digitalvenue/runtime-base:$VERSION
+STACK_PREFIX=digitalvenue-$DEPLOY_ENVIRONMENT
+
+set -x
+
+aws cloudformation deploy --no-fail-on-empty-changeset \
+  --template-file $ROOT/.cloudformation/lambda-ecr.yml \
+  --stack-name digitalvenue-$LAMBDA_NAME-ecr \
+  --parameter-overrides LambdaName=$LAMBDA_NAME
+
+$ROOT/.ci/build-image $DOCKER_REGISTRY $LAMBDA_NAME $VERSION docker/lambda-runtime.Dockerfile "--build-arg BUILD=$BUILDER_IMAGE --build-arg RUNTIME=$RUNTIME_BASE_IMAGE --build-arg LAMBDA=$LAMBDA_NAME"
+
+aws cloudformation deploy --no-fail-on-empty-changeset --template-file .cloudformation/lambda.yml --stack-name $STACK_PREFIX-$LAMBDA_NAME --parameter-overrides StackPrefix=$STACK_PREFIX LambdaName=$LAMBDA_NAME ImageVersion=$VERSION LogLevel=debug
+aws cloudformation deploy --no-fail-on-empty-changeset --template-file $LAMBDA_NAME/api.yml --stack-name $STACK_PREFIX-$LAMBDA_NAME-api --parameter-overrides StackPrefix=$STACK_PREFIX LambdaName=$LAMBDA_NAME

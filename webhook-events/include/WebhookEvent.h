@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <nlohmann/json.hpp>
 
@@ -25,6 +26,15 @@ struct PaymentCreatedEventData {
 struct WebhookEvent {
     std::string event_id;
     PaymentCreatedEventData data;
+    std::string signature;
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(WebhookEvent, event_id, data);
+};
+
+struct WebhookEventContainer {
+    std::string body;
+    std::map<std::string, std::string> headers;
+    WebhookEvent event;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(WebhookEventContainer, body, headers);
 };

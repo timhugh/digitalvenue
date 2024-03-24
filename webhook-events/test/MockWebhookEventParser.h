@@ -2,20 +2,35 @@
 
 #include "WebhookEventParser.h"
 
+#include <optional>
+
 class MockWebhookEventParser: public IWebhookEventParser {
 private:
-    const WebhookEvent &result;
+    std::optional<WebhookEventContainer> result;
+    std::optional<parse_exception> exception;
     std::string payload;
 
 public:
-    explicit MockWebhookEventParser(const WebhookEvent &result) : result(result) {}
+
+    void stubResult(const WebhookEventContainer &result) {
+        this->result = std::optional<WebhookEventContainer>(result);
+    }
+
+    void stubException(const parse_exception &exception) {
+        this->exception = std::optional<parse_exception>(exception);
+    }
 
     std::string getPayload() const {
         return payload;
     }
 
-    WebhookEvent parse(const std::string &payload) override {
+    WebhookEventContainer parse(const std::string &payload) override {
         this->payload = payload;
-        return result;
+
+        if (exception.has_value()) {
+            throw exception.value();
+        }
+
+        return result.value();
     }
 };

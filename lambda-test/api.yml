@@ -1,30 +1,30 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  LambdaName:
-    Type: String
-    Description: The name of the Lambda function
   StackPrefix:
     Type: String
     Description: The prefix to use for the stack names
 
 Resources:
 
-  LambdaApiMethod:
-    Type: AWS::ApiGateway::Method
+  TestLambdaApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
     Properties:
-      OperationName: !Sub ${LambdaName}
-      AuthorizationType: NONE
-      HttpMethod: POST
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri:
-          Fn::Sub:
-            - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
-            - LambdaArn:
-                Fn::ImportValue: !Sub '${StackPrefix}-${LambdaName}-Arn'
-      ResourceId:
-        Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-TestApiResource'
-      RestApiId:
-        Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-LambdaGatewayRestApi'
+      ApiId:
+        Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-LambdaGatewayApi'
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      IntegrationUri:
+        Fn::Sub:
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - LambdaArn:
+              Fn::ImportValue: !Sub '${StackPrefix}-lambda-test-Arn'
+      PayloadFormatVersion: "1.0"
+
+  TestLambdaApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Fn::ImportValue: !Sub '${StackPrefix}-lambda-gateway-LambdaGatewayApi'
+      RouteKey: 'POST /test'
+      Target: !Sub 'integrations/${TestLambdaApiIntegration}'

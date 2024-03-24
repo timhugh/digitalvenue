@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+docker buildx create --name container --driver=docker-container
+docker buildx use container

@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+
+VERSION=$(git rev-parse --short HEAD)
+ROOT=$(git rev-parse --show-toplevel)
+
+# secrets, including AWS credentials
+source .env
+
+# deploy base infra
+$ROOT/.ci/_infra staging
+$ROOT/.ci/_infra production
+
+# build base images and push
+$ROOT/.ci/_builder-base $VERSION
+$ROOT/.ci/_runtime-base $VERSION
+
+# build project and push
+$ROOT/.ci/_build $VERSION
+
+# deploy staging
+$ROOT/.ci/_deploy-lambda lambda-test staging $VERSION
+$ROOT/.ci/_deploy-lambda webhook-events staging $VERSION
+
+# deploy production
+#$ROOT/.ci/_deploy-lambda lambda-test production $VERSION
+#$ROOT/.ci/_deploy-lambda webhook-events production $VERSION

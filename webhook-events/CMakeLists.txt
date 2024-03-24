@@ -12,13 +12,15 @@ add_library(${TARGET}-lib
         src/WebhookSignatureVerifier.cpp
         include/WebhookSignatureVerifier.h
         src/base64.cpp
+        include/WebhookEventsConfiguration.h
 )
 target_include_directories(${TARGET}-lib PUBLIC include)
+target_compile_features(${TARGET}-lib PUBLIC cxx_std_17)
 target_link_libraries(${TARGET}-lib PUBLIC lib-core OpenSSL::Crypto)
 
 add_executable(${TARGET} main.cpp)
-target_compile_features(${TARGET} PRIVATE cxx_std_17)
-target_link_libraries(${TARGET} PRIVATE ${TARGET}-lib)
+target_compile_features(${TARGET} PUBLIC cxx_std_17)
+target_link_libraries(${TARGET} PUBLIC ${TARGET}-lib)
 aws_lambda_package_target(${TARGET} NO_LIBC)
 
 if(BUILD_TESTING)
@@ -30,8 +32,10 @@ if(BUILD_TESTING)
             test/MockWebhookEventParser.h
             test/WebhookSignatureVerifierTest.cpp
             test/MockWebhookSignatureVerifier.h
+            test/MockWebhookEventParserTest.cpp
     )
-    target_link_libraries(${TARGET}-test PRIVATE ${TARGET}-lib Catch2::Catch2WithMain)
+    target_compile_features(${TARGET}-test PUBLIC cxx_std_17)
+    target_link_libraries(${TARGET}-test PUBLIC ${TARGET}-lib Catch2::Catch2WithMain)
 
     add_test(NAME ${TARGET}-test COMMAND ${TARGET}-test)
 
@@ -40,3 +44,10 @@ if(BUILD_TESTING)
             DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test/fixtures
     )
 endif()
+
+install(TARGETS ${TARGET} ${TARGET}-lib
+        EXPORT ${TARGET}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

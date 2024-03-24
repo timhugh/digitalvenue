@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+
+DOCKER_REGISTRY="$1"
+IMAGE="$2"
+VERSION="$3"
+DOCKER_FILE="$4"
+BUILD_ARGS="$5"
+
+ROOT=$(git rev-parse --show-toplevel)
+
+if [[ -z $DOCKER_REGISTRY || -z $IMAGE || -z $VERSION || -z $DOCKER_FILE ]]; then
+  echo "Usage: $0 <docker-registry> <image> <version> <docker-file> [build-args]"
+  exit 1
+fi
+
+echo building $IMAGE
+echo build args: $BUILD_ARGS
+
+IMAGE_TAG=$DOCKER_REGISTRY/digitalvenue/$IMAGE
+
+set -x
+
+# tag latest
+docker buildx build --push --platform linux/arm64 \
+  --provenance false \
+  -t ${IMAGE_TAG}:latest \
+  -t ${IMAGE_TAG}:${VERSION} \
+  --build-arg BUILDKIT_INLINE_CACHE=1 \
+  --cache-from "type=registry,ref=$IMAGE_TAG:latest-cache" \
+  --cache-from "type=registry,ref=$IMAGE_TAG:latest" \
+  --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=$IMAGE_TAG:latest-cache" \
+  $BUILD_ARGS \
+  --progress plain \
+  --file $ROOT/$DOCKER_FILE $ROOT

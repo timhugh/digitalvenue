@@ -12,16 +12,20 @@ TEST_CASE("verifies signatures") {
     std::string signature_key = "signature_key";
     std::string notification_url = "https://example.com/events";
 
-    REQUIRE(verifier.verify(payload, signature, signature_key, notification_url) == true);
+    auto result = verifier.verify(payload, signature, signature_key, notification_url);
+    REQUIRE(result.verified == true);
 }
 
 TEST_CASE("fails on bad signature") {
     WebhookSignatureVerifier verifier;
 
     std::string payload = R"({"type":"payment.created"})";
-    std::string signature = "bad_signature";
+    std::string bad_signature = "bad_signature";
+    std::string good_signature = "E9PjUAz21LpgB61TDgI8zhKSjap5oEEnvlljAhz3t7Q=";
     std::string signature_key = "signature_key";
     std::string notification_url = "https://example.com/events";
 
-    REQUIRE(verifier.verify(payload, signature, signature_key, notification_url) == false);
+    auto result = verifier.verify(payload, bad_signature, signature_key, notification_url);
+    REQUIRE(result.verified == false);
+    REQUIRE(result.expectedSignature == good_signature);
 }

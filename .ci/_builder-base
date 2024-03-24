@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+
+VERSION="$1"
+
+ROOT=$(git rev-parse --show-toplevel)
+
+if [ -z "$VERSION" ]; then
+  echo "No version provided, using latest"
+  VERSION=latest
+fi
+
+DOCKER_REGISTRY=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+
+set -x
+
+$ROOT/.ci/build-image $DOCKER_REGISTRY builder-base $VERSION docker/builder-base.Dockerfile

@@ -1,0 +1,109 @@
+env:
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-west-2
+  ROUTE_53_HOSTED_ZONE_ID: ${{ secrets.ROUTE_53_HOSTED_ZONE_ID }}
+
+on:
+  workflow_dispatch:
+
+jobs:
+  configureBuild:
+    runs-on: ubuntu-latest
+
+    outputs:
+      environments: ${{ steps.getEnvironments.outputs.environments }}
+
+    steps:
+      - id: getEnvironments
+        run: |
+          if [ ${{ env.GITHUB_REF_NAME }} == "main" ]; then
+              echo "environments=[prod]" >> $GITHUB_OUTPUT
+          else
+              echo "environments=[stage]" >> $GITHUB_OUTPUT
+          fi
+
+  deployInfra:
+    runs-on: ubuntu-latest
+    needs: configureBuild
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.configureBuild.outputs.environments) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - run: .ci/_infra ${{ matrix.environment }}
+
+  baseImages:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        image_name: [ builder-base, runtime-base ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - run: .ci/_${{ matrix.image_name }} ${{ github.sha }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: baseImages
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - run: .ci/_build ${{ github.sha }}
+
+  deployLambdas:
+    runs-on: ubuntu-latest
+    needs: [ build, configureBuild ]
+
+    strategy:
+      matrix:
+        lambda_name: [ lambda-test, webhook-events ]
+        environment: ${{ fromJson(needs.configureBuild.outputs.environments) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - run: .ci/_deploy-lambda ${{ matrix.lambda_name }} ${{ matrix.environment }} ${{ github.sha }}

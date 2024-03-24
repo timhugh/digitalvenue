@@ -24,7 +24,5 @@ public:
             const std::string &notificationUrl
     ) : eventParser(eventParser), signatureVerifier(signatureVerifier), notificationUrl(notificationUrl) {}
 
-    WebhookEventServiceResult processPaymentCreatedEvent(
-            const std::string &payload,
-            const std::string &signature);
+    WebhookEventServiceResult processPaymentCreatedEvent(const std::string &payload);
 };

@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: The prefix for the stack
+  Environment:
+    Type: String
+    Description: The environment for the stack
+  HostedZoneId:
+    Type: String
+    Description: The hosted zone id for the domain
+
+Resources:
+  DomainCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub 'api.${Environment}.digital-venue.net'
+      DomainValidationOptions:
+        - DomainName: !Sub 'api.${Environment}.digital-venue.net'
+          HostedZoneId: !Ref HostedZoneId
+      ValidationMethod: DNS
+
+Outputs:
+  DomainCertificateArn:
+    Value: !Ref DomainCertificate
+    Export:
+      Name: !Sub '${StackPrefix}-domain-certificate-arn'

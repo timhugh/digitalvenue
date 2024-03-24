@@ -20,12 +20,15 @@ std::string computeSignature(const std::string &payload,
     return std::string(reinterpret_cast<char *>(hash.data()), hashLength);
 }
 
-bool WebhookSignatureVerifier::verify(const std::string &requestBody, const std::string &signature,
+const WebhookSignatureVerifierResult WebhookSignatureVerifier::verify(const std::string &requestBody, const std::string &signature,
                                       const std::string &signature_key, const std::string &notification_url) {
     std::string payload = notification_url + requestBody;
 
     auto hash = computeSignature(payload, signature_key);
     auto computedSignature = base64_encode(reinterpret_cast<const unsigned char *>(hash.c_str()), hash.size());
 
-    return computedSignature == signature;
+    if (computedSignature != signature) {
+        return {false, computedSignature};
+    }
+    return {true, {}};
 }

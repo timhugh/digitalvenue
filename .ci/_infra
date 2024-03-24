@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+
+DEPLOY_ENVIRONMENT=$1
+
+if [ -z "$DEPLOY_ENVIRONMENT" ]; then
+  echo "Usage: $0 <environment>"
+  exit 1
+fi
+
+if [ -z "$ROUTE_53_HOSTED_ZONE_ID" ]; then
+  echo "ROUTE_53_HOSTED_ZONE_ID is not set"
+  exit 1
+fi
+
+STACK_PREFIX=digitalvenue-$DEPLOY_ENVIRONMENT
+
+set -x
+
+aws cloudformation deploy --no-fail-on-empty-changeset --template-file .cloudformation/lambda-role.yml --stack-name $STACK_PREFIX-lambda-role --capabilities CAPABILITY_IAM --parameter-overrides StackPrefix=$STACK_PREFIX
+aws cloudformation deploy --no-fail-on-empty-changeset --template-file .cloudformation/certificate.yml --stack-name $STACK_PREFIX-certificate --parameter-overrides StackPrefix=$STACK_PREFIX HostedZoneId=$ROUTE_53_HOSTED_ZONE_ID Environment=$DEPLOY_ENVIRONMENT
+aws cloudformation deploy --no-fail-on-empty-changeset --template-file .cloudformation/lambda-gateway.yml --stack-name $STACK_PREFIX-lambda-gateway --parameter-overrides StackPrefix=$STACK_PREFIX Environment=$DEPLOY_ENVIRONMENT HostedZoneId=$ROUTE_53_HOSTED_ZONE_ID

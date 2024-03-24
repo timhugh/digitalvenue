@@ -1,24 +1,10 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023.3.20240304.0
+FROM digitalvenue/builder-base:dev
 
-RUN dnf -y install gcc-c++ libcurl-devel cmake3 git gdb openssl-devel
-
-COPY vendor/aws-lambda-cpp /tmp/aws-lambda-cpp
-RUN mkdir /tmp/aws-lambda-cpp/build
-RUN cmake3 -S /tmp/aws-lambda-cpp -B /tmp/aws-lambda-cpp/build
-RUN cmake3 --build /tmp/aws-lambda-cpp/build --parallel --config Release
-RUN cmake3 --install /tmp/aws-lambda-cpp/build
-RUN rm -rf /tmp/aws-lambda-cpp
-
-COPY vendor/Catch2 /tmp/Catch2
+RUN curl https://github.com/catchorg/Catch2/archive/refs/tags/v3.5.3.tar.gz -L -o /tmp/Catch2.tar.gz
+RUN tar -xzf /tmp/Catch2.tar.gz -C /tmp
+RUN mv /tmp/Catch2-3.5.3 /tmp/Catch2
 RUN mkdir /tmp/Catch2/build
-RUN cmake3 -S /tmp/Catch2 -B /tmp/Catch2/build
+RUN cmake3 -S /tmp/Catch2 -B /tmp/Catch2/build -DBUILD_SHARED_LIBS=ON
 RUN cmake3 --build /tmp/Catch2/build --parallel --config Release
 RUN cmake3 --install /tmp/Catch2/build
 RUN rm -rf /tmp/Catch2
-
-COPY vendor/spdlog /tmp/spdlog
-RUN mkdir /tmp/spdlog/build
-RUN cmake3 -S /tmp/spdlog -B /tmp/spdlog/build
-RUN cmake3 --build /tmp/spdlog/build --parallel --config Release
-RUN cmake3 --install /tmp/spdlog/build
-RUN rm -rf /tmp/spdlog

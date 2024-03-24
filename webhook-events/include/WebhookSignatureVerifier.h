@@ -2,11 +2,16 @@
 
 #include <string>
 
+struct WebhookSignatureVerifierResult {
+    const bool verified;
+    const std::string expectedSignature;
+};
+
 class IWebhookSignatureVerifier {
 public:
     virtual ~IWebhookSignatureVerifier() = default;
 
-    virtual bool verify(
+    virtual const WebhookSignatureVerifierResult verify(
             const std::string &requestBody,
             const std::string &signature,
             const std::string &signature_key,
@@ -16,7 +21,7 @@ public:
 
 class WebhookSignatureVerifier: public IWebhookSignatureVerifier {
 public:
-    bool verify(
+    const WebhookSignatureVerifierResult verify(
             const std::string &requestBody,
             const std::string &signature,
             const std::string &signature_key,

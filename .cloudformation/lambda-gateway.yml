@@ -4,43 +4,80 @@ Parameters:
   StackPrefix:
     Type: String
     Description: The prefix for the stack
+  Environment:
+    Type: String
+    Description: The environment for the stack
+  HostedZoneId:
+    Type: String
+    Description: The hosted zone id for the domain
 
 Resources:
 
-  LambdaGatewayRestApi:
-    Type: AWS::ApiGateway::RestApi
+  LambdaGatewayApi:
+    Type: AWS::ApiGatewayV2::Api
     Properties:
       Name: !Sub '${StackPrefix}-lambda-gateway'
-      Description: Digital Venue API
-      ApiKeySourceType: HEADER
-      EndpointConfiguration:
-        Types:
-          - EDGE
+      ProtocolType: HTTP
 
-  EventsApiResource:
-    Type: AWS::ApiGateway::Resource
+  LambdaGatewayStage:
+    Type: AWS::ApiGatewayV2::Stage
     Properties:
-      ParentId: !GetAtt LambdaGatewayRestApi.RootResourceId
-      PathPart: events
-      RestApiId: !Ref LambdaGatewayRestApi
+      StageName: !Ref Environment
+      ApiId: !Ref LambdaGatewayApi
+      AutoDeploy: true
+      AccessLogSettings:
+        Format: '{
+                  "httpMethod": "$context.httpMethod",
+                  "path": "$context.path",
+                  "environment": "$context.stage",
+                  "requestId": "$context.requestId",
+                  "ip": "$context.identity.sourceIp",
+                  "userAgent": "$context.identity.userAgent",
+                  "latency": "$context.responseLatency",
+                  "httpStatus": "$context.status",
+                  "integrationError": "$context.integration.error",
+                  "lambdaError": "$context.error.message"
+        }'
+        DestinationArn: !GetAtt LambdaGatewayApiLogGroup.Arn
 
-  TestApiResource:
-    Type: AWS::ApiGateway::Resource
+  DomainName:
+    Type: AWS::ApiGatewayV2::DomainName
     Properties:
-      ParentId: !GetAtt LambdaGatewayRestApi.RootResourceId
-      PathPart: test
-      RestApiId: !Ref LambdaGatewayRestApi
+      DomainName: !Sub 'api.${Environment}.digital-venue.net'
+      DomainNameConfigurations:
+        - EndpointType: REGIONAL
+          CertificateArn:
+            Fn::ImportValue: !Sub '${StackPrefix}-domain-certificate-arn'
+          SecurityPolicy: TLS_1_2
+
+  ApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties:
+      DomainName: !Ref DomainName
+      ApiId: !Ref LambdaGatewayApi
+      Stage: !Ref LambdaGatewayStage
+
+  DnsRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub 'api.${Environment}.digital-venue.net'
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt DomainName.RegionalDomainName
+        HostedZoneId: !GetAtt DomainName.RegionalHostedZoneId
+
+  LambdaGatewayApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/api-gateway/api-logs-${Environment}'
 
 Outputs:
-  LambdaGatewayRestApi:
-    Value: !Ref LambdaGatewayRestApi
+  ApiDomain:
+    Value: !Sub 'api.${Environment}.digital-venue.net'
     Export:
-      Name: !Sub '${StackPrefix}-lambda-gateway-LambdaGatewayRestApi'
-  EventsApiResource:
-    Value: !Ref EventsApiResource
+      Name: !Sub '${StackPrefix}-lambda-gateway-ApiDomain'
+  LambdaGatewayApi:
+    Value: !Ref LambdaGatewayApi
     Export:
-      Name: !Sub '${StackPrefix}-lambda-gateway-EventsApiResource'
-  TestApiResource:
-    Value: !Ref TestApiResource
-    Export:
-      Name: !Sub '${StackPrefix}-lambda-gateway-TestApiResource'
+      Name: !Sub '${StackPrefix}-lambda-gateway-LambdaGatewayApi'
