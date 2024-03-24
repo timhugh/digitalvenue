@@ -2,8 +2,10 @@
 .git/
 
 # ci cd files
-.cloudformation
-.github
+.ci/
+.cloudformation/
+.github/
+.gitlab-ci.yml
 
 # build artifacts
 build/

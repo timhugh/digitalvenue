@@ -6,7 +6,7 @@ env:
   ROUTE_53_HOSTED_ZONE_ID: ${{ secrets.ROUTE_53_HOSTED_ZONE_ID }}
 
 on:
-  workflow_dispatch:
+  push:
 
 jobs:
   configureBuild:
@@ -18,10 +18,10 @@ jobs:
     steps:
       - id: getEnvironments
         run: |
-          if [ ${{ env.GITHUB_REF_NAME }} == "main" ]; then
-              echo "environments=[prod]" >> $GITHUB_OUTPUT
+          if [ "${{ vars.GITHUB_REF_NAME }}" == "main" ]; then
+              echo "environments=['prod']" >> $GITHUB_OUTPUT
           else
-              echo "environments=[stage]" >> $GITHUB_OUTPUT
+              echo "environments=['stage']" >> $GITHUB_OUTPUT
           fi
 
   deployInfra:
