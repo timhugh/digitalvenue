@@ -1,0 +1,6 @@
+POST {{host}}/echo
+Content-Type: application/json
+
+{
+  "message": "Hello, World!"
+}
