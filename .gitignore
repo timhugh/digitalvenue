@@ -1,0 +1,8 @@
+# jetbrains
+.idea/
+
+# build artifacts
+build/
+
+# aws cloudformation packaged template
+template.yml
