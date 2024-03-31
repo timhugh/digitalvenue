@@ -19,30 +19,27 @@ type EventServiceConfig struct {
 }
 
 func handler(config EventServiceConfig, merchantRepo persistence.MerchantRepo) func(ctx events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	log := log.With().Str("service", "events-service").Logger()
 
 	return func(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 		webhookEvent, err := webhooks.NewWebhookEvent(request.Body)
 		if err != nil {
-			log.Warn().
-				Str("service", "events-service").
-				Err(err).
-				Msg("Failed to create webhook event")
+			log.Warn().Err(err).Msg("Failed to create webhook event")
 
 			return events.APIGatewayProxyResponse{
 				StatusCode: 400,
 				Body:       fmt.Sprintf(`{"error": "Unable to process event: %s"}`, err.Error()),
 			}, nil
 		}
+		log := log.With().
+			Str("event_id", webhookEvent.EventId()).
+			Str("event", webhookEvent.EventType()).
+			Str("merchant_id", webhookEvent.MerchantId()).
+			Logger()
 
 		merchant, err := merchantRepo.FindMerchantBySquareMerchantId(webhookEvent.MerchantId())
 		if err != nil {
-			log.Warn().
-				Str("service", "events-service").
-				Str("event_id", webhookEvent.EventId()).
-				Str("event", webhookEvent.EventType()).
-				Str("merchant_id", webhookEvent.MerchantId()).
-				Err(err).
-				Msg("Failed to find merchant")
+			log.Warn().Err(err).Msg("Failed to find merchant")
 
 			// TODO: unknown merchant isn't entirely accurate
 			return events.APIGatewayProxyResponse{
@@ -54,13 +51,7 @@ func handler(config EventServiceConfig, merchantRepo persistence.MerchantRepo) f
 		signature := request.Headers[squareSignatureHeader]
 		err = webhooks.Validate(request.Body, config.WebhookUrl, merchant.SquareWebhookSignatureKey, signature)
 		if err != nil {
-			log.Warn().
-				Str("service", "events-service").
-				Str("event_id", webhookEvent.EventId()).
-				Str("event", webhookEvent.EventType()).
-				Str("merchant_id", webhookEvent.MerchantId()).
-				Err(err).
-				Msg("Failed to validate event")
+			log.Warn().Err(err).Msg("Failed to validate event")
 
 			return events.APIGatewayProxyResponse{
 				StatusCode: 400,
@@ -70,13 +61,7 @@ func handler(config EventServiceConfig, merchantRepo persistence.MerchantRepo) f
 
 		eventHandler, err := core.GetHandler(webhookEvent.EventType())
 		if err != nil {
-			log.Warn().
-				Str("service", "events-service").
-				Str("event_id", webhookEvent.EventId()).
-				Str("event", webhookEvent.EventType()).
-				Str("merchant_id", webhookEvent.MerchantId()).
-				Err(err).
-				Msg("Failed to get event handler")
+			log.Warn().Err(err).Msg("Failed to get event handler")
 
 			return events.APIGatewayProxyResponse{
 				StatusCode: 400,
