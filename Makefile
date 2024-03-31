@@ -35,7 +35,7 @@ deploy: package
 			CodeBucketName=$(code_bucket)
 
 .PHONY: build
-build: build/hello-world.zip build/echo-service.zip
+build: build/hello-world.zip build/echo-service.zip build/event-service.zip
 
 build/%.zip: %
 	GOOS=linux GOARCH=arm64 go build -o ../build/$^/bootstrap -C $^

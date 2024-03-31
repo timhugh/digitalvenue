@@ -1,11 +1,15 @@
+POST {{host}}/events
+Content-Type: application/json
+x-square-hmacsha256-signature: {{signature}}
+
 {
-  "merchant_id": "merchant_id",
+  "merchant_id": "{{merchantId}}",
   "type": "payment.created",
   "event_id": "event_id",
   "created_at": "2020-02-06T21:27:30.792Z",
   "data": {
     "type": "payment",
-    "id": "payment_id",
+    "id": "{{paymentId}}",
     "object": {
       "payment": {
         "amount_money": {
@@ -45,9 +49,9 @@
         "delay_action": "CANCEL",
         "delay_duration": "PT168H",
         "delayed_until": "2020-11-29T21:16:51.086Z",
-        "id": "payment_id",
-        "location_id": "location_id",
-        "order_id": "order_id",
+        "id": "{{paymentId}}",
+        "location_id": "{{locationId}}",
+        "order_id": "{{orderId}}",
         "receipt_number": "hYy9",
         "risk_evaluation": {
           "created_at": "2020-11-22T21:16:51.198Z",
@@ -64,4 +68,16 @@
       }
     }
   }
+}
+
+
+### Same request for local lambda using aws-lambda-rie
+POST {{host}}
+Content-Type: application/json
+
+{
+  "headers": {
+      "x-square-signature": "{{signature}}"
+  },
+  "body": "{\"merchant_id\":\"{{merchantId}}\",\"type\":\"payment.created\",\"event_id\":\"f8ae652b-44b3-3a81-b8c7-bf5e0eeef58c\",\"created_at\":\"2024-03-31T01:18:43.756Z\",\"data\":{\"type\":\"payment\",\"id\":\"{{paymentId}}\",\"object\":{\"payment\":{\"amount_money\":{\"amount\":2000,\"currency\":\"USD\"},\"application_details\":{\"square_product\":\"SQUARE_POS\"},\"capabilities\":[\"EDIT_AMOUNT_UP\",\"EDIT_AMOUNT_DOWN\",\"EDIT_TIP_AMOUNT_UP\",\"EDIT_TIP_AMOUNT_DOWN\"],\"cash_details\":{\"buyer_supplied_money\":{\"amount\":2000,\"currency\":\"USD\"},\"change_back_money\":{\"amount\":0,\"currency\":\"USD\"}},\"created_at\":\"2024-03-31T01:18:43.749Z\",\"device_details\":{\"device_id\":\"DEVICE_INSTALLATION_ID:device_id\",\"device_installation_id\":\"device_installation_id\",\"device_name\":\"TimPhone v6\"},\"id\":\"{{paymentId}}\",\"location_id\":\"{{locationId}}\",\"order_id\":\"{{orderId}}\",\"receipt_number\":\"abcdef\",\"source_type\":\"CASH\",\"status\":\"APPROVED\",\"total_money\":{\"amount\":2000,\"currency\":\"USD\"},\"updated_at\":\"2024-03-31T01:18:43.749Z\",\"version\":0}}}}"
 }

@@ -7,3 +7,6 @@ build/
 
 # aws cloudformation packaged template
 template.yml
+
+# aws dynamo local storage
+docker/dynamodb/

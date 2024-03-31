@@ -3,16 +3,22 @@ package webhooks
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rs/zerolog/log"
+)
+
+const (
+	PaymentCreated = "payment.created"
 )
 
 func NewWebhookEvent(body string) (WebhookEvent[any], error) {
 	var metadata WebhookEventMetadata
 	if err := json.Unmarshal([]byte(body), &metadata); err != nil {
-		return nil, fmt.Errorf("error unmarshalling webhook event metadata: %w", err)
+		log.Warn().Err(err).Msg("Failed to unmarshal webhook event metadata")
+		return nil, fmt.Errorf("malformed request json")
 	}
 
 	switch metadata.EventType {
-	case "payment.created":
+	case PaymentCreated:
 		var event PaymentCreatedEvent
 		if err := json.Unmarshal([]byte(body), &event); err != nil {
 			return nil, err
