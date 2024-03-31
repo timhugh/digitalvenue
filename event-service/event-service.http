@@ -77,7 +77,7 @@ Content-Type: application/json
 
 {
   "headers": {
-      "x-square-signature": "{{signature}}"
+      "x-square-hmacsha256-signature": "{{signature}}"
   },
   "body": "{\"merchant_id\":\"{{merchantId}}\",\"type\":\"payment.created\",\"event_id\":\"f8ae652b-44b3-3a81-b8c7-bf5e0eeef58c\",\"created_at\":\"2024-03-31T01:18:43.756Z\",\"data\":{\"type\":\"payment\",\"id\":\"{{paymentId}}\",\"object\":{\"payment\":{\"amount_money\":{\"amount\":2000,\"currency\":\"USD\"},\"application_details\":{\"square_product\":\"SQUARE_POS\"},\"capabilities\":[\"EDIT_AMOUNT_UP\",\"EDIT_AMOUNT_DOWN\",\"EDIT_TIP_AMOUNT_UP\",\"EDIT_TIP_AMOUNT_DOWN\"],\"cash_details\":{\"buyer_supplied_money\":{\"amount\":2000,\"currency\":\"USD\"},\"change_back_money\":{\"amount\":0,\"currency\":\"USD\"}},\"created_at\":\"2024-03-31T01:18:43.749Z\",\"device_details\":{\"device_id\":\"DEVICE_INSTALLATION_ID:device_id\",\"device_installation_id\":\"device_installation_id\",\"device_name\":\"TimPhone v6\"},\"id\":\"{{paymentId}}\",\"location_id\":\"{{locationId}}\",\"order_id\":\"{{orderId}}\",\"receipt_number\":\"abcdef\",\"source_type\":\"CASH\",\"status\":\"APPROVED\",\"total_money\":{\"amount\":2000,\"currency\":\"USD\"},\"updated_at\":\"2024-03-31T01:18:43.749Z\",\"version\":0}}}}"
 }

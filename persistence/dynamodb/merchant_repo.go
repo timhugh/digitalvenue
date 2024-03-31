@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	squareMerchantId          = "SquareMerchantId"
-	squareWebhookSignatureKey = "SquareWebhookSignatureKey"
-	squareAPIKey              = "SquareAPIKey"
+	SquareMerchantId          = "SquareMerchantId"
+	SquareWebhookSignatureKey = "SquareWebhookSignatureKey"
+	SquareAPIKey              = "SquareAPIKey"
 )
 
 type MerchantRepo struct {
@@ -25,6 +25,7 @@ type MerchantRepo struct {
 
 func NewMerchantRepo(tableName string) (*MerchantRepo, error) {
 	awsConfig, err := config.LoadDefaultConfig(context.TODO())
+
 	//awsConfig, err := config.LoadDefaultConfig(context.TODO(),
 	//	config.WithRegion("us-west-2"),
 	//	config.WithEndpointResolver(aws.EndpointResolverFunc(
@@ -38,6 +39,7 @@ func NewMerchantRepo(tableName string) (*MerchantRepo, error) {
 	//		},
 	//	}),
 	//)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure aws: %w", err)
 	}
@@ -51,9 +53,9 @@ func NewMerchantRepo(tableName string) (*MerchantRepo, error) {
 func (r *MerchantRepo) CreateMerchant(merchant *core.Merchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
-			squareMerchantId:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantId},
-			squareWebhookSignatureKey: &types.AttributeValueMemberS{Value: merchant.SquareWebhookSignatureKey},
-			squareAPIKey:              &types.AttributeValueMemberS{Value: merchant.SquareAPIKey},
+			SquareMerchantId:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantId},
+			SquareWebhookSignatureKey: &types.AttributeValueMemberS{Value: merchant.SquareWebhookSignatureKey},
+			SquareAPIKey:              &types.AttributeValueMemberS{Value: merchant.SquareAPIKey},
 		},
 		TableName: aws.String(r.tableName),
 	}
@@ -69,18 +71,19 @@ func (r *MerchantRepo) CreateMerchant(merchant *core.Merchant) error {
 func (r *MerchantRepo) FindMerchantBySquareMerchantId(squareMerchantId string) (*core.Merchant, error) {
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
-			squareMerchantId: &types.AttributeValueMemberS{Value: squareMerchantId},
+			SquareMerchantId: &types.AttributeValueMemberS{Value: squareMerchantId},
 		},
 		TableName: aws.String(r.tableName),
 	}
-	getItemResponse, err := r.client.GetItem(context.TODO(), getItemInput)
+
+	getItemOutput, err := r.client.GetItem(context.TODO(), getItemInput)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to get merchant")
 		return nil, fmt.Errorf("unable to retrieve merchant with id '%s'", squareMerchantId)
 	}
 
-	var merchant *core.Merchant
-	err = attributevalue.UnmarshalMap(getItemResponse.Item, merchant)
+	var merchant = &core.Merchant{}
+	err = attributevalue.UnmarshalMap(getItemOutput.Item, merchant)
 
-	return merchant, nil
+	return merchant, err
 }
