@@ -6,8 +6,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/persistence"
-	"github.com/timhugh/digitalvenue/persistence/dynamodb"
+	"github.com/timhugh/digitalvenue/db"
+	"github.com/timhugh/digitalvenue/db/dynamodb"
 	"github.com/timhugh/digitalvenue/square/webhooks"
 	"os"
 )
@@ -18,7 +18,7 @@ type EventServiceConfig struct {
 	WebhookUrl string
 }
 
-func handler(config EventServiceConfig, merchantRepo persistence.MerchantRepo) func(ctx events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func handler(config EventServiceConfig, merchantRepo db.MerchantsRepository) func(ctx events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log := log.With().Str("service", "events-service").Logger()
 
 	return func(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -84,11 +84,10 @@ func main() {
 	config := EventServiceConfig{
 		WebhookUrl: os.Getenv("WEBHOOK_NOTIFICATION_URL"),
 	}
-	merchantRepo, err := dynamodb.NewMerchantRepo(os.Getenv("MERCHANTS_TABLE"))
+
+	merchantRepo, err := dynamodb.NewMerchantsRespository(os.Getenv("MERCHANTS_TABLE"))
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Failed to create merchant repo")
+		log.Fatal().Err(err).Msg("Failed to create merchant repository")
 	}
 
 	handler := handler(config, merchantRepo)

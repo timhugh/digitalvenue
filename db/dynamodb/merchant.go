@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/core"
+	"github.com/timhugh/digitalvenue/db"
 )
 
 const (
@@ -18,39 +18,24 @@ const (
 	SquareAPIKey              = "SquareAPIKey"
 )
 
-type MerchantRepo struct {
-	client    *dynamodb.Client
+type merchantsRepository struct {
 	tableName string
+	client    *dynamodb.Client
 }
 
-func NewMerchantRepo(tableName string) (*MerchantRepo, error) {
-	awsConfig, err := config.LoadDefaultConfig(context.TODO())
-
-	//awsConfig, err := config.LoadDefaultConfig(context.TODO(),
-	//	config.WithRegion("us-west-2"),
-	//	config.WithEndpointResolver(aws.EndpointResolverFunc(
-	//		func(service, region string) (aws.Endpoint, error) {
-	//			return aws.Endpoint{URL: "http://localhost:8000"}, nil
-	//		})),
-	//	config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
-	//		Value: aws.Credentials{
-	//			AccessKeyID: "dummy", SecretAccessKey: "dummy", SessionToken: "dummy",
-	//			Source: "Hard-coded credentials; values are irrelevant for local DynamoDB",
-	//		},
-	//	}),
-	//)
-
+func NewMerchantsRespository(tableName string) (db.MerchantsRepository, error) {
+	client, err := Connect()
 	if err != nil {
-		return nil, fmt.Errorf("failed to configure aws: %w", err)
+		return nil, err
 	}
 
-	return &MerchantRepo{
-		client:    dynamodb.NewFromConfig(awsConfig),
+	return &merchantsRepository{
 		tableName: tableName,
+		client:    client,
 	}, nil
 }
 
-func (r *MerchantRepo) CreateMerchant(merchant *core.Merchant) error {
+func (r *merchantsRepository) CreateMerchant(merchant core.Merchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquareMerchantId:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantId},
@@ -68,7 +53,9 @@ func (r *MerchantRepo) CreateMerchant(merchant *core.Merchant) error {
 	return nil
 }
 
-func (r *MerchantRepo) FindMerchantBySquareMerchantId(squareMerchantId string) (*core.Merchant, error) {
+func (r *merchantsRepository) FindMerchantBySquareMerchantId(squareMerchantId string) (core.Merchant, error) {
+	var merchant = core.Merchant{}
+
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
 			SquareMerchantId: &types.AttributeValueMemberS{Value: squareMerchantId},
@@ -79,11 +66,10 @@ func (r *MerchantRepo) FindMerchantBySquareMerchantId(squareMerchantId string) (
 	getItemOutput, err := r.client.GetItem(context.TODO(), getItemInput)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to get merchant")
-		return nil, fmt.Errorf("unable to retrieve merchant with id '%s'", squareMerchantId)
+		return merchant, fmt.Errorf("unable to retrieve merchant with id '%s'", squareMerchantId)
 	}
 
-	var merchant = &core.Merchant{}
-	err = attributevalue.UnmarshalMap(getItemOutput.Item, merchant)
+	err = attributevalue.UnmarshalMap(getItemOutput.Item, &merchant)
 
 	return merchant, err
 }

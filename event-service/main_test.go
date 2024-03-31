@@ -5,7 +5,7 @@ import (
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/persistence"
+	"github.com/timhugh/digitalvenue/db"
 	"os"
 	"testing"
 
@@ -94,7 +94,7 @@ func TestHandler(t *testing.T) {
 			mock.SetUp(t)
 
 			//mockEventHandler := mock.Mock[core.EventHandler]()
-			mockMerchantRepo := mock.Mock[persistence.MerchantRepo]()
+			mockMerchantRepo := mock.Mock[db.MerchantsRepository]()
 			mock.WhenDouble(mockMerchantRepo.FindMerchantBySquareMerchantId(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
 			handler := handler(config, mockMerchantRepo)
 
