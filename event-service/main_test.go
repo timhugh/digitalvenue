@@ -22,7 +22,7 @@ func TestHandler(t *testing.T) {
 		name string
 		// given
 		request            events.APIGatewayProxyRequest
-		merchant           *core.Merchant
+		merchant           core.Merchant
 		merchantFetchError error
 		// then
 		expectedStatus int
@@ -37,7 +37,7 @@ func TestHandler(t *testing.T) {
 					"Content-Type":        "application/json",
 				},
 			},
-			merchant:       &core.Merchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       core.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 200,
 			expectedBody:   "",
 		},
@@ -69,7 +69,7 @@ func TestHandler(t *testing.T) {
 					squareSignatureHeader: "not the right signature",
 				},
 			},
-			merchant:       &core.Merchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       core.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
 			expectedBody:   `{"error": "invalid signature: not the right signature"}`,
 		},
@@ -78,14 +78,14 @@ func TestHandler(t *testing.T) {
 			request: events.APIGatewayProxyRequest{
 				Body: `{"type": "not.a.real.event"}`,
 			},
-			merchant:       &core.Merchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       core.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
 			expectedBody:   `{"error": "Unable to process event: unknown event type: not.a.real.event"}`,
 		},
 	}
 
-	config := EventServiceConfig{
-		WebhookUrl: "http://localhost:8080/events",
+	config := eventServiceConfig{
+		webhookUrl: "http://localhost:8080/events",
 	}
 
 	for _, testCase := range testCases {
@@ -96,9 +96,9 @@ func TestHandler(t *testing.T) {
 			//mockEventHandler := mock.Mock[core.EventHandler]()
 			mockMerchantRepo := mock.Mock[db.MerchantsRepository]()
 			mock.WhenDouble(mockMerchantRepo.FindMerchantBySquareMerchantId(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
-			handler := handler(config, mockMerchantRepo)
+			handler := newHandler(config, mockMerchantRepo)
 
-			response, err := handler(testCase.request)
+			response, err := handler.handle(testCase.request)
 			is.NoErr(err)
 			is.Equal(response.StatusCode, testCase.expectedStatus)
 			is.Equal(response.Body, testCase.expectedBody)

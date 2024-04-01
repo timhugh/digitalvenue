@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/db"
+	"os"
 )
 
 const (
@@ -18,19 +19,29 @@ const (
 	SquareAPIKey              = "SquareAPIKey"
 )
 
+type MerchantRepositoryConfig struct {
+	TableName string
+}
+
+func NewMerchantsRepositoryConfig() MerchantRepositoryConfig {
+	return MerchantRepositoryConfig{
+		TableName: os.Getenv("MERCHANTS_TABLE"),
+	}
+}
+
 type merchantsRepository struct {
 	tableName string
 	client    *dynamodb.Client
 }
 
-func NewMerchantsRespository(tableName string) (db.MerchantsRepository, error) {
+func NewMerchantsRespository(config MerchantRepositoryConfig) (db.MerchantsRepository, error) {
 	client, err := Connect()
 	if err != nil {
 		return nil, err
 	}
 
 	return &merchantsRepository{
-		tableName: tableName,
+		tableName: config.TableName,
 		client:    client,
 	}, nil
 }

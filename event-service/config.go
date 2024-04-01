@@ -2,12 +2,12 @@ package main
 
 import "os"
 
-type EventServiceConfig struct {
-	WebhookUrl string
+type eventServiceConfig struct {
+	webhookUrl string
 }
 
-func NewEventServiceConfig() EventServiceConfig {
-	return EventServiceConfig{
-		WebhookUrl: os.Getenv("WEBHOOK_NOTIFICATION_URL"),
+func newEventServiceConfig() eventServiceConfig {
+	return eventServiceConfig{
+		webhookUrl: os.Getenv("WEBHOOK_NOTIFICATION_URL"),
 	}
 }
