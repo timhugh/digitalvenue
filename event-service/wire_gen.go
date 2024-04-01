@@ -7,6 +7,7 @@
 package main
 
 import (
+	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/db/dynamodb"
 )
 
@@ -19,6 +20,8 @@ func initializeHandler() (handler, error) {
 	if err != nil {
 		return handler{}, err
 	}
-	mainHandler := newHandler(mainEventServiceConfig, merchantsRepository)
+	paymentCreatedService := core.NewPaymentCreatedService()
+	handlerProvider := core.NewHandlerProvider(paymentCreatedService)
+	mainHandler := newHandler(mainEventServiceConfig, merchantsRepository, handlerProvider)
 	return mainHandler, nil
 }

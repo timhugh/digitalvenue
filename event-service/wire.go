@@ -5,6 +5,7 @@ package main
 
 import (
 	"github.com/google/wire"
+	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/db/dynamodb"
 )
 
@@ -14,6 +15,8 @@ func initializeHandler() (handler, error) {
 		newEventServiceConfig,
 		dynamodb.NewMerchantsRespository,
 		dynamodb.NewMerchantsRepositoryConfig,
+		core.NewPaymentCreatedService,
+		core.NewHandlerProvider,
 	)
 	return handler{}, nil
 }

@@ -9,6 +9,10 @@ import (
 type PaymentCreatedService struct {
 }
 
+func NewPaymentCreatedService() PaymentCreatedService {
+	return PaymentCreatedService{}
+}
+
 func (s PaymentCreatedService) HandleEvent(event webhooks.WebhookEvent[any]) error {
 	paymentCreatedEvent, ok := event.(webhooks.PaymentCreatedEvent)
 	if !ok {

@@ -13,16 +13,18 @@ import (
 const squareSignatureHeader = "x-square-hmacsha256-signature"
 
 type handler struct {
-	config       eventServiceConfig
-	merchantRepo db.MerchantsRepository
-	log          zerolog.Logger
+	config          eventServiceConfig
+	merchantRepo    db.MerchantsRepository
+	log             zerolog.Logger
+	handlerProvider core.HandlerProvider
 }
 
-func newHandler(config eventServiceConfig, merchantRepo db.MerchantsRepository) handler {
+func newHandler(config eventServiceConfig, merchantRepo db.MerchantsRepository, handlerProvider core.HandlerProvider) handler {
 	return handler{
-		config:       config,
-		merchantRepo: merchantRepo,
-		log:          log.With().Str("service", "event-service").Logger(),
+		config:          config,
+		merchantRepo:    merchantRepo,
+		log:             log.With().Str("service", "event-service").Logger(),
+		handlerProvider: handlerProvider,
 	}
 }
 
@@ -64,7 +66,7 @@ func (h handler) handle(request events.APIGatewayProxyRequest) (events.APIGatewa
 		}, nil
 	}
 
-	eventHandler, err := core.GetHandler(webhookEvent.EventType())
+	eventHandler, err := h.handlerProvider.GetHandler(webhookEvent.EventType())
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to get event handler")
 

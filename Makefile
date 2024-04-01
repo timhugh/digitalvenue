@@ -3,6 +3,7 @@ include .env
 app_name = digitalvenue
 environment = dev
 code_bucket = $(app_name)-codebucket
+root = $(shell git rev-parse --show-toplevel)
 
 .PHONY: validate
 validate:
@@ -37,9 +38,14 @@ deploy: package
 .PHONY: build
 build: build/hello-world.zip build/echo-service.zip build/event-service.zip
 
+GOOS=linux
+export GOOS
+GOARCH=amd64
+export GOARCH
 build/%.zip: %
-	GOOS=linux GOARCH=arm64 go build -o ../build/$^/bootstrap -C $^
-	zip -rj $@ build/$^/bootstrap
+	$(MAKE) -C $^ OUT_DIR=$(root)/build
+	#GOOS=linux GOARCH=arm64 go build -o ../build/$^/bootstrap -C $^
+	#zip -rj $@ build/$^/bootstrap
 
 clean:
 	rm -f template.yml
