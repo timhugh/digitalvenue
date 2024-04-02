@@ -5,8 +5,7 @@ import (
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/db"
-	"github.com/timhugh/digitalvenue/services/webhooks"
+	"github.com/timhugh/digitalvenue/core/db"
 	squarewebhooks "github.com/timhugh/digitalvenue/square/webhooks"
 	"os"
 	"testing"
@@ -96,8 +95,8 @@ func TestHandler(t *testing.T) {
 			mock.SetUp(t)
 
 			mockMerchantRepo := mock.Mock[db.MerchantsRepository]()
-			mockHandlerProvider := mock.Mock[webhooks.HandlerProvider]()
-			mockHandler := mock.Mock[webhooks.EventHandler]()
+			mockHandlerProvider := mock.Mock[squarewebhooks.HandlerProvider]()
+			mockHandler := mock.Mock[squarewebhooks.EventHandler]()
 			mock.WhenDouble(mockMerchantRepo.FindMerchantBySquareMerchantId(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
 			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
 			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[squarewebhooks.WebhookEvent[any]]())).ThenReturn(nil)

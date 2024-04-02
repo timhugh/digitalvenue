@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/timhugh/digitalvenue/queue"
+	"github.com/timhugh/digitalvenue/core/queue"
 	"os"
 )
 

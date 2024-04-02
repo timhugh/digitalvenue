@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/db"
+	"github.com/timhugh/digitalvenue/core/db"
 	"os"
 )
 

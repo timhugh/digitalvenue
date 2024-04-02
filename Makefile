@@ -7,20 +7,20 @@ root = $(shell git rev-parse --show-toplevel)
 
 .PHONY: validate
 validate:
-	aws cloudformation validate-template --template-body file://./.cloudformation/env.yml
+	aws cloudformation validate-template --template-body file://$(root)/.cloudformation/env.yml
 
 .PHONY: codebucket
 codebucket:
 	aws cloudformation deploy --stack-name $(code_bucket) \
-		--template-file ./.cloudformation/bucket.yml \
+		--template-file $(root)/.cloudformation/bucket.yml \
 		--parameter-overrides \
 			BucketName=$(code_bucket)
 
 .PHONY: package
 package: codebucket build
 	aws cloudformation package \
-		--template-file ./.cloudformation/env.yml \
-		--output-template-file ./template.yml \
+		--template-file $(root)/.cloudformation/env.yml \
+		--output-template-file $(root)/template.yml \
 		--s3-bucket $(code_bucket) \
 		--s3-prefix $(app_name)/$(environment)
 
@@ -28,7 +28,7 @@ package: codebucket build
 deploy: package
 	aws cloudformation deploy \
 		--stack-name $(app_name)-$(environment) \
-		--template-file ./template.yml \
+		--template-file $(root)/template.yml \
 		--capabilities CAPABILITY_IAM \
 		--parameter-overrides \
 			Route53HostedZoneId=${ROUTE_53_HOSTED_ZONE_ID} \
@@ -36,11 +36,19 @@ deploy: package
 			CodeBucketName=$(code_bucket)
 
 .PHONY: build
-build: build/hello-world.zip build/echo-service.zip build/event-service.zip
+build: build/echo.zip build/square-events.zip
+build/echo.zip:
+	$(MAKE) -C cmd/echo OUT=$(root)/$@
+build/square-events.zip:
+	$(MAKE) -C cmd/square-events OUT=$(root)/$@
 
-build/%.zip: %
-	$(MAKE) -C $^ OUT_DIR=$(root)/build
-
-clean:
+.PHONY: clean
+clean: clean-echo clean-square-events
 	rm -f template.yml
 	rm -rf build/
+.PHONY: clean-echo
+clean-echo:
+	$(MAKE) -C cmd/echo clean
+.PHONY: clean-square-events
+clean-square-events:
+	$(MAKE) -C cmd/square-events clean

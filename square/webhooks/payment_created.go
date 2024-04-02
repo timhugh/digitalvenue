@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/db"
-	"github.com/timhugh/digitalvenue/queue"
-	"github.com/timhugh/digitalvenue/square/webhooks"
+	"github.com/timhugh/digitalvenue/core/db"
+	"github.com/timhugh/digitalvenue/core/queue"
 )
 
 type PaymentCreatedHandler struct {
@@ -23,12 +22,12 @@ func NewPaymentCreatedService(paymentsRepository db.PaymentsRepository, paymentC
 	}
 }
 
-func (handler PaymentCreatedHandler) HandleEvent(event webhooks.WebhookEvent[any]) error {
-	paymentCreatedEvent, ok := event.(webhooks.PaymentCreatedEvent)
+func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error {
+	paymentCreatedEvent, ok := event.(PaymentCreatedEvent)
 	if !ok {
 		return fmt.Errorf("event is not PaymentCreatedEvent")
 	}
-	paymentData, ok := paymentCreatedEvent.Data().(webhooks.PaymentData)
+	paymentData, ok := paymentCreatedEvent.Data().(PaymentData)
 	if !ok {
 		return fmt.Errorf("data type is not PaymentData")
 	}

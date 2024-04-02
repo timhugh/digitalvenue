@@ -2,11 +2,10 @@ package webhooks
 
 import (
 	"fmt"
-	"github.com/timhugh/digitalvenue/square/webhooks"
 )
 
 type EventHandler interface {
-	HandleEvent(event webhooks.WebhookEvent[any]) error
+	HandleEvent(event WebhookEvent[any]) error
 }
 
 type HandlerProvider struct {
@@ -21,7 +20,7 @@ func NewHandlerProvider(paymentCreatedHandler PaymentCreatedHandler) HandlerProv
 
 func (provider HandlerProvider) GetHandler(eventType string) (EventHandler, error) {
 	switch eventType {
-	case webhooks.PaymentCreated:
+	case PaymentCreated:
 		return provider.paymentCreatedHandler, nil
 	default:
 		return nil, fmt.Errorf("unknown event type")

@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/rs/zerolog"
-	"github.com/timhugh/digitalvenue/db"
-	webhooks2 "github.com/timhugh/digitalvenue/services/webhooks"
+	"github.com/timhugh/digitalvenue/core/db"
 	"github.com/timhugh/digitalvenue/square/webhooks"
 )
 
@@ -15,10 +14,10 @@ type handler struct {
 	config          eventServiceConfig
 	merchantRepo    db.MerchantsRepository
 	log             zerolog.Logger
-	handlerProvider webhooks2.HandlerProvider
+	handlerProvider webhooks.HandlerProvider
 }
 
-func newHandler(config eventServiceConfig, merchantRepo db.MerchantsRepository, handlerProvider webhooks2.HandlerProvider, log zerolog.Logger) handler {
+func newHandler(config eventServiceConfig, merchantRepo db.MerchantsRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) handler {
 	return handler{
 		config:          config,
 		merchantRepo:    merchantRepo,

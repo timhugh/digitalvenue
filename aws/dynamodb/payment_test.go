@@ -1,7 +1,7 @@
 package dynamodb
 
 import (
-	"github.com/timhugh/digitalvenue/db"
+	"github.com/timhugh/digitalvenue/core/db"
 	"testing"
 )
 
