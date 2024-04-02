@@ -24,6 +24,10 @@ package: codebucket build
 
 .PHONY: deploy
 deploy: package
+	if [ -z "$(ROUTE_53_HOSTED_ZONE_ID)" ]; then \
+		echo "ROUTE_53_HOSTED_ZONE_ID is not set"; \
+		exit 1; \
+	fi
 	aws cloudformation deploy \
 		--stack-name $(APP_NAME)-$(ENVIRONMENT) \
 		--template-file $(ROOT)/template.yml \
