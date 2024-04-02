@@ -6,5 +6,5 @@ import (
 )
 
 func TestPaymentsRepository_ImplementsInterface(t *testing.T) {
-	var _ db.PaymentsRepository = &PaymentsRepository{}
+	var _ db.SquarePaymentsRepository = &SquarePaymentsRepository{}
 }

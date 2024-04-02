@@ -6,6 +6,6 @@ const (
 	SquareAPIKey              = "SquareAPIKey"
 	SquarePaymentID           = "SquarePaymentID"
 	SquareOrderID             = "SquareOrderID"
-	PaymentsTableName         = "PAYMENTS_TABLE_NAME"
-	MerchantsTableName        = "MERCHANTS_TABLE_NAME"
+	SquarePaymentsTableName   = "SQUARE_PAYMENTS_TABLE_NAME"
+	SquareMerchantsTableName  = "SQUARE_MERCHANTS_TABLE_NAME"
 )

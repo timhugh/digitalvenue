@@ -9,29 +9,29 @@ import (
 	"os"
 )
 
-type PaymentCreatedQueueConfig struct {
+type SquarePaymentCreatedQueueConfig struct {
 	QueueURL string
 }
 
-func NewPaymentCreatedQueueConfig() PaymentCreatedQueueConfig {
-	return PaymentCreatedQueueConfig{
-		QueueURL: os.Getenv("PAYMENT_CREATED_QUEUE_URL"),
+func NewSquarePaymentCreatedQueueConfig() SquarePaymentCreatedQueueConfig {
+	return SquarePaymentCreatedQueueConfig{
+		QueueURL: os.Getenv("SQUARE_PAYMENT_CREATED_QUEUE_URL"),
 	}
 }
 
-type PaymentCreatedQueue struct {
+type SquarePaymentCreatedQueue struct {
 	queueURL string
 	client   *sqs.Client
 }
 
-func NewPaymentCreatedQueue(config PaymentCreatedQueueConfig, client *sqs.Client) queue.PaymentCreatedQueue {
-	return PaymentCreatedQueue{
+func NewSquarePaymentCreatedQueue(config SquarePaymentCreatedQueueConfig, client *sqs.Client) queue.SquarePaymentCreatedQueue {
+	return SquarePaymentCreatedQueue{
 		queueURL: config.QueueURL,
 		client:   client,
 	}
 }
 
-func (queue PaymentCreatedQueue) Publish(squarePaymentID string) error {
+func (queue SquarePaymentCreatedQueue) Publish(squarePaymentID string) error {
 	_, err := queue.client.SendMessage(context.TODO(), &sqs.SendMessageInput{
 		MessageBody: aws.String(string(squarePaymentID)),
 		QueueUrl:    aws.String(queue.queueURL),

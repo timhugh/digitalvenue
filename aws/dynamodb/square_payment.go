@@ -10,29 +10,29 @@ import (
 	"os"
 )
 
-type PaymentsRepositoryConfig struct {
+type SquarePaymentsRepositoryConfig struct {
 	TableName string
 }
 
-func NewPaymentsRepositoryConfig() PaymentsRepositoryConfig {
-	return PaymentsRepositoryConfig{
-		TableName: os.Getenv(PaymentsTableName),
+func NewSquarePaymentsRepositoryConfig() SquarePaymentsRepositoryConfig {
+	return SquarePaymentsRepositoryConfig{
+		TableName: os.Getenv(SquarePaymentsTableName),
 	}
 }
 
-type PaymentsRepository struct {
+type SquarePaymentsRepository struct {
 	tableName string
 	client    *dynamodb.Client
 }
 
-func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Client) db.PaymentsRepository {
-	return PaymentsRepository{
+func NewSquarePaymentsRepository(config SquarePaymentsRepositoryConfig, client *dynamodb.Client) db.SquarePaymentsRepository {
+	return SquarePaymentsRepository{
 		tableName: config.TableName,
 		client:    client,
 	}
 }
 
-func (repo PaymentsRepository) CreatePayment(payment db.Payment) error {
+func (repo SquarePaymentsRepository) Create(payment db.SquarePayment) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquarePaymentID:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},

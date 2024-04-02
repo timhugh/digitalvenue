@@ -8,6 +8,6 @@ type eventServiceConfig struct {
 
 func newEventServiceConfig() eventServiceConfig {
 	return eventServiceConfig{
-		webhookNotificationURL: os.Getenv("WEBHOOK_NOTIFICATION_URL"),
+		webhookNotificationURL: os.Getenv("SQUARE_WEBHOOK_NOTIFICATION_URL"),
 	}
 }

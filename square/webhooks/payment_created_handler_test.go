@@ -13,11 +13,11 @@ func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
 
-	paymentsRepo := mock.Mock[db.PaymentsRepository]()
-	paymentCaptor := mock.Captor[db.Payment]()
-	mock.WhenSingle(paymentsRepo.CreatePayment(paymentCaptor.Capture())).ThenReturn(nil)
+	paymentsRepo := mock.Mock[db.SquarePaymentsRepository]()
+	paymentCaptor := mock.Captor[db.SquarePayment]()
+	mock.WhenSingle(paymentsRepo.Create(paymentCaptor.Capture())).ThenReturn(nil)
 
-	paymentCreatedQueue := mock.Mock[queue.PaymentCreatedQueue]()
+	paymentCreatedQueue := mock.Mock[queue.SquarePaymentCreatedQueue]()
 	paymentEventIDCaptor := mock.Captor[string]()
 	mock.WhenSingle(paymentCreatedQueue.Publish(paymentEventIDCaptor.Capture())).ThenReturn(nil)
 
@@ -45,7 +45,7 @@ func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 	err := service.HandleEvent(event)
 	is.NoErr(err)
 
-	is.Equal(paymentCaptor.Last(), db.Payment{
+	is.Equal(paymentCaptor.Last(), db.SquarePayment{
 		SquarePaymentID:  "payment_id",
 		SquareOrderID:    "order_id",
 		SquareMerchantID: "merchant_id",

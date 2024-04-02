@@ -11,29 +11,29 @@ import (
 	"os"
 )
 
-type MerchantsRepositoryConfig struct {
+type SquareMerchantsRepositoryConfig struct {
 	TableName string
 }
 
-func NewMerchantsRepositoryConfig() MerchantsRepositoryConfig {
-	return MerchantsRepositoryConfig{
-		TableName: os.Getenv(MerchantsTableName),
+func NewSquareMerchantsRepositoryConfig() SquareMerchantsRepositoryConfig {
+	return SquareMerchantsRepositoryConfig{
+		TableName: os.Getenv(SquareMerchantsTableName),
 	}
 }
 
-type MerchantsRepository struct {
+type SquareMerchantsRepository struct {
 	tableName string
 	client    *dynamodb.Client
 }
 
-func NewMerchantsRepository(config MerchantsRepositoryConfig, client *dynamodb.Client) db.MerchantsRepository {
-	return MerchantsRepository{
+func NewSquareMerchantsRepository(config SquareMerchantsRepositoryConfig, client *dynamodb.Client) db.SquareMerchantsRepository {
+	return SquareMerchantsRepository{
 		tableName: config.TableName,
 		client:    client,
 	}
 }
 
-func (repo MerchantsRepository) CreateMerchant(merchant db.Merchant) error {
+func (repo SquareMerchantsRepository) CreateMerchant(merchant db.SquareMerchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquareMerchantID:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantID},
@@ -50,8 +50,8 @@ func (repo MerchantsRepository) CreateMerchant(merchant db.Merchant) error {
 	return nil
 }
 
-func (repo MerchantsRepository) FindMerchantBySquareMerchantID(squareMerchantID string) (db.Merchant, error) {
-	var merchant = db.Merchant{}
+func (repo SquareMerchantsRepository) FindById(squareMerchantID string) (db.SquareMerchant, error) {
+	var merchant = db.SquareMerchant{}
 
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{

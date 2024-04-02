@@ -1,9 +1,9 @@
 package queue
 
-type PaymentCreatedEvent struct {
+type SquarePaymentCreatedEvent struct {
 	SquarePaymentId string
 }
 
-type PaymentCreatedQueue interface {
+type SquarePaymentCreatedQueue interface {
 	Publish(squarePaymentId string) error
 }

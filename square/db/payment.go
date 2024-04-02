@@ -1,11 +1,11 @@
 package db
 
-type Payment struct {
+type SquarePayment struct {
 	SquarePaymentID  string
 	SquareMerchantID string
 	SquareOrderID    string
 }
 
-type PaymentsRepository interface {
-	CreatePayment(payment Payment) error
+type SquarePaymentsRepository interface {
+	Create(payment SquarePayment) error
 }

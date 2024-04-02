@@ -8,12 +8,12 @@ import (
 )
 
 type PaymentCreatedHandler struct {
-	paymentsRepository  db.PaymentsRepository
-	paymentCreatedQueue queue.PaymentCreatedQueue
+	paymentsRepository  db.SquarePaymentsRepository
+	paymentCreatedQueue queue.SquarePaymentCreatedQueue
 	log                 zerolog.Logger
 }
 
-func NewPaymentCreatedHandler(paymentsRepository db.PaymentsRepository, paymentCreatedQueue queue.PaymentCreatedQueue, log zerolog.Logger) PaymentCreatedHandler {
+func NewPaymentCreatedHandler(paymentsRepository db.SquarePaymentsRepository, paymentCreatedQueue queue.SquarePaymentCreatedQueue, log zerolog.Logger) PaymentCreatedHandler {
 	return PaymentCreatedHandler{
 		paymentsRepository:  paymentsRepository,
 		paymentCreatedQueue: paymentCreatedQueue,
@@ -24,7 +24,7 @@ func NewPaymentCreatedHandler(paymentsRepository db.PaymentsRepository, paymentC
 func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error {
 	paymentCreatedEvent, ok := event.(PaymentCreatedEvent)
 	if !ok {
-		return fmt.Errorf("event is not PaymentCreatedEvent")
+		return fmt.Errorf("event is not SquarePaymentCreatedEvent")
 	}
 	paymentData, ok := paymentCreatedEvent.Data().(PaymentData)
 	if !ok {
@@ -39,13 +39,13 @@ func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error 
 		Str("merchant_id", paymentCreatedEvent.MerchantID()).
 		Msg("Received event")
 
-	payment := db.Payment{
+	payment := db.SquarePayment{
 		SquarePaymentID:  paymentData.PaymentID,
 		SquareOrderID:    paymentData.OrderID,
 		SquareMerchantID: paymentCreatedEvent.MerchantID(),
 	}
 
-	err := handler.paymentsRepository.CreatePayment(payment)
+	err := handler.paymentsRepository.Create(payment)
 	if err != nil {
 		return fmt.Errorf("failed to create payment: %w", err)
 	}
