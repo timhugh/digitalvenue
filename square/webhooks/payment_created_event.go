@@ -11,9 +11,9 @@ type PaymentCreatedEvent struct {
 }
 
 type PaymentData struct {
-	PaymentID  string
-	LocationID string
-	OrderID    string
+	PaymentId  string
+	LocationId string
+	OrderId    string
 }
 
 func (event PaymentCreatedEvent) Data() any {
@@ -41,9 +41,9 @@ func (event *PaymentCreatedEvent) UnmarshalJSON(data []byte) error {
 	event.merchantId = raw.MerchantId
 	event.eventId = raw.EventId
 
-	event.data.PaymentID = raw.Data.Object.Payment.ID
-	event.data.LocationID = raw.Data.Object.Payment.LocationId
-	event.data.OrderID = raw.Data.Object.Payment.OrderID
+	event.data.PaymentId = raw.Data.Object.Payment.ID
+	event.data.LocationId = raw.Data.Object.Payment.LocationId
+	event.data.OrderId = raw.Data.Object.Payment.OrderID
 
 	return nil
 }

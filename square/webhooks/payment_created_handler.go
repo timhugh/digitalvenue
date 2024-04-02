@@ -13,7 +13,7 @@ type PaymentCreatedHandler struct {
 	log                 zerolog.Logger
 }
 
-func NewPaymentCreatedService(paymentsRepository db.PaymentsRepository, paymentCreatedQueue queue.PaymentCreatedQueue, log zerolog.Logger) PaymentCreatedHandler {
+func NewPaymentCreatedHandler(paymentsRepository db.PaymentsRepository, paymentCreatedQueue queue.PaymentCreatedQueue, log zerolog.Logger) PaymentCreatedHandler {
 	return PaymentCreatedHandler{
 		paymentsRepository:  paymentsRepository,
 		paymentCreatedQueue: paymentCreatedQueue,
@@ -34,14 +34,14 @@ func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error 
 	handler.log.Debug().
 		Str("service", "events-service").
 		Str("event", "payment.created").
-		Str("payment_id", paymentData.PaymentID).
-		Str("order_id", paymentData.OrderID).
+		Str("payment_id", paymentData.PaymentId).
+		Str("order_id", paymentData.OrderId).
 		Str("merchant_id", paymentCreatedEvent.MerchantId()).
 		Msg("Received event")
 
 	payment := db.Payment{
-		SquarePaymentID:  paymentData.PaymentID,
-		SquareOrderID:    paymentData.OrderID,
+		SquarePaymentID:  paymentData.PaymentId,
+		SquareOrderID:    paymentData.OrderId,
 		SquareMerchantID: paymentCreatedEvent.MerchantId(),
 	}
 

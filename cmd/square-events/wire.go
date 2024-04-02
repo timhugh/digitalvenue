@@ -10,7 +10,7 @@ import (
 	"github.com/timhugh/digitalvenue/aws"
 	"github.com/timhugh/digitalvenue/aws/dynamodb"
 	"github.com/timhugh/digitalvenue/aws/sqs"
-	webhooks2 "github.com/timhugh/digitalvenue/square/webhooks"
+	"github.com/timhugh/digitalvenue/square/webhooks"
 )
 
 func NewLogger() zerolog.Logger {
@@ -31,8 +31,8 @@ func initializeHandler() (handler, error) {
 		sqs.NewClient,
 		sqs.NewPaymentCreatedQueue,
 		sqs.NewPaymentCreatedQueueConfig,
-		webhooks2.NewHandlerProvider,
-		webhooks2.NewPaymentCreatedService,
+		webhooks.NewHandlerProvider,
+		webhooks.NewPaymentCreatedHandler,
 	)
 	return handler{}, nil
 }
