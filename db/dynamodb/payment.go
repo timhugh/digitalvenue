@@ -11,12 +11,6 @@ import (
 	"os"
 )
 
-const (
-	SquarePaymentID  = "SquarePaymentID"
-	SquareMerchantID = "SquareMerchantID"
-	SquareOrderID    = "SquareOrderID"
-)
-
 type PaymentsRepositoryConfig struct {
 	TableName string
 }
@@ -42,9 +36,9 @@ func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Cli
 func (p PaymentsRepository) CreatePayment(payment core.Payment) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
-			SquarePaymentID:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},
-			SquareMerchantID: &types.AttributeValueMemberS{Value: payment.SquareMerchantID},
-			SquareOrderID:    &types.AttributeValueMemberS{Value: payment.SquareOrderID},
+			SquarePaymentId:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},
+			SquareMerchantId: &types.AttributeValueMemberS{Value: payment.SquareMerchantID},
+			SquareOrderId:    &types.AttributeValueMemberS{Value: payment.SquareOrderID},
 		},
 		TableName: aws.String(p.tableName),
 	}

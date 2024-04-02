@@ -12,12 +12,6 @@ import (
 	"os"
 )
 
-const (
-	SquareMerchantId          = "SquareMerchantId"
-	SquareWebhookSignatureKey = "SquareWebhookSignatureKey"
-	SquareAPIKey              = "SquareAPIKey"
-)
-
 type MerchantsRepositoryConfig struct {
 	TableName string
 }

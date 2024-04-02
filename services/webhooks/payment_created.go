@@ -31,8 +31,9 @@ func (s PaymentCreatedHandler) HandleEvent(event webhooks.WebhookEvent[any]) err
 	log.Debug().
 		Str("service", "events-service").
 		Str("event", "payment.created").
-		Str("merchant_id", paymentCreatedEvent.MerchantId()).
+		Str("payment_id", paymentData.PaymentID).
 		Str("order_id", paymentData.OrderID).
+		Str("merchant_id", paymentCreatedEvent.MerchantId()).
 		Msg("Received event")
 
 	payment := core.Payment{
