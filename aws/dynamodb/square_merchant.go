@@ -66,6 +66,9 @@ func (repo SquareMerchantsRepository) FindById(squareMerchantID string) (db.Squa
 	}
 
 	err = attributevalue.UnmarshalMap(getItemOutput.Item, &merchant)
+	if err != nil {
+		return merchant, fmt.Errorf("failed to unmarshal merchant: %w", err)
+	}
 
 	return merchant, err
 }

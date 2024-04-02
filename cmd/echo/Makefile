@@ -5,7 +5,7 @@ $(OUT): build/bootstrap
 	mkdir -p $(shell dirname $@)
 	zip -rj $@ $^
 
-build/bootstrap:
+build/bootstrap: .
 	GOOS=linux GOARCH=arm64 go build -o $@ .
 
 .PHONY: clean

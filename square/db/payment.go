@@ -8,4 +8,5 @@ type SquarePayment struct {
 
 type SquarePaymentsRepository interface {
 	Create(payment SquarePayment) error
+	FindByID(squarePaymentID string) (SquarePayment, error)
 }

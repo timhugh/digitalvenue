@@ -39,11 +39,11 @@ deploy: package
 
 .PHONY: build
 build: build/echo.zip build/square-events.zip build/square-event-gatherer.zip
-build/echo.zip:
+build/echo.zip: cmd/echo
 	$(MAKE) -C cmd/echo OUT=$(ROOT)/$@
-build/square-events.zip:
+build/square-events.zip: cmd/square-events
 	$(MAKE) -C cmd/square-events OUT=$(ROOT)/$@
-build/square-event-gatherer.zip:
+build/square-event-gatherer.zip: cmd/square-event-gatherer
 	$(MAKE) -C cmd/square-event-gatherer OUT=$(ROOT)/$@
 
 .PHONY: test
