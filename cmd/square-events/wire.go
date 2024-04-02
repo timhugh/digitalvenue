@@ -13,13 +13,13 @@ import (
 	"github.com/timhugh/digitalvenue/square/webhooks"
 )
 
-func NewLogger() zerolog.Logger {
+func newLogger() zerolog.Logger {
 	return log.With().Str("service", "square-events").Logger()
 }
 
 func initializeHandler() (handler, error) {
 	wire.Build(
-		NewLogger,
+		newLogger,
 		aws.NewConfig,
 		dynamodb.NewClient,
 		dynamodb.NewMerchantsRepository,

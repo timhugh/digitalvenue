@@ -34,11 +34,13 @@ deploy: package
 			CodeBucketName=$(CODE_BUCKET)
 
 .PHONY: build
-build: build/echo.zip build/square-events.zip
+build: build/echo.zip build/square-events.zip build/square-event-gatherer.zip
 build/echo.zip:
 	$(MAKE) -C cmd/echo OUT=$(ROOT)/$@
 build/square-events.zip:
 	$(MAKE) -C cmd/square-events OUT=$(ROOT)/$@
+build/square-event-gatherer.zip:
+	$(MAKE) -C cmd/square-event-gatherer OUT=$(ROOT)/$@
 
 .PHONY: test
 test: build
@@ -55,3 +57,5 @@ clean-echo:
 .PHONY: clean-square-events
 clean-square-events:
 	$(MAKE) -C cmd/square-events clean
+clean-square-event-gatherer:
+	$(MAKE) -C cmd/square-event-gatherer clean
