@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
+	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/core/db"
 	squarewebhooks "github.com/timhugh/digitalvenue/square/webhooks"
@@ -89,6 +90,8 @@ func TestHandler(t *testing.T) {
 		webhookUrl: "http://localhost:8080/events",
 	}
 
+	log := zerolog.Logger{}
+
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			is := is.New(t)
@@ -100,7 +103,7 @@ func TestHandler(t *testing.T) {
 			mock.WhenDouble(mockMerchantRepo.FindMerchantBySquareMerchantId(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
 			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
 			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[squarewebhooks.WebhookEvent[any]]())).ThenReturn(nil)
-			handler := newHandler(config, mockMerchantRepo, mockHandlerProvider)
+			handler := newHandler(config, mockMerchantRepo, mockHandlerProvider, log)
 
 			response, err := handler.handle(testCase.request)
 			is.NoErr(err)
