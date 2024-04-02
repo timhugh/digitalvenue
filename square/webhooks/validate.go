@@ -22,7 +22,7 @@ func Validate(body string, notificationURL string, signatureKey string, signatur
 	goodSignature := generateSignature(signatureKey, appended)
 	if goodSignature != signature {
 		// TODO: this logger isn't injected
-		log.Debug().
+		log.Warn().
 			Str("expectedSignature", goodSignature).
 			Str("actualSignature", signature).
 			Msg("Signature mismatch")
