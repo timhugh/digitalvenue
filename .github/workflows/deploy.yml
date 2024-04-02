@@ -7,9 +7,9 @@ env:
   DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
 on:
-  push:
-    branches:
-      - main
+#  push:
+#    branches:
+#      - main
   workflow_dispatch:
     inputs:
       environment:
@@ -20,7 +20,6 @@ on:
           - dev
           - stage
           - prod
-        default: prod
 
 jobs:
   goApps:
