@@ -48,7 +48,7 @@ test: build
 	go vet ./...
 
 .PHONY: clean
-clean: clean-echo clean-square-events
+clean: clean-echo clean-square-events clean-square-event-gatherer
 	rm -f template.yml
 	rm -rf build/
 .PHONY: clean-echo
