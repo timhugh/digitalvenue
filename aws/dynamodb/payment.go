@@ -35,9 +35,9 @@ func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Cli
 func (repo PaymentsRepository) CreatePayment(payment db.Payment) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
-			SquarePaymentId:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},
-			SquareMerchantId: &types.AttributeValueMemberS{Value: payment.SquareMerchantID},
-			SquareOrderId:    &types.AttributeValueMemberS{Value: payment.SquareOrderID},
+			SquarePaymentID:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},
+			SquareMerchantID: &types.AttributeValueMemberS{Value: payment.SquareMerchantID},
+			SquareOrderID:    &types.AttributeValueMemberS{Value: payment.SquareOrderID},
 		},
 		TableName: aws.String(repo.tableName),
 	}

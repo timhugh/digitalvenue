@@ -13,8 +13,8 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-var webhookEventRawJson, _ = os.ReadFile("test-event.json")
-var webhookEventJson = string(webhookEventRawJson)
+var webhookEventRawJSON, _ = os.ReadFile("test-event.json")
+var webhookEventJSON = string(webhookEventRawJSON)
 
 const goodSignature = "/p9MrQ6sTzL2iuGBPa5YoadntDIMv5ms+ihDe3MLoLc="
 
@@ -32,7 +32,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "basic success",
 			request: events.APIGatewayProxyRequest{
-				Body: webhookEventJson,
+				Body: webhookEventJSON,
 				Headers: map[string]string{
 					squareSignatureHeader: goodSignature,
 					"Content-Type":        "application/json",
@@ -53,7 +53,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "unknown merchant",
 			request: events.APIGatewayProxyRequest{
-				Body: webhookEventJson,
+				Body: webhookEventJSON,
 				Headers: map[string]string{
 					squareSignatureHeader: goodSignature,
 				},
@@ -65,7 +65,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "incorrect signature",
 			request: events.APIGatewayProxyRequest{
-				Body: webhookEventJson,
+				Body: webhookEventJSON,
 				Headers: map[string]string{
 					squareSignatureHeader: "not the right signature",
 				},
@@ -86,7 +86,7 @@ func TestHandler(t *testing.T) {
 	}
 
 	config := eventServiceConfig{
-		webhookUrl: "http://localhost:8080/events",
+		webhookNotificationURL: "http://localhost:8080/events",
 	}
 
 	log := zerolog.Logger{}
@@ -99,7 +99,7 @@ func TestHandler(t *testing.T) {
 			mockMerchantRepo := mock.Mock[db.MerchantsRepository]()
 			mockHandlerProvider := mock.Mock[squarewebhooks.HandlerProvider]()
 			mockHandler := mock.Mock[squarewebhooks.EventHandler]()
-			mock.WhenDouble(mockMerchantRepo.FindMerchantBySquareMerchantId(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
+			mock.WhenDouble(mockMerchantRepo.FindMerchantBySquareMerchantID(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
 			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
 			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[squarewebhooks.WebhookEvent[any]]())).ThenReturn(nil)
 			handler := newHandler(config, mockMerchantRepo, mockHandlerProvider, log)

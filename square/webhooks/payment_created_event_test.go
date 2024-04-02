@@ -16,14 +16,14 @@ func TestPaymentCreatedEvent_Unmarshal(t *testing.T) {
 	paymentCreatedEvent, ok := event.(PaymentCreatedEvent)
 	is.True(ok)
 
-	is.Equal(paymentCreatedEvent.EventId(), "event_id")
+	is.Equal(paymentCreatedEvent.EventID(), "event_id")
 	is.Equal(paymentCreatedEvent.EventType(), "payment.created")
-	is.Equal(paymentCreatedEvent.MerchantId(), "merchant_id")
+	is.Equal(paymentCreatedEvent.MerchantID(), "merchant_id")
 
 	data := paymentCreatedEvent.Data()
 	paymentData, ok := data.(PaymentData)
 	is.True(ok)
-	is.Equal(paymentData.PaymentId, "payment_id")
-	is.Equal(paymentData.LocationId, "location_id")
-	is.Equal(paymentData.OrderId, "order_id")
+	is.Equal(paymentData.PaymentID, "payment_id")
+	is.Equal(paymentData.LocationID, "location_id")
+	is.Equal(paymentData.OrderID, "order_id")
 }

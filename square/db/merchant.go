@@ -1,12 +1,12 @@
 package db
 
 type Merchant struct {
-	SquareMerchantId          string
+	SquareMerchantID          string
 	SquareWebhookSignatureKey string
 	SquareAPIKey              string
 }
 
 type MerchantsRepository interface {
 	CreateMerchant(merchant Merchant) error
-	FindMerchantBySquareMerchantId(squareMerchantId string) (Merchant, error)
+	FindMerchantBySquareMerchantID(squareMerchantID string) (Merchant, error)
 }

@@ -33,19 +33,19 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 		return errorResponse("unable to process event: %s", err.Error())
 	}
 	log := handler.log.With().
-		Str("event_id", webhookEvent.EventId()).
+		Str("event_id", webhookEvent.EventID()).
 		Str("event", webhookEvent.EventType()).
-		Str("merchant_id", webhookEvent.MerchantId()).
+		Str("merchant_id", webhookEvent.MerchantID()).
 		Logger()
 
-	merchant, err := handler.merchantRepo.FindMerchantBySquareMerchantId(webhookEvent.MerchantId())
+	merchant, err := handler.merchantRepo.FindMerchantBySquareMerchantID(webhookEvent.MerchantID())
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to find merchant")
-		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantId())
+		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantID())
 	}
 
 	signature := request.Headers[squareSignatureHeader]
-	err = webhooks.Validate(request.Body, handler.config.webhookUrl, merchant.SquareWebhookSignatureKey, signature)
+	err = webhooks.Validate(request.Body, handler.config.webhookNotificationURL, merchant.SquareWebhookSignatureKey, signature)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to validate event")
 		return errorResponse("invalid signature: %s", signature)

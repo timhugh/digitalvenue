@@ -18,8 +18,8 @@ func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 	mock.WhenSingle(paymentsRepo.CreatePayment(paymentCaptor.Capture())).ThenReturn(nil)
 
 	paymentCreatedQueue := mock.Mock[queue.PaymentCreatedQueue]()
-	paymentEventIdCaptor := mock.Captor[string]()
-	mock.WhenSingle(paymentCreatedQueue.Publish(paymentEventIdCaptor.Capture())).ThenReturn(nil)
+	paymentEventIDCaptor := mock.Captor[string]()
+	mock.WhenSingle(paymentCreatedQueue.Publish(paymentEventIDCaptor.Capture())).ThenReturn(nil)
 
 	log := zerolog.Logger{}
 
@@ -32,14 +32,14 @@ func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 	event := PaymentCreatedEvent{
 		webhookEventBase: webhookEventBase{
 			eventType:  "payment.created",
-			merchantId: "merchant_id",
-			eventId:    "event_id",
+			merchantID: "merchant_id",
+			eventID:    "event_id",
 			body:       paymentCreatedEventJson,
 		},
 		data: PaymentData{
-			PaymentId:  "payment_id",
-			LocationId: "location_id",
-			OrderId:    "order_id",
+			PaymentID:  "payment_id",
+			LocationID: "location_id",
+			OrderID:    "order_id",
 		},
 	}
 	err := service.HandleEvent(event)
@@ -50,5 +50,5 @@ func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 		SquareOrderID:    "order_id",
 		SquareMerchantID: "merchant_id",
 	})
-	is.Equal(paymentEventIdCaptor.Last(), "payment_id")
+	is.Equal(paymentEventIDCaptor.Last(), "payment_id")
 }

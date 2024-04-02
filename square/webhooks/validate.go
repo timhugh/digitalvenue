@@ -10,16 +10,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Validate(body string, notification_url string, signature_key string, signature string) error {
+func Validate(body string, notificationURL string, signatureKey string, signature string) error {
 	payload := new(bytes.Buffer)
 	err := json.Compact(payload, []byte(body))
 	if err != nil {
 		return err
 	}
 
-	appended := append([]byte(notification_url), payload.Bytes()...)
+	appended := append([]byte(notificationURL), payload.Bytes()...)
 
-	goodSignature := generateSignature(signature_key, appended)
+	goodSignature := generateSignature(signatureKey, appended)
 	if goodSignature != signature {
 		log.Debug().
 			Str("expectedSignature", goodSignature).

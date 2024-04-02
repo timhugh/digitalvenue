@@ -36,7 +36,7 @@ func NewMerchantsRepository(config MerchantsRepositoryConfig, client *dynamodb.C
 func (repo MerchantsRepository) CreateMerchant(merchant db.Merchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
-			SquareMerchantId:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantId},
+			SquareMerchantID:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantID},
 			SquareWebhookSignatureKey: &types.AttributeValueMemberS{Value: merchant.SquareWebhookSignatureKey},
 			SquareAPIKey:              &types.AttributeValueMemberS{Value: merchant.SquareAPIKey},
 		},
@@ -50,19 +50,19 @@ func (repo MerchantsRepository) CreateMerchant(merchant db.Merchant) error {
 	return nil
 }
 
-func (repo MerchantsRepository) FindMerchantBySquareMerchantId(squareMerchantId string) (db.Merchant, error) {
+func (repo MerchantsRepository) FindMerchantBySquareMerchantID(squareMerchantID string) (db.Merchant, error) {
 	var merchant = db.Merchant{}
 
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
-			SquareMerchantId: &types.AttributeValueMemberS{Value: squareMerchantId},
+			SquareMerchantID: &types.AttributeValueMemberS{Value: squareMerchantID},
 		},
 		TableName: aws.String(repo.tableName),
 	}
 
 	getItemOutput, err := repo.client.GetItem(context.TODO(), getItemInput)
 	if err != nil {
-		return merchant, fmt.Errorf("unable to retrieve merchant with id '%s': %w", squareMerchantId, err)
+		return merchant, fmt.Errorf("unable to retrieve merchant with id '%s': %w", squareMerchantID, err)
 	}
 
 	err = attributevalue.UnmarshalMap(getItemOutput.Item, &merchant)

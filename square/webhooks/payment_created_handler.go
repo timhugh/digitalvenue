@@ -34,15 +34,15 @@ func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error 
 	handler.log.Debug().
 		Str("service", "events-service").
 		Str("event", "payment.created").
-		Str("payment_id", paymentData.PaymentId).
-		Str("order_id", paymentData.OrderId).
-		Str("merchant_id", paymentCreatedEvent.MerchantId()).
+		Str("payment_id", paymentData.PaymentID).
+		Str("order_id", paymentData.OrderID).
+		Str("merchant_id", paymentCreatedEvent.MerchantID()).
 		Msg("Received event")
 
 	payment := db.Payment{
-		SquarePaymentID:  paymentData.PaymentId,
-		SquareOrderID:    paymentData.OrderId,
-		SquareMerchantID: paymentCreatedEvent.MerchantId(),
+		SquarePaymentID:  paymentData.PaymentID,
+		SquareOrderID:    paymentData.OrderID,
+		SquareMerchantID: paymentCreatedEvent.MerchantID(),
 	}
 
 	err := handler.paymentsRepository.CreatePayment(payment)

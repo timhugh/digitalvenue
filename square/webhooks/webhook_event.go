@@ -32,33 +32,33 @@ func NewWebhookEvent(body string, log zerolog.Logger) (WebhookEvent[any], error)
 }
 
 type WebhookEventMetadata struct {
-	EventId    string `json:"event_id"`
+	EventID    string `json:"event_id"`
 	EventType  string `json:"type"`
-	MerchantId string `json:"merchant_id"`
+	MerchantID string `json:"merchant_id"`
 }
 
 type WebhookEvent[DataType any] interface {
-	EventId() string
+	EventID() string
 	EventType() string
-	MerchantId() string
+	MerchantID() string
 	Data() DataType
 }
 
 type webhookEventBase struct {
 	eventType  string
-	merchantId string
-	eventId    string
+	merchantID string
+	eventID    string
 	body       string
 }
 
-func (base webhookEventBase) EventId() string {
-	return base.eventId
+func (base webhookEventBase) EventID() string {
+	return base.eventID
 }
 
 func (base webhookEventBase) EventType() string {
 	return base.eventType
 }
 
-func (base webhookEventBase) MerchantId() string {
-	return base.merchantId
+func (base webhookEventBase) MerchantID() string {
+	return base.merchantID
 }

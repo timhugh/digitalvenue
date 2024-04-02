@@ -10,31 +10,31 @@ import (
 )
 
 type PaymentCreatedQueueConfig struct {
-	QueueUrl string
+	QueueURL string
 }
 
 func NewPaymentCreatedQueueConfig() PaymentCreatedQueueConfig {
 	return PaymentCreatedQueueConfig{
-		QueueUrl: os.Getenv("PAYMENT_CREATED_QUEUE_URL"),
+		QueueURL: os.Getenv("PAYMENT_CREATED_QUEUE_URL"),
 	}
 }
 
 type PaymentCreatedQueue struct {
-	queueUrl string
+	queueURL string
 	client   *sqs.Client
 }
 
 func NewPaymentCreatedQueue(config PaymentCreatedQueueConfig, client *sqs.Client) queue.PaymentCreatedQueue {
 	return PaymentCreatedQueue{
-		queueUrl: config.QueueUrl,
+		queueURL: config.QueueURL,
 		client:   client,
 	}
 }
 
-func (queue PaymentCreatedQueue) Publish(squarePaymentId string) error {
+func (queue PaymentCreatedQueue) Publish(squarePaymentID string) error {
 	_, err := queue.client.SendMessage(context.TODO(), &sqs.SendMessageInput{
-		MessageBody: aws.String(string(squarePaymentId)),
-		QueueUrl:    aws.String(queue.queueUrl),
+		MessageBody: aws.String(string(squarePaymentID)),
+		QueueUrl:    aws.String(queue.queueURL),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to send message to sqs: %w", err)

@@ -5,6 +5,6 @@ import (
 	"testing"
 )
 
-func PaymentCreatedQueue_SatisfiesInterface(t *testing.T) {
+func TestPaymentCreatedQueue_SatisfiesInterface(t *testing.T) {
 	var _ queue.PaymentCreatedQueue = PaymentCreatedQueue{}
 }

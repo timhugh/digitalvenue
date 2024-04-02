@@ -1,11 +1,11 @@
 package dynamodb
 
 const (
-	SquareMerchantId          = "SquareMerchantId"
+	SquareMerchantID          = "SquareMerchantID"
 	SquareWebhookSignatureKey = "SquareWebhookSignatureKey"
 	SquareAPIKey              = "SquareAPIKey"
-	SquarePaymentId           = "SquarePaymentId"
-	SquareOrderId             = "SquareOrderId"
+	SquarePaymentID           = "SquarePaymentID"
+	SquareOrderID             = "SquareOrderID"
 	PaymentsTableName         = "PAYMENTS_TABLE_NAME"
 	MerchantsTableName        = "MERCHANTS_TABLE_NAME"
 )
