@@ -11,5 +11,6 @@ build/bootstrap:
 
 .PHONY: clean
 clean:
+	rm -f wire_gen.go
 	rm -f $(TARGET)
 	rm -rf build
