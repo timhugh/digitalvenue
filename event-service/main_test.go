@@ -6,6 +6,8 @@ import (
 	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/db"
+	"github.com/timhugh/digitalvenue/services/webhooks"
+	squarewebhooks "github.com/timhugh/digitalvenue/square/webhooks"
 	"os"
 	"testing"
 
@@ -93,10 +95,13 @@ func TestHandler(t *testing.T) {
 			is := is.New(t)
 			mock.SetUp(t)
 
-			//mockEventHandler := mock.Mock[core.EventHandler]()
 			mockMerchantRepo := mock.Mock[db.MerchantsRepository]()
+			mockHandlerProvider := mock.Mock[webhooks.HandlerProvider]()
+			mockHandler := mock.Mock[webhooks.EventHandler]()
 			mock.WhenDouble(mockMerchantRepo.FindMerchantBySquareMerchantId(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
-			handler := newHandler(config, mockMerchantRepo)
+			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
+			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[squarewebhooks.WebhookEvent[any]]())).ThenReturn(nil)
+			handler := newHandler(config, mockMerchantRepo, mockHandlerProvider)
 
 			response, err := handler.handle(testCase.request)
 			is.NoErr(err)

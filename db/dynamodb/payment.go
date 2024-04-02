@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/db"
+	"os"
 )
 
 const (
@@ -17,21 +17,26 @@ const (
 	SquareOrderID    = "SquareOrderID"
 )
 
+type PaymentsRepositoryConfig struct {
+	TableName string
+}
+
+func NewPaymentsRepositoryConfig() PaymentsRepositoryConfig {
+	return PaymentsRepositoryConfig{
+		TableName: os.Getenv("PAYMENTS_TABLE"),
+	}
+}
+
 type PaymentsRepository struct {
 	tableName string
 	client    *dynamodb.Client
 }
 
-func NewPaymentsRepository(tableName string) (db.PaymentsRepository, error) {
-	client, err := Connect()
-	if err != nil {
-		return nil, err
-	}
-
-	return &PaymentsRepository{
-		tableName: tableName,
+func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Client) PaymentsRepository {
+	return PaymentsRepository{
+		tableName: config.TableName,
 		client:    client,
-	}, nil
+	}
 }
 
 func (p PaymentsRepository) CreatePayment(payment core.Payment) error {

@@ -1,4 +1,4 @@
-package core
+package webhooks
 
 import (
 	"fmt"
@@ -10,10 +10,10 @@ type EventHandler interface {
 }
 
 type HandlerProvider struct {
-	paymentCreatedHandler PaymentCreatedService
+	paymentCreatedHandler PaymentCreatedHandler
 }
 
-func NewHandlerProvider(paymentCreatedHandler PaymentCreatedService) HandlerProvider {
+func NewHandlerProvider(paymentCreatedHandler PaymentCreatedHandler) HandlerProvider {
 	return HandlerProvider{
 		paymentCreatedHandler: paymentCreatedHandler,
 	}

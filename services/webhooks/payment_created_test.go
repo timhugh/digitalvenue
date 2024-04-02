@@ -1,4 +1,4 @@
-package core
+package webhooks
 
 import (
 	"github.com/matryer/is"
@@ -8,7 +8,7 @@ import (
 
 func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 	is := is.New(t)
-	service := PaymentCreatedService{}
+	service := PaymentCreatedHandler{}
 
 	event := webhooks.PaymentCreatedEvent{}
 	err := service.HandleEvent(event)

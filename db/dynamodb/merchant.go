@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/db"
 	"os"
 )
 
@@ -19,34 +18,29 @@ const (
 	SquareAPIKey              = "SquareAPIKey"
 )
 
-type MerchantRepositoryConfig struct {
+type MerchantsRepositoryConfig struct {
 	TableName string
 }
 
-func NewMerchantsRepositoryConfig() MerchantRepositoryConfig {
-	return MerchantRepositoryConfig{
+func NewMerchantsRepositoryConfig() MerchantsRepositoryConfig {
+	return MerchantsRepositoryConfig{
 		TableName: os.Getenv("MERCHANTS_TABLE"),
 	}
 }
 
-type merchantsRepository struct {
+type MerchantsRepository struct {
 	tableName string
 	client    *dynamodb.Client
 }
 
-func NewMerchantsRespository(config MerchantRepositoryConfig) (db.MerchantsRepository, error) {
-	client, err := Connect()
-	if err != nil {
-		return nil, err
-	}
-
-	return &merchantsRepository{
+func NewMerchantsRepository(config MerchantsRepositoryConfig, client *dynamodb.Client) MerchantsRepository {
+	return MerchantsRepository{
 		tableName: config.TableName,
 		client:    client,
-	}, nil
+	}
 }
 
-func (r *merchantsRepository) CreateMerchant(merchant core.Merchant) error {
+func (r MerchantsRepository) CreateMerchant(merchant core.Merchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquareMerchantId:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantId},
@@ -64,7 +58,7 @@ func (r *merchantsRepository) CreateMerchant(merchant core.Merchant) error {
 	return nil
 }
 
-func (r *merchantsRepository) FindMerchantBySquareMerchantId(squareMerchantId string) (core.Merchant, error) {
+func (r MerchantsRepository) FindMerchantBySquareMerchantId(squareMerchantId string) (core.Merchant, error) {
 	var merchant = core.Merchant{}
 
 	getItemInput := &dynamodb.GetItemInput{

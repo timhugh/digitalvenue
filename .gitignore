@@ -3,10 +3,13 @@
 *.private.env.json
 
 # build artifacts
-build/
+build*/
 
 # aws cloudformation packaged template
 template.yml
 
 # aws dynamo local storage
 docker/dynamodb/
+
+# wire gen files
+wire_gen.go
