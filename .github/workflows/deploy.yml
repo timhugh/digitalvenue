@@ -4,6 +4,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_DEFAULT_REGION: us-west-2
   ROUTE_53_HOSTED_ZONE_ID: ${{ secrets.ROUTE_53_HOSTED_ZONE_ID }}
+  DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
 on:
   push:
@@ -26,9 +27,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.20'
+
       - run: make test
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
       - run: make deploy
+
+      - name: Failure notification
+        if: failure()
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ env.DISCORD_WEBHOOK_URL }}
+        with:
+          args: 'Test failure in ${{ github.repository }}. ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Publish test report
+        if: always()
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: junit.xml
