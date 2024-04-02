@@ -1,7 +1,7 @@
 package sqs
 
 import (
-	"github.com/timhugh/digitalvenue/core/queue"
+	"github.com/timhugh/digitalvenue/square/queue"
 	"testing"
 )
 

@@ -1,51 +1,49 @@
-include .env
-
-app_name = digitalvenue
-environment = dev
-code_bucket = $(app_name)-codebucket
-root = $(shell git rev-parse --show-toplevel)
+APP_NAME = digitalvenue
+ENVIRONMENT = dev
+CODE_BUCKET = $(APP_NAME)-codebucket
+ROOT = $(shell git rev-parse --show-toplevel)
 
 .PHONY: validate
 validate:
-	aws cloudformation validate-template --template-body file://$(root)/.cloudformation/env.yml
+	aws cloudformation validate-template --template-body file://$(ROOT)/.cloudformation/env.yml
 
 .PHONY: codebucket
 codebucket:
-	aws cloudformation deploy --stack-name $(code_bucket) \
-		--template-file $(root)/.cloudformation/bucket.yml \
+	aws cloudformation deploy --stack-name $(CODE_BUCKET) \
+		--template-file $(ROOT)/.cloudformation/bucket.yml \
 		--parameter-overrides \
-			BucketName=$(code_bucket)
+			BucketName=$(CODE_BUCKET)
 
 .PHONY: package
 package: codebucket build
 	aws cloudformation package \
-		--template-file $(root)/.cloudformation/env.yml \
-		--output-template-file $(root)/template.yml \
-		--s3-bucket $(code_bucket) \
-		--s3-prefix $(app_name)/$(environment)
+		--template-file $(ROOT)/.cloudformation/env.yml \
+		--output-template-file $(ROOT)/template.yml \
+		--s3-bucket $(CODE_BUCKET) \
+		--s3-prefix $(APP_NAME)/$(ENVIRONMENT)
 
 .PHONY: deploy
 deploy: package
 	aws cloudformation deploy \
-		--stack-name $(app_name)-$(environment) \
-		--template-file $(root)/template.yml \
+		--stack-name $(APP_NAME)-$(ENVIRONMENT) \
+		--template-file $(ROOT)/template.yml \
 		--capabilities CAPABILITY_IAM \
 		--parameter-overrides \
 			Route53HostedZoneId=${ROUTE_53_HOSTED_ZONE_ID} \
-			Environment=$(environment) \
-			CodeBucketName=$(code_bucket)
+			Environment=$(ENVIRONMENT) \
+			CodeBucketName=$(CODE_BUCKET)
 
 .PHONY: build
 build: build/echo.zip build/square-events.zip
 build/echo.zip:
-	$(MAKE) -C cmd/echo OUT=$(root)/$@
+	$(MAKE) -C cmd/echo OUT=$(ROOT)/$@
 build/square-events.zip:
-	$(MAKE) -C cmd/square-events OUT=$(root)/$@
+	$(MAKE) -C cmd/square-events OUT=$(ROOT)/$@
 
 .PHONY: test
 test: build
 	go test ./...
-	go vet -v ./...
+	go vet ./...
 
 .PHONY: clean
 clean: clean-echo clean-square-events

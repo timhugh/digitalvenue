@@ -5,8 +5,7 @@ import (
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/rs/zerolog"
-	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/core/db"
+	"github.com/timhugh/digitalvenue/square/db"
 	squarewebhooks "github.com/timhugh/digitalvenue/square/webhooks"
 	"os"
 	"testing"
@@ -24,7 +23,7 @@ func TestHandler(t *testing.T) {
 		name string
 		// given
 		request            events.APIGatewayProxyRequest
-		merchant           core.Merchant
+		merchant           db.Merchant
 		merchantFetchError error
 		// then
 		expectedStatus int
@@ -39,7 +38,7 @@ func TestHandler(t *testing.T) {
 					"Content-Type":        "application/json",
 				},
 			},
-			merchant:       core.Merchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       db.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 200,
 			expectedBody:   `{"status": "success"}`,
 		},
@@ -71,7 +70,7 @@ func TestHandler(t *testing.T) {
 					squareSignatureHeader: "not the right signature",
 				},
 			},
-			merchant:       core.Merchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       db.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
 			expectedBody:   `{"error": "invalid signature: not the right signature"}`,
 		},
@@ -80,7 +79,7 @@ func TestHandler(t *testing.T) {
 			request: events.APIGatewayProxyRequest{
 				Body: `{"type": "not.a.real.event"}`,
 			},
-			merchant:       core.Merchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       db.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
 			expectedBody:   `{"error": "unable to process event: unknown event type: not.a.real.event"}`,
 		},

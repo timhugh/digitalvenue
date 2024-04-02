@@ -3,9 +3,8 @@ package webhooks
 import (
 	"fmt"
 	"github.com/rs/zerolog"
-	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/core/db"
-	"github.com/timhugh/digitalvenue/core/queue"
+	"github.com/timhugh/digitalvenue/square/db"
+	"github.com/timhugh/digitalvenue/square/queue"
 )
 
 type PaymentCreatedHandler struct {
@@ -40,7 +39,7 @@ func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error 
 		Str("merchant_id", paymentCreatedEvent.MerchantId()).
 		Msg("Received event")
 
-	payment := core.Payment{
+	payment := db.Payment{
 		SquarePaymentID:  paymentData.PaymentID,
 		SquareOrderID:    paymentData.OrderID,
 		SquareMerchantID: paymentCreatedEvent.MerchantId(),

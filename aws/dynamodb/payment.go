@@ -6,8 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/core/db"
+	"github.com/timhugh/digitalvenue/square/db"
 	"os"
 )
 
@@ -33,7 +32,7 @@ func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Cli
 	}
 }
 
-func (repo PaymentsRepository) CreatePayment(payment core.Payment) error {
+func (repo PaymentsRepository) CreatePayment(payment db.Payment) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquarePaymentId:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},

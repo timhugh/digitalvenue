@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/rs/zerolog"
-	"github.com/timhugh/digitalvenue/core/db"
+	"github.com/timhugh/digitalvenue/square/db"
 	"github.com/timhugh/digitalvenue/square/webhooks"
 )
 

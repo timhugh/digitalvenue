@@ -7,8 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/timhugh/digitalvenue/core"
-	"github.com/timhugh/digitalvenue/core/db"
+	"github.com/timhugh/digitalvenue/square/db"
 	"os"
 )
 
@@ -34,7 +33,7 @@ func NewMerchantsRepository(config MerchantsRepositoryConfig, client *dynamodb.C
 	}
 }
 
-func (repo MerchantsRepository) CreateMerchant(merchant core.Merchant) error {
+func (repo MerchantsRepository) CreateMerchant(merchant db.Merchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquareMerchantId:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantId},
@@ -51,8 +50,8 @@ func (repo MerchantsRepository) CreateMerchant(merchant core.Merchant) error {
 	return nil
 }
 
-func (repo MerchantsRepository) FindMerchantBySquareMerchantId(squareMerchantId string) (core.Merchant, error) {
-	var merchant = core.Merchant{}
+func (repo MerchantsRepository) FindMerchantBySquareMerchantId(squareMerchantId string) (db.Merchant, error) {
+	var merchant = db.Merchant{}
 
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
