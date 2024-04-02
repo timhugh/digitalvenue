@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"github.com/matryer/is"
+	"github.com/rs/zerolog"
 	"os"
 	"testing"
 )
@@ -12,7 +13,8 @@ var paymentCreatedEventJson = string(paymentCreatedEventRawJson)
 func TestPaymentCreatedEvent_Unmarshal(t *testing.T) {
 	is := is.New(t)
 
-	event, err := NewWebhookEvent(paymentCreatedEventJson)
+	log := zerolog.Logger{}
+	event, err := NewWebhookEvent(paymentCreatedEventJson, log)
 	is.NoErr(err)
 
 	paymentCreatedEvent, ok := event.(PaymentCreatedEvent)

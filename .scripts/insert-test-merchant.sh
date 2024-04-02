@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if [ -z "$MERCHANTS_TABLE" ]; then
-  echo "MERCHANTS_TABLE is not set. Please set the MERCHANTS_TABLE environment variable."
+if [ -z "$MERCHANTS_TABLE_NAME" ]; then
+  echo "MERCHANTS_TABLE_NAME is not set. Please set the MERCHANTS_TABLE_NAME environment variable."
   exit 1
 fi
 
@@ -20,7 +20,7 @@ if [ -z "$SQUARE_API_ACCESS_TOKEN" ]; then
   exit 1
 fi
 
-aws dynamodb put-item --endpoint-url http://localhost:8000 --table-name "$MERCHANTS_TABLE" --item "$(cat <<EOF
+aws dynamodb put-item --endpoint-url http://localhost:8000 --table-name "$MERCHANTS_TABLE_NAME" --item "$(cat <<EOF
 {
   "SquareMerchantId": {"S": "$SQUARE_MERCHANT_ID"},
   "SquareWebhookSignatureKey": {"S": "$SQUARE_WEBHOOK_SIGNATURE_KEY"},

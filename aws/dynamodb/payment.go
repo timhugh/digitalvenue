@@ -6,8 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/core"
+	"github.com/timhugh/digitalvenue/db"
 	"os"
 )
 
@@ -17,7 +17,7 @@ type PaymentsRepositoryConfig struct {
 
 func NewPaymentsRepositoryConfig() PaymentsRepositoryConfig {
 	return PaymentsRepositoryConfig{
-		TableName: os.Getenv("PAYMENTS_TABLE"),
+		TableName: os.Getenv(PaymentsTableName),
 	}
 }
 
@@ -26,27 +26,26 @@ type PaymentsRepository struct {
 	client    *dynamodb.Client
 }
 
-func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Client) PaymentsRepository {
+func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Client) db.PaymentsRepository {
 	return PaymentsRepository{
 		tableName: config.TableName,
 		client:    client,
 	}
 }
 
-func (p PaymentsRepository) CreatePayment(payment core.Payment) error {
+func (repo PaymentsRepository) CreatePayment(payment core.Payment) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquarePaymentId:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},
 			SquareMerchantId: &types.AttributeValueMemberS{Value: payment.SquareMerchantID},
 			SquareOrderId:    &types.AttributeValueMemberS{Value: payment.SquareOrderID},
 		},
-		TableName: aws.String(p.tableName),
+		TableName: aws.String(repo.tableName),
 	}
 
-	_, err := p.client.PutItem(context.TODO(), &putItemInput)
+	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed to create payment")
-		return fmt.Errorf("failed to create payment")
+		return fmt.Errorf("failed to create payment: %w", err)
 	}
 
 	return nil

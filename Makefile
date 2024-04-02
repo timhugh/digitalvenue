@@ -38,14 +38,8 @@ deploy: package
 .PHONY: build
 build: build/hello-world.zip build/echo-service.zip build/event-service.zip
 
-GOOS=linux
-export GOOS
-GOARCH=amd64
-export GOARCH
 build/%.zip: %
 	$(MAKE) -C $^ OUT_DIR=$(root)/build
-	#GOOS=linux GOARCH=arm64 go build -o ../build/$^/bootstrap -C $^
-	#zip -rj $@ build/$^/bootstrap
 
 clean:
 	rm -f template.yml

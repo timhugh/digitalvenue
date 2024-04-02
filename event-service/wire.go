@@ -4,33 +4,35 @@
 package main
 
 import (
-	awsdynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/wire"
-	"github.com/timhugh/digitalvenue/db"
-	"github.com/timhugh/digitalvenue/db/dynamodb"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/timhugh/digitalvenue/aws"
+	"github.com/timhugh/digitalvenue/aws/dynamodb"
+	"github.com/timhugh/digitalvenue/aws/sqs"
 	"github.com/timhugh/digitalvenue/services/webhooks"
 )
 
-func NewPaymentsRepository(config dynamodb.PaymentsRepositoryConfig, client *awsdynamodb.Client) db.PaymentsRepository {
-	return dynamodb.NewPaymentsRepository(config, client)
-}
-
-func NewMerchantsRepository(config dynamodb.MerchantsRepositoryConfig, client *awsdynamodb.Client) db.MerchantsRepository {
-	return dynamodb.NewMerchantsRepository(config, client)
+func NewLogger() zerolog.Logger {
+	return log.With().Str("service", "event-service").Logger()
 }
 
 func initializeHandler() (handler, error) {
 	wire.Build(
-		newHandler,
-		newEventServiceConfig,
-		dynamodb.NewConfig,
+		NewLogger,
+		aws.NewConfig,
 		dynamodb.NewClient,
+		dynamodb.NewMerchantsRepository,
 		dynamodb.NewMerchantsRepositoryConfig,
-		NewMerchantsRepository,
+		dynamodb.NewPaymentsRepository,
 		dynamodb.NewPaymentsRepositoryConfig,
-		NewPaymentsRepository,
-		webhooks.NewPaymentCreatedService,
+		newEventServiceConfig,
+		newHandler,
+		sqs.NewClient,
+		sqs.NewPaymentCreatedQueue,
+		sqs.NewPaymentCreatedQueueConfig,
 		webhooks.NewHandlerProvider,
+		webhooks.NewPaymentCreatedService,
 	)
 	return handler{}, nil
 }

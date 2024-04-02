@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/db"
 	webhooks2 "github.com/timhugh/digitalvenue/services/webhooks"
 	"github.com/timhugh/digitalvenue/square/webhooks"
@@ -19,67 +18,61 @@ type handler struct {
 	handlerProvider webhooks2.HandlerProvider
 }
 
-func newHandler(config eventServiceConfig, merchantRepo db.MerchantsRepository, handlerProvider webhooks2.HandlerProvider) handler {
+func newHandler(config eventServiceConfig, merchantRepo db.MerchantsRepository, handlerProvider webhooks2.HandlerProvider, log zerolog.Logger) handler {
 	return handler{
 		config:          config,
 		merchantRepo:    merchantRepo,
-		log:             log.With().Str("service", "event-service").Logger(),
+		log:             log,
 		handlerProvider: handlerProvider,
 	}
 }
 
-func (h handler) handle(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	webhookEvent, err := webhooks.NewWebhookEvent(request.Body)
+func (handler handler) handle(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	webhookEvent, err := webhooks.NewWebhookEvent(request.Body, handler.log)
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to create webhook event")
-
-		return events.APIGatewayProxyResponse{
-			StatusCode: 400,
-			Body:       fmt.Sprintf(`{"error": "Unable to process event: %s"}`, err.Error()),
-		}, nil
+		handler.log.Warn().Err(err).Msg("Failed to create webhook event")
+		return errorResponse("unable to process event: %w", err)
 	}
-	log := log.With().
+	log := handler.log.With().
 		Str("event_id", webhookEvent.EventId()).
 		Str("event", webhookEvent.EventType()).
 		Str("merchant_id", webhookEvent.MerchantId()).
 		Logger()
 
-	merchant, err := h.merchantRepo.FindMerchantBySquareMerchantId(webhookEvent.MerchantId())
+	merchant, err := handler.merchantRepo.FindMerchantBySquareMerchantId(webhookEvent.MerchantId())
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to find merchant")
-
-		// TODO: unknown merchant isn't entirely accurate
-		return events.APIGatewayProxyResponse{
-			StatusCode: 400,
-			Body:       fmt.Sprintf(`{"error": "unknown merchant: %s"}`, webhookEvent.MerchantId()),
-		}, nil
+		return errorResponse("failed to find merchant")
 	}
 
 	signature := request.Headers[squareSignatureHeader]
-	err = webhooks.Validate(request.Body, h.config.webhookUrl, merchant.SquareWebhookSignatureKey, signature)
+	err = webhooks.Validate(request.Body, handler.config.webhookUrl, merchant.SquareWebhookSignatureKey, signature)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to validate event")
-
-		return events.APIGatewayProxyResponse{
-			StatusCode: 400,
-			Body:       fmt.Sprintf(`{"error": "invalid signature: %s"}`, signature),
-		}, nil
+		return errorResponse("invalid signature: %s", signature)
 	}
 
-	eventHandler, err := h.handlerProvider.GetHandler(webhookEvent.EventType())
+	eventHandler, err := handler.handlerProvider.GetHandler(webhookEvent.EventType())
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to get event handler")
-
-		return events.APIGatewayProxyResponse{
-			StatusCode: 400,
-			Body:       fmt.Sprintf(`{"error": "unknown event type: %s"}`, webhookEvent.EventType()),
-		}, nil
+		return errorResponse("unknown event type: %s", webhookEvent.EventType())
 	}
 
-	eventHandler.HandleEvent(webhookEvent)
+	err = eventHandler.HandleEvent(webhookEvent)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to handle event")
+		return errorResponse("failed to handle event: %w", err)
+	}
 
 	return events.APIGatewayProxyResponse{
-		Body:       "",
+		Body:       `{"status": "success"}`,
 		StatusCode: 200,
+	}, nil
+}
+
+func errorResponse(msg string, params ...interface{}) (events.APIGatewayProxyResponse, error) {
+	return events.APIGatewayProxyResponse{
+		Body:       fmt.Sprintf(`{"error": "%s"}`, fmt.Sprintf(msg, params)),
+		StatusCode: 400,
 	}, nil
 }

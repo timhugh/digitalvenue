@@ -19,10 +19,10 @@ func NewHandlerProvider(paymentCreatedHandler PaymentCreatedHandler) HandlerProv
 	}
 }
 
-func (p HandlerProvider) GetHandler(eventType string) (EventHandler, error) {
+func (provider HandlerProvider) GetHandler(eventType string) (EventHandler, error) {
 	switch eventType {
 	case webhooks.PaymentCreated:
-		return p.paymentCreatedHandler, nil
+		return provider.paymentCreatedHandler, nil
 	default:
 		return nil, fmt.Errorf("unknown event type")
 	}

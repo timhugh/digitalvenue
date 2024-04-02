@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/core"
+	"github.com/timhugh/digitalvenue/db"
 	"os"
 )
 
@@ -18,7 +18,7 @@ type MerchantsRepositoryConfig struct {
 
 func NewMerchantsRepositoryConfig() MerchantsRepositoryConfig {
 	return MerchantsRepositoryConfig{
-		TableName: os.Getenv("MERCHANTS_TABLE"),
+		TableName: os.Getenv(MerchantsTableName),
 	}
 }
 
@@ -27,45 +27,43 @@ type MerchantsRepository struct {
 	client    *dynamodb.Client
 }
 
-func NewMerchantsRepository(config MerchantsRepositoryConfig, client *dynamodb.Client) MerchantsRepository {
+func NewMerchantsRepository(config MerchantsRepositoryConfig, client *dynamodb.Client) db.MerchantsRepository {
 	return MerchantsRepository{
 		tableName: config.TableName,
 		client:    client,
 	}
 }
 
-func (r MerchantsRepository) CreateMerchant(merchant core.Merchant) error {
+func (repo MerchantsRepository) CreateMerchant(merchant core.Merchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquareMerchantId:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantId},
 			SquareWebhookSignatureKey: &types.AttributeValueMemberS{Value: merchant.SquareWebhookSignatureKey},
 			SquareAPIKey:              &types.AttributeValueMemberS{Value: merchant.SquareAPIKey},
 		},
-		TableName: aws.String(r.tableName),
+		TableName: aws.String(repo.tableName),
 	}
-	_, err := r.client.PutItem(context.TODO(), &putItemInput)
+	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed to create merchant")
-		return fmt.Errorf("failed to create merchant")
+		return fmt.Errorf("failed to create merchant: %w", err)
 	}
 
 	return nil
 }
 
-func (r MerchantsRepository) FindMerchantBySquareMerchantId(squareMerchantId string) (core.Merchant, error) {
+func (repo MerchantsRepository) FindMerchantBySquareMerchantId(squareMerchantId string) (core.Merchant, error) {
 	var merchant = core.Merchant{}
 
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
 			SquareMerchantId: &types.AttributeValueMemberS{Value: squareMerchantId},
 		},
-		TableName: aws.String(r.tableName),
+		TableName: aws.String(repo.tableName),
 	}
 
-	getItemOutput, err := r.client.GetItem(context.TODO(), getItemInput)
+	getItemOutput, err := repo.client.GetItem(context.TODO(), getItemInput)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed to get merchant")
-		return merchant, fmt.Errorf("unable to retrieve merchant with id '%s'", squareMerchantId)
+		return merchant, fmt.Errorf("unable to retrieve merchant with id '%s': %w", squareMerchantId, err)
 	}
 
 	err = attributevalue.UnmarshalMap(getItemOutput.Item, &merchant)

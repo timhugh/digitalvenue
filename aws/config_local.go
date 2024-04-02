@@ -1,7 +1,7 @@
 //go:build localDynamoDB
 // +build localDynamoDB
 
-package dynamodb
+package aws
 
 import (
 	"context"

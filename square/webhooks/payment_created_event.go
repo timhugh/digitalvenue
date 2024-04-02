@@ -16,11 +16,11 @@ type PaymentData struct {
 	OrderID    string
 }
 
-func (p PaymentCreatedEvent) Data() any {
-	return p.data
+func (event PaymentCreatedEvent) Data() any {
+	return event.data
 }
 
-func (p *PaymentCreatedEvent) UnmarshalJSON(data []byte) error {
+func (event PaymentCreatedEvent) UnmarshalJSON(data []byte) error {
 	var raw struct {
 		WebhookEventMetadata
 		Data struct {
@@ -37,13 +37,13 @@ func (p *PaymentCreatedEvent) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("error unmarshalling payment created event: %w", err)
 	}
 
-	p.eventType = raw.EventType
-	p.merchantId = raw.MerchantId
-	p.eventId = raw.EventId
+	event.eventType = raw.EventType
+	event.merchantId = raw.MerchantId
+	event.eventId = raw.EventId
 
-	p.data.PaymentID = raw.Data.Object.Payment.ID
-	p.data.LocationID = raw.Data.Object.Payment.LocationId
-	p.data.OrderID = raw.Data.Object.Payment.OrderID
+	event.data.PaymentID = raw.Data.Object.Payment.ID
+	event.data.LocationID = raw.Data.Object.Payment.LocationId
+	event.data.OrderID = raw.Data.Object.Payment.OrderID
 
 	return nil
 }

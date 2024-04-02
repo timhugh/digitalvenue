@@ -3,14 +3,15 @@ package webhooks
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
 const (
 	PaymentCreated = "payment.created"
 )
 
-func NewWebhookEvent(body string) (WebhookEvent[any], error) {
+// FIXME: passing the logger feels a little gross -- maybe this should become a class
+func NewWebhookEvent(body string, log zerolog.Logger) (WebhookEvent[any], error) {
 	var metadata WebhookEventMetadata
 	if err := json.Unmarshal([]byte(body), &metadata); err != nil {
 		log.Warn().Err(err).Msg("Failed to unmarshal webhook event metadata")
@@ -50,14 +51,14 @@ type webhookEventBase struct {
 	body       string
 }
 
-func (w webhookEventBase) EventId() string {
-	return w.eventId
+func (base webhookEventBase) EventId() string {
+	return base.eventId
 }
 
-func (w webhookEventBase) EventType() string {
-	return w.eventType
+func (base webhookEventBase) EventType() string {
+	return base.eventType
 }
 
-func (w webhookEventBase) MerchantId() string {
-	return w.merchantId
+func (base webhookEventBase) MerchantId() string {
+	return base.merchantId
 }
