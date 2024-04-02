@@ -30,7 +30,7 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 	webhookEvent, err := webhooks.NewWebhookEvent(request.Body, handler.log)
 	if err != nil {
 		handler.log.Warn().Err(err).Msg("Failed to create webhook event")
-		return errorResponse("unable to process event: %w", err)
+		return errorResponse("unable to process event: %s", err.Error())
 	}
 	log := handler.log.With().
 		Str("event_id", webhookEvent.EventId()).
@@ -41,7 +41,7 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 	merchant, err := handler.merchantRepo.FindMerchantBySquareMerchantId(webhookEvent.MerchantId())
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to find merchant")
-		return errorResponse("failed to find merchant")
+		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantId())
 	}
 
 	signature := request.Headers[squareSignatureHeader]
@@ -60,7 +60,7 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 	err = eventHandler.HandleEvent(webhookEvent)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to handle event")
-		return errorResponse("failed to handle event: %w", err)
+		return errorResponse("failed to handle event: %s", err.Error())
 	}
 
 	return events.APIGatewayProxyResponse{
@@ -71,7 +71,7 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 
 func errorResponse(msg string, params ...interface{}) (events.APIGatewayProxyResponse, error) {
 	return events.APIGatewayProxyResponse{
-		Body:       fmt.Sprintf(`{"error": "%s"}`, fmt.Sprintf(msg, params)),
+		Body:       fmt.Sprintf(`{"error": "%s"}`, fmt.Sprintf(msg, params...)),
 		StatusCode: 400,
 	}, nil
 }

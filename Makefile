@@ -42,6 +42,11 @@ build/echo.zip:
 build/square-events.zip:
 	$(MAKE) -C cmd/square-events OUT=$(root)/$@
 
+.PHONY: test
+test: build
+	go test ./...
+	go vet -v ./...
+
 .PHONY: clean
 clean: clean-echo clean-square-events
 	rm -f template.yml

@@ -41,7 +41,7 @@ func TestHandler(t *testing.T) {
 			},
 			merchant:       core.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 200,
-			expectedBody:   "",
+			expectedBody:   `{"status": "success"}`,
 		},
 		{
 			name: "bad json",
@@ -49,7 +49,7 @@ func TestHandler(t *testing.T) {
 				Body: "this isn't even json",
 			},
 			expectedStatus: 400,
-			expectedBody:   `{"error": "Unable to process event: malformed request json"}`,
+			expectedBody:   `{"error": "unable to process event: malformed request json"}`,
 		},
 		{
 			name: "unknown merchant",
@@ -61,7 +61,7 @@ func TestHandler(t *testing.T) {
 			},
 			merchantFetchError: fmt.Errorf("who dat"),
 			expectedStatus:     400,
-			expectedBody:       `{"error": "unknown merchant: merchant_id"}`,
+			expectedBody:       `{"error": "failed to find merchant with ID 'merchant_id'"}`,
 		},
 		{
 			name: "incorrect signature",
@@ -82,7 +82,7 @@ func TestHandler(t *testing.T) {
 			},
 			merchant:       core.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
-			expectedBody:   `{"error": "Unable to process event: unknown event type: not.a.real.event"}`,
+			expectedBody:   `{"error": "unable to process event: unknown event type: not.a.real.event"}`,
 		},
 	}
 

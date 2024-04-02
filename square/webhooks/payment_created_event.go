@@ -20,7 +20,7 @@ func (event PaymentCreatedEvent) Data() any {
 	return event.data
 }
 
-func (event PaymentCreatedEvent) UnmarshalJSON(data []byte) error {
+func (event *PaymentCreatedEvent) UnmarshalJSON(data []byte) error {
 	var raw struct {
 		WebhookEventMetadata
 		Data struct {
