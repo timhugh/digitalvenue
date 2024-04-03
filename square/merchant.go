@@ -3,7 +3,7 @@ package square
 type Merchant struct {
 	SquareMerchantID          string
 	SquareWebhookSignatureKey string
-	SquareAPIKey              string
+	SquareAPIToken            string
 }
 
 type MerchantsRepository interface {

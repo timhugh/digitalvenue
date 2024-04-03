@@ -38,13 +38,13 @@ func (repo MerchantsRepository) Create(merchant square.Merchant) error {
 		Item: map[string]types.AttributeValue{
 			SquareMerchantID:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantID},
 			SquareWebhookSignatureKey: &types.AttributeValueMemberS{Value: merchant.SquareWebhookSignatureKey},
-			SquareAPIKey:              &types.AttributeValueMemberS{Value: merchant.SquareAPIKey},
+			SquareAPIToken:            &types.AttributeValueMemberS{Value: merchant.SquareAPIToken},
 		},
 		TableName: aws.String(repo.tableName),
 	}
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
 	if err != nil {
-		return fmt.Errorf("failed to create merchant: %w", err)
+		return err
 	}
 
 	return nil

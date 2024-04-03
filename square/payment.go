@@ -10,3 +10,11 @@ type PaymentsRepository interface {
 	Create(payment Payment) error
 	FindByID(squarePaymentID string) (Payment, error)
 }
+
+type PaymentCreatedEvent struct {
+	SquarePaymentId string
+}
+
+type PaymentCreatedQueue interface {
+	Publish(squarePaymentId string) error
+}
