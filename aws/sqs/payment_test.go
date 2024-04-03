@@ -1,10 +1,10 @@
 package sqs
 
 import (
-	"github.com/timhugh/digitalvenue/square/queue"
+	"github.com/timhugh/digitalvenue/square"
 	"testing"
 )
 
 func TestSquarePaymentCreatedQueue_SatisfiesInterface(t *testing.T) {
-	var _ queue.SquarePaymentCreatedQueue = SquarePaymentCreatedQueue{}
+	var _ square.PaymentCreatedQueue = SquarePaymentCreatedQueue{}
 }

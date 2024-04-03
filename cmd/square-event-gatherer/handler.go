@@ -8,11 +8,14 @@ import (
 
 type handler struct {
 	log      zerolog.Logger
-	gatherer square.SquareEventGatherer
+	gatherer square.EventGatherer
 }
 
-func newHandler(log zerolog.Logger) handler {
-	return handler{log: log}
+func newHandler(log zerolog.Logger, gatherer square.EventGatherer) handler {
+	return handler{
+		log:      log,
+		gatherer: gatherer,
+	}
 }
 
 func (handler handler) handle(request events.SQSEvent) (events.SQSEventResponse, error) {

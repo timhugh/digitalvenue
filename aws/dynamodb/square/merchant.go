@@ -1,4 +1,4 @@
-package dynamodb
+package square
 
 import (
 	"context"
@@ -7,33 +7,33 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/timhugh/digitalvenue/square/db"
+	"github.com/timhugh/digitalvenue/square"
 	"os"
 )
 
-type SquareMerchantsRepositoryConfig struct {
+type MerchantsRepositoryConfig struct {
 	TableName string
 }
 
-func NewSquareMerchantsRepositoryConfig() SquareMerchantsRepositoryConfig {
-	return SquareMerchantsRepositoryConfig{
+func NewMerchantsRepositoryConfig() MerchantsRepositoryConfig {
+	return MerchantsRepositoryConfig{
 		TableName: os.Getenv(SquareMerchantsTableName),
 	}
 }
 
-type SquareMerchantsRepository struct {
+type MerchantsRepository struct {
 	tableName string
 	client    *dynamodb.Client
 }
 
-func NewSquareMerchantsRepository(config SquareMerchantsRepositoryConfig, client *dynamodb.Client) db.SquareMerchantsRepository {
-	return SquareMerchantsRepository{
+func NewMerchantsRepository(config MerchantsRepositoryConfig, client *dynamodb.Client) square.MerchantsRepository {
+	return MerchantsRepository{
 		tableName: config.TableName,
 		client:    client,
 	}
 }
 
-func (repo SquareMerchantsRepository) CreateMerchant(merchant db.SquareMerchant) error {
+func (repo MerchantsRepository) Create(merchant square.Merchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquareMerchantID:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantID},
@@ -50,8 +50,8 @@ func (repo SquareMerchantsRepository) CreateMerchant(merchant db.SquareMerchant)
 	return nil
 }
 
-func (repo SquareMerchantsRepository) FindById(squareMerchantID string) (db.SquareMerchant, error) {
-	var merchant = db.SquareMerchant{}
+func (repo MerchantsRepository) FindByID(squareMerchantID string) (square.Merchant, error) {
+	var merchant = square.Merchant{}
 
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{

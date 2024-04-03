@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/timhugh/digitalvenue/square/queue"
+	"github.com/timhugh/digitalvenue/square"
 	"os"
 )
 
@@ -24,7 +24,7 @@ type SquarePaymentCreatedQueue struct {
 	client   *sqs.Client
 }
 
-func NewSquarePaymentCreatedQueue(config SquarePaymentCreatedQueueConfig, client *sqs.Client) queue.SquarePaymentCreatedQueue {
+func NewSquarePaymentCreatedQueue(config SquarePaymentCreatedQueueConfig, client *sqs.Client) square.PaymentCreatedQueue {
 	return SquarePaymentCreatedQueue{
 		queueURL: config.QueueURL,
 		client:   client,

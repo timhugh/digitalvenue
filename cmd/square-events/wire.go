@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/aws"
 	"github.com/timhugh/digitalvenue/aws/dynamodb"
+	"github.com/timhugh/digitalvenue/aws/dynamodb/square"
 	"github.com/timhugh/digitalvenue/aws/sqs"
 	"github.com/timhugh/digitalvenue/square/webhooks"
 )
@@ -22,10 +23,10 @@ func initializeHandler() (handler, error) {
 		newLogger,
 		aws.NewConfig,
 		dynamodb.NewClient,
-		dynamodb.NewSquareMerchantsRepository,
-		dynamodb.NewSquareMerchantsRepositoryConfig,
-		dynamodb.NewSquarePaymentsRepository,
-		dynamodb.NewSquarePaymentsRepositoryConfig,
+		square.NewMerchantsRepository,
+		square.NewMerchantsRepositoryConfig,
+		square.NewPaymentsRepository,
+		square.NewPaymentsRepositoryConfig,
 		newEventServiceConfig,
 		newHandler,
 		sqs.NewClient,

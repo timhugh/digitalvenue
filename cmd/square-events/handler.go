@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/rs/zerolog"
-	"github.com/timhugh/digitalvenue/square/db"
+	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/webhooks"
 )
 
@@ -12,12 +12,12 @@ const squareSignatureHeader = "x-square-hmacsha256-signature"
 
 type handler struct {
 	config          eventServiceConfig
-	merchantRepo    db.SquareMerchantsRepository
+	merchantRepo    square.MerchantsRepository
 	log             zerolog.Logger
 	handlerProvider webhooks.HandlerProvider
 }
 
-func newHandler(config eventServiceConfig, merchantRepo db.SquareMerchantsRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) handler {
+func newHandler(config eventServiceConfig, merchantRepo square.MerchantsRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) handler {
 	return handler{
 		config:          config,
 		merchantRepo:    merchantRepo,
@@ -38,7 +38,7 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 		Str("merchant_id", webhookEvent.MerchantID()).
 		Logger()
 
-	merchant, err := handler.merchantRepo.FindById(webhookEvent.MerchantID())
+	merchant, err := handler.merchantRepo.FindByID(webhookEvent.MerchantID())
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to find merchant")
 		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantID())

@@ -3,17 +3,16 @@ package webhooks
 import (
 	"fmt"
 	"github.com/rs/zerolog"
-	"github.com/timhugh/digitalvenue/square/db"
-	"github.com/timhugh/digitalvenue/square/queue"
+	"github.com/timhugh/digitalvenue/square"
 )
 
 type PaymentCreatedHandler struct {
-	paymentsRepository  db.SquarePaymentsRepository
-	paymentCreatedQueue queue.SquarePaymentCreatedQueue
+	paymentsRepository  square.PaymentsRepository
+	paymentCreatedQueue square.PaymentCreatedQueue
 	log                 zerolog.Logger
 }
 
-func NewPaymentCreatedHandler(paymentsRepository db.SquarePaymentsRepository, paymentCreatedQueue queue.SquarePaymentCreatedQueue, log zerolog.Logger) PaymentCreatedHandler {
+func NewPaymentCreatedHandler(paymentsRepository square.PaymentsRepository, paymentCreatedQueue square.PaymentCreatedQueue, log zerolog.Logger) PaymentCreatedHandler {
 	return PaymentCreatedHandler{
 		paymentsRepository:  paymentsRepository,
 		paymentCreatedQueue: paymentCreatedQueue,
@@ -24,7 +23,7 @@ func NewPaymentCreatedHandler(paymentsRepository db.SquarePaymentsRepository, pa
 func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error {
 	paymentCreatedEvent, ok := event.(PaymentCreatedEvent)
 	if !ok {
-		return fmt.Errorf("event is not SquarePaymentCreatedEvent")
+		return fmt.Errorf("event is not PaymentCreatedEvent")
 	}
 	paymentData, ok := paymentCreatedEvent.Data().(PaymentData)
 	if !ok {
@@ -39,7 +38,7 @@ func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error 
 		Str("merchant_id", paymentCreatedEvent.MerchantID()).
 		Msg("Received event")
 
-	payment := db.SquarePayment{
+	payment := square.Payment{
 		SquarePaymentID:  paymentData.PaymentID,
 		SquareOrderID:    paymentData.OrderID,
 		SquareMerchantID: paymentCreatedEvent.MerchantID(),

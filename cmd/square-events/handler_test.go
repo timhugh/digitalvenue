@@ -5,7 +5,7 @@ import (
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/rs/zerolog"
-	"github.com/timhugh/digitalvenue/square/db"
+	"github.com/timhugh/digitalvenue/square"
 	squarewebhooks "github.com/timhugh/digitalvenue/square/webhooks"
 	"os"
 	"testing"
@@ -23,7 +23,7 @@ func TestHandler(t *testing.T) {
 		name string
 		// given
 		request            events.APIGatewayProxyRequest
-		merchant           db.SquareMerchant
+		merchant           square.Merchant
 		merchantFetchError error
 		// then
 		expectedStatus int
@@ -38,7 +38,7 @@ func TestHandler(t *testing.T) {
 					"Content-Type":        "application/json",
 				},
 			},
-			merchant:       db.SquareMerchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       square.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 200,
 			expectedBody:   `{"status": "success"}`,
 		},
@@ -70,7 +70,7 @@ func TestHandler(t *testing.T) {
 					squareSignatureHeader: "not the right signature",
 				},
 			},
-			merchant:       db.SquareMerchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       square.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
 			expectedBody:   `{"error": "invalid signature: not the right signature"}`,
 		},
@@ -79,7 +79,7 @@ func TestHandler(t *testing.T) {
 			request: events.APIGatewayProxyRequest{
 				Body: `{"type": "not.a.real.event"}`,
 			},
-			merchant:       db.SquareMerchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       square.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
 			expectedBody:   `{"error": "unable to process event: unknown event type: not.a.real.event"}`,
 		},
@@ -96,10 +96,10 @@ func TestHandler(t *testing.T) {
 			is := is.New(t)
 			mock.SetUp(t)
 
-			mockMerchantRepo := mock.Mock[db.SquareMerchantsRepository]()
+			mockMerchantRepo := mock.Mock[square.MerchantsRepository]()
 			mockHandlerProvider := mock.Mock[squarewebhooks.HandlerProvider]()
 			mockHandler := mock.Mock[squarewebhooks.EventHandler]()
-			mock.WhenDouble(mockMerchantRepo.FindById(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
+			mock.WhenDouble(mockMerchantRepo.FindByID(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
 			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
 			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[squarewebhooks.WebhookEvent[any]]())).ThenReturn(nil)
 			handler := newHandler(config, mockMerchantRepo, mockHandlerProvider, log)

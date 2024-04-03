@@ -1,4 +1,4 @@
-package dynamodb
+package square
 
 import (
 	"context"
@@ -7,33 +7,33 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/timhugh/digitalvenue/square/db"
+	"github.com/timhugh/digitalvenue/square"
 	"os"
 )
 
-type SquarePaymentsRepositoryConfig struct {
+type PaymentsRepositoryConfig struct {
 	TableName string
 }
 
-func NewSquarePaymentsRepositoryConfig() SquarePaymentsRepositoryConfig {
-	return SquarePaymentsRepositoryConfig{
+func NewPaymentsRepositoryConfig() PaymentsRepositoryConfig {
+	return PaymentsRepositoryConfig{
 		TableName: os.Getenv(SquarePaymentsTableName),
 	}
 }
 
-type SquarePaymentsRepository struct {
+type PaymentsRepository struct {
 	tableName string
 	client    *dynamodb.Client
 }
 
-func NewSquarePaymentsRepository(config SquarePaymentsRepositoryConfig, client *dynamodb.Client) db.SquarePaymentsRepository {
-	return SquarePaymentsRepository{
+func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Client) square.PaymentsRepository {
+	return PaymentsRepository{
 		tableName: config.TableName,
 		client:    client,
 	}
 }
 
-func (repo SquarePaymentsRepository) Create(payment db.SquarePayment) error {
+func (repo PaymentsRepository) Create(payment square.Payment) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquarePaymentID:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},
@@ -51,8 +51,8 @@ func (repo SquarePaymentsRepository) Create(payment db.SquarePayment) error {
 	return nil
 }
 
-func (repo SquarePaymentsRepository) FindByID(squarePaymentID string) (db.SquarePayment, error) {
-	var payment = db.SquarePayment{}
+func (repo PaymentsRepository) FindByID(squarePaymentID string) (square.Payment, error) {
+	var payment = square.Payment{}
 
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{

@@ -1,4 +1,4 @@
-package dynamodb
+package square
 
 const (
 	SquareMerchantID          = "SquareMerchantID"

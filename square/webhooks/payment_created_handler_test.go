@@ -4,8 +4,7 @@ import (
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/rs/zerolog"
-	"github.com/timhugh/digitalvenue/square/db"
-	"github.com/timhugh/digitalvenue/square/queue"
+	"github.com/timhugh/digitalvenue/square"
 	"testing"
 )
 
@@ -13,11 +12,11 @@ func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
 
-	paymentsRepo := mock.Mock[db.SquarePaymentsRepository]()
-	paymentCaptor := mock.Captor[db.SquarePayment]()
+	paymentsRepo := mock.Mock[square.PaymentsRepository]()
+	paymentCaptor := mock.Captor[square.Payment]()
 	mock.WhenSingle(paymentsRepo.Create(paymentCaptor.Capture())).ThenReturn(nil)
 
-	paymentCreatedQueue := mock.Mock[queue.SquarePaymentCreatedQueue]()
+	paymentCreatedQueue := mock.Mock[square.PaymentCreatedQueue]()
 	paymentEventIDCaptor := mock.Captor[string]()
 	mock.WhenSingle(paymentCreatedQueue.Publish(paymentEventIDCaptor.Capture())).ThenReturn(nil)
 
@@ -45,7 +44,7 @@ func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 	err := service.HandleEvent(event)
 	is.NoErr(err)
 
-	is.Equal(paymentCaptor.Last(), db.SquarePayment{
+	is.Equal(paymentCaptor.Last(), square.Payment{
 		SquarePaymentID:  "payment_id",
 		SquareOrderID:    "order_id",
 		SquareMerchantID: "merchant_id",

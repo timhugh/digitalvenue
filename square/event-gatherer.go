@@ -3,21 +3,24 @@ package square
 import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/timhugh/digitalvenue/square/db"
 )
 
-type SquareEventGatherer struct {
+type EventGatherer struct {
 	log         zerolog.Logger
-	paymentRepo db.SquarePaymentsRepository
+	paymentRepo PaymentsRepository
 }
 
-func (gatherer SquareEventGatherer) Gather(squarePaymentID string) error {
-	log := log.With().
-		Str("payment_id", squarePaymentID).
-		Str("caller", "SquareEventGatherer.Gather").
-		Logger()
+func NewEventGatherer(log zerolog.Logger, paymentRepo PaymentsRepository) EventGatherer {
+	return EventGatherer{
+		log:         log.With().Str("caller", "EventGatherer.Gather").Logger(),
+		paymentRepo: paymentRepo,
+	}
+}
 
-	log.Info().Msgf("Processing payment event")
+func (gatherer EventGatherer) Gather(squarePaymentID string) error {
+	log := log.With().Str("square_payment_id", squarePaymentID).Logger()
+
+	log.Info().Msg("Processing square payment event")
 
 	payment, err := gatherer.paymentRepo.FindByID(squarePaymentID)
 	if err != nil {
