@@ -63,6 +63,8 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 		return errorResponse("failed to handle event: %s", err.Error())
 	}
 
+	log.Info().Msg("Event processed successfully")
+
 	return events.APIGatewayProxyResponse{
 		Body:       `{"status": "success"}`,
 		StatusCode: 200,
