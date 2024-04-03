@@ -32,6 +32,8 @@ func initializeHandler() (handler, error) {
 		dynamoSquare.NewOrderRepository,
 		dynamoSquare.NewMerchantsRepositoryConfig,
 		dynamoSquare.NewMerchantsRepository,
+		dynamodb.NewCustomerRepositoryConfig,
+		dynamodb.NewCustomerRepository,
 		square.NewEventGatherer,
 	)
 	return handler{}, nil

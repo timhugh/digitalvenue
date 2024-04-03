@@ -1,6 +1,9 @@
 package square
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/timhugh/digitalvenue/core"
+)
 
 type Customer struct {
 	SquareCustomerID string
@@ -36,4 +39,17 @@ func (client client) GetCustomer(squareCustomerID string, apiToken string) (Cust
 		Email:            customerContainer.Customer.EmailAddress,
 		Phone:            customerContainer.Customer.PhoneNumber,
 	}, nil
+}
+
+func MapCustomer(customer Customer) core.Customer {
+	return core.Customer{
+		FirstName: customer.FirstName,
+		LastName:  customer.LastName,
+		Email:     customer.Email,
+		Phone:     customer.Phone,
+		Meta: core.CustomerMeta{
+			Source:           square,
+			SquareCustomerID: customer.SquareCustomerID,
+		},
+	}
 }

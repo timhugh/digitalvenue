@@ -3,6 +3,7 @@ package square
 import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/timhugh/digitalvenue/core"
 )
 
 type EventGatherer interface {
@@ -14,6 +15,7 @@ type eventGatherer struct {
 	paymentRepo  PaymentsRepository
 	merchantRepo MerchantsRepository
 	orderRepo    OrdersRepository
+	customerRepo core.CustomerRepository
 	squareApi    Client
 }
 
@@ -22,6 +24,7 @@ func NewEventGatherer(
 	paymentRepo PaymentsRepository,
 	merchantRepo MerchantsRepository,
 	orderRepo OrdersRepository,
+	customerRepo core.CustomerRepository,
 	squareApi Client,
 ) EventGatherer {
 	return eventGatherer{
@@ -29,6 +32,7 @@ func NewEventGatherer(
 		paymentRepo:  paymentRepo,
 		merchantRepo: merchantRepo,
 		orderRepo:    orderRepo,
+		customerRepo: customerRepo,
 		squareApi:    squareApi,
 	}
 }
@@ -58,14 +62,17 @@ func (gatherer eventGatherer) Gather(squarePaymentID string) error {
 		return err
 	}
 
-	customer, err := gatherer.squareApi.GetCustomer(order.SquareCustomerID, merchant.SquareAPIToken)
+	squareCustomer, err := gatherer.squareApi.GetCustomer(order.SquareCustomerID, merchant.SquareAPIToken)
 	if err != nil {
 		return err
 	}
 
-	log.Debug().Interface("customer", customer).Msg("Got customer details")
+	customer := MapCustomer(squareCustomer)
 
-	// persist customer details
+	err = gatherer.customerRepo.Create(customer)
+	if err != nil {
+		return err
+	}
 
 	// publish gathered event to SQS
 

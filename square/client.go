@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	square        = "square"
 	maxBodyLength = 1048576
 	bearerToken   = "Bearer %s"
 
