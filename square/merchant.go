@@ -7,6 +7,6 @@ type Merchant struct {
 }
 
 type MerchantsRepository interface {
-	Create(merchant Merchant) error
-	FindByID(squareMerchantID string) (Merchant, error)
+	Put(merchant Merchant) error
+	Get(squareMerchantID string) (Merchant, error)
 }

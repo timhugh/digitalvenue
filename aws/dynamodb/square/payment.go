@@ -33,7 +33,7 @@ func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Cli
 	}
 }
 
-func (repo PaymentsRepository) Create(payment square.Payment) error {
+func (repo PaymentsRepository) Put(payment square.Payment) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquarePaymentID:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},
@@ -51,7 +51,7 @@ func (repo PaymentsRepository) Create(payment square.Payment) error {
 	return nil
 }
 
-func (repo PaymentsRepository) FindByID(squarePaymentID string) (square.Payment, error) {
+func (repo PaymentsRepository) Get(squarePaymentID string) (square.Payment, error) {
 	var payment = square.Payment{}
 
 	getItemInput := &dynamodb.GetItemInput{

@@ -44,7 +44,7 @@ func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error 
 		SquareMerchantID: paymentCreatedEvent.MerchantID(),
 	}
 
-	err := handler.paymentsRepository.Create(payment)
+	err := handler.paymentsRepository.Put(payment)
 	if err != nil {
 		return fmt.Errorf("failed to create payment: %w", err)
 	}

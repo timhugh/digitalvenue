@@ -14,7 +14,7 @@ type eventGatherer struct {
 	log          zerolog.Logger
 	paymentRepo  PaymentsRepository
 	merchantRepo MerchantsRepository
-	orderRepo    OrdersRepository
+	orderRepo    core.OrderRepository
 	customerRepo core.CustomerRepository
 	squareApi    Client
 }
@@ -23,7 +23,7 @@ func NewEventGatherer(
 	log zerolog.Logger,
 	paymentRepo PaymentsRepository,
 	merchantRepo MerchantsRepository,
-	orderRepo OrdersRepository,
+	orderRepo core.OrderRepository,
 	customerRepo core.CustomerRepository,
 	squareApi Client,
 ) EventGatherer {
@@ -42,37 +42,45 @@ func (gatherer eventGatherer) Gather(squarePaymentID string) error {
 
 	log.Info().Msg("Processing square payment event")
 
-	payment, err := gatherer.paymentRepo.FindByID(squarePaymentID)
+	payment, err := gatherer.paymentRepo.Get(squarePaymentID)
 	if err != nil {
 		return err
 	}
 
-	merchant, err := gatherer.merchantRepo.FindByID(payment.SquareMerchantID)
+	merchant, err := gatherer.merchantRepo.Get(payment.SquareMerchantID)
 	if err != nil {
 		return err
 	}
 
-	order, err := gatherer.squareApi.GetOrder(payment.SquareOrderID, merchant.SquareAPIToken)
+	squareOrder, err := gatherer.squareApi.GetOrder(payment.SquareOrderID, merchant.SquareAPIToken)
 	if err != nil {
 		return err
 	}
 
-	err = gatherer.orderRepo.Create(order)
-	if err != nil {
-		return err
-	}
-
-	squareCustomer, err := gatherer.squareApi.GetCustomer(order.SquareCustomerID, merchant.SquareAPIToken)
+	squareCustomer, err := gatherer.squareApi.GetCustomer(squareOrder.SquareCustomerID, merchant.SquareAPIToken)
 	if err != nil {
 		return err
 	}
 
 	customer := MapCustomer(squareCustomer)
-
-	err = gatherer.customerRepo.Create(customer)
+	customerID, err := gatherer.customerRepo.Put(customer)
 	if err != nil {
 		return err
 	}
+
+	order, err := MapOrder(squareOrder)
+	if err != nil {
+		return err
+	}
+	order.CustomerID = customerID
+	order.Meta.SquarePaymentID = squarePaymentID
+	order.Meta.SquareMerchantID = merchant.SquareMerchantID
+	orderID, err := gatherer.orderRepo.Put(order)
+	if err != nil {
+		return err
+	}
+
+	log.Info().Str("order_id", orderID).Msg("Order created")
 
 	// publish gathered event to SQS
 

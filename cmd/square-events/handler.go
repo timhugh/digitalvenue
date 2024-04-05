@@ -38,7 +38,7 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 		Str("merchant_id", webhookEvent.MerchantID()).
 		Logger()
 
-	merchant, err := handler.merchantRepo.FindByID(webhookEvent.MerchantID())
+	merchant, err := handler.merchantRepo.Get(webhookEvent.MerchantID())
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to find merchant")
 		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantID())

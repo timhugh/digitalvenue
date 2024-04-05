@@ -2,22 +2,25 @@ package square
 
 import (
 	"fmt"
+	"github.com/timhugh/digitalvenue/core"
+	"strconv"
 )
 
 type Order struct {
-	SquareOrderID    string
-	SquareCustomerID string
+	SquareOrderID    string      `json:"id"`
+	SquareCustomerID string      `json:"customer_id"`
+	SquareLocationID string      `json:"location_id"`
+	OrderItems       []OrderItem `json:"line_items"`
 }
 
-type OrdersRepository interface {
-	Create(order Order) error
+type OrderItem struct {
+	ItemID   string `json:"uid"`
+	Name     string `json:"name"`
+	Quantity string `json:"quantity"`
 }
 
 type orderContainer struct {
-	Order struct {
-		Id         string `json:"id"`
-		CustomerId string `json:"customer_id"`
-	} `json:"order"`
+	Order Order `json:"order"`
 }
 
 func (client client) GetOrder(squareOrderID string, apiToken string) (Order, error) {
@@ -29,8 +32,31 @@ func (client client) GetOrder(squareOrderID string, apiToken string) (Order, err
 		return Order{}, err
 	}
 
-	return Order{
-		SquareOrderID:    orderContainer.Order.Id,
-		SquareCustomerID: orderContainer.Order.CustomerId,
-	}, nil
+	return orderContainer.Order, nil
+}
+
+func MapOrder(squareOrder Order) (core.Order, error) {
+	order := core.Order{
+		Meta: core.OrderMeta{
+			SquareOrderID:    squareOrder.SquareOrderID,
+			SquareCustomerID: squareOrder.SquareCustomerID,
+		},
+	}
+
+	for _, item := range squareOrder.OrderItems {
+		quantity, err := strconv.Atoi(item.Quantity)
+		if err != nil {
+			return order, err
+		}
+		for i := 0; i < quantity; i++ {
+			order.Items = append(order.Items, core.OrderItem{
+				Name: item.Name,
+				Meta: core.OrderItemMeta{
+					SquareItemID: item.ItemID,
+				},
+			})
+		}
+	}
+
+	return order, nil
 }

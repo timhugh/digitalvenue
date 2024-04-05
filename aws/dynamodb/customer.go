@@ -32,10 +32,17 @@ func NewCustomerRepository(config CustomerRepositoryConfig, client *dynamodb.Cli
 	}
 }
 
-func (repo customerRepository) Create(customer core.Customer) error {
+func (repo customerRepository) Put(customer core.Customer) (string, error) {
+	var customerID string
+	if customer.CustomerID == "" {
+		customerID = core.GenerateID()
+	} else {
+		customerID = customer.CustomerID
+	}
+
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
-			CustomerID: &types.AttributeValueMemberS{Value: customer.CustomerID},
+			CustomerID: &types.AttributeValueMemberS{Value: customerID},
 			FirstName:  &types.AttributeValueMemberS{Value: customer.FirstName},
 			LastName:   &types.AttributeValueMemberS{Value: customer.LastName},
 			Email:      &types.AttributeValueMemberS{Value: customer.Email},
@@ -49,8 +56,8 @@ func (repo customerRepository) Create(customer core.Customer) error {
 
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return customerID, nil
 }

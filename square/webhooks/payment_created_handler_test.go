@@ -14,7 +14,7 @@ func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 
 	paymentsRepo := mock.Mock[square.PaymentsRepository]()
 	paymentCaptor := mock.Captor[square.Payment]()
-	mock.WhenSingle(paymentsRepo.Create(paymentCaptor.Capture())).ThenReturn(nil)
+	mock.WhenSingle(paymentsRepo.Put(paymentCaptor.Capture())).ThenReturn(nil)
 
 	paymentCreatedQueue := mock.Mock[square.PaymentCreatedQueue]()
 	paymentEventIDCaptor := mock.Captor[string]()

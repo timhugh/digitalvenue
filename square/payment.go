@@ -7,8 +7,8 @@ type Payment struct {
 }
 
 type PaymentsRepository interface {
-	Create(payment Payment) error
-	FindByID(squarePaymentID string) (Payment, error)
+	Put(payment Payment) error
+	Get(squarePaymentID string) (Payment, error)
 }
 
 type PaymentCreatedEvent struct {

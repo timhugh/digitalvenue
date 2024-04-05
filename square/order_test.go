@@ -2,7 +2,9 @@ package square
 
 import (
 	"bytes"
+	"github.com/go-test/deep"
 	"github.com/matryer/is"
+	"github.com/timhugh/digitalvenue/core"
 	"io"
 	"net/http"
 	"testing"
@@ -29,6 +31,76 @@ func TestClient_GetOrder_Success(t *testing.T) {
 	expectedOrder := Order{
 		SquareOrderID:    "order_id",
 		SquareCustomerID: "customer_id",
+		SquareLocationID: "location_id",
+		OrderItems: []OrderItem{
+			{
+				ItemID:   "item_uid_1",
+				Name:     "Item 1",
+				Quantity: "1",
+			},
+			{
+				ItemID:   "item_uid_2",
+				Name:     "Item 2",
+				Quantity: "2",
+			},
+		},
 	}
-	is.Equal(order, expectedOrder)
+	if diff := deep.Equal(order, expectedOrder); diff != nil {
+		t.Error(diff)
+	}
+}
+
+func TestMapOrder(t *testing.T) {
+	is := is.New(t)
+
+	squareOrder := Order{
+		SquareOrderID:    "order_id",
+		SquareCustomerID: "customer_id",
+		SquareLocationID: "location_id",
+		OrderItems: []OrderItem{
+			{
+				ItemID:   "item_uid_1",
+				Name:     "Item 1",
+				Quantity: "1",
+			},
+			{
+				ItemID:   "item_uid_2",
+				Name:     "Item 2",
+				Quantity: "2",
+			},
+		},
+	}
+
+	order, err := MapOrder(squareOrder)
+	is.NoErr(err)
+
+	expectedOrder := core.Order{
+		Items: []core.OrderItem{
+			{
+				Name: "Item 1",
+				Meta: core.OrderItemMeta{
+					SquareItemID: "item_uid_1",
+				},
+			},
+			{
+				Name: "Item 2",
+				Meta: core.OrderItemMeta{
+					SquareItemID: "item_uid_2",
+				},
+			},
+			{
+				Name: "Item 2",
+				Meta: core.OrderItemMeta{
+					SquareItemID: "item_uid_2",
+				},
+			},
+		},
+		Meta: core.OrderMeta{
+			SquareOrderID:    "order_id",
+			SquareCustomerID: "customer_id",
+		},
+	}
+	if diff := deep.Equal(order, expectedOrder); diff != nil {
+		t.Error(diff)
+	}
 }

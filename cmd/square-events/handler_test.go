@@ -99,7 +99,7 @@ func TestHandler(t *testing.T) {
 			mockMerchantRepo := mock.Mock[square.MerchantsRepository]()
 			mockHandlerProvider := mock.Mock[squarewebhooks.HandlerProvider]()
 			mockHandler := mock.Mock[squarewebhooks.EventHandler]()
-			mock.WhenDouble(mockMerchantRepo.FindByID(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
+			mock.WhenDouble(mockMerchantRepo.Get(mock.Any[string]())).ThenReturn(testCase.merchant, testCase.merchantFetchError)
 			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
 			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[squarewebhooks.WebhookEvent[any]]())).ThenReturn(nil)
 			handler := newHandler(config, mockMerchantRepo, mockHandlerProvider, log)

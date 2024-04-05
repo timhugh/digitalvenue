@@ -2,6 +2,7 @@ package core
 
 type Customer struct {
 	CustomerID string
+	TenantID   string
 	FirstName  string
 	LastName   string
 	Email      string
@@ -15,5 +16,5 @@ type CustomerMeta struct {
 }
 
 type CustomerRepository interface {
-	Create(customer Customer) error
+	Put(customer Customer) (string, error)
 }

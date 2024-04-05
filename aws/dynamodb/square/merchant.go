@@ -33,7 +33,7 @@ func NewMerchantsRepository(config MerchantsRepositoryConfig, client *dynamodb.C
 	}
 }
 
-func (repo MerchantsRepository) Create(merchant square.Merchant) error {
+func (repo MerchantsRepository) Put(merchant square.Merchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquareMerchantID:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantID},
@@ -50,7 +50,7 @@ func (repo MerchantsRepository) Create(merchant square.Merchant) error {
 	return nil
 }
 
-func (repo MerchantsRepository) FindByID(squareMerchantID string) (square.Merchant, error) {
+func (repo MerchantsRepository) Get(squareMerchantID string) (square.Merchant, error) {
 	var merchant = square.Merchant{}
 
 	getItemInput := &dynamodb.GetItemInput{
