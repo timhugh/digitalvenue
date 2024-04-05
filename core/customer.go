@@ -11,10 +11,9 @@ type Customer struct {
 }
 
 type CustomerMeta struct {
-	Source           string
 	SquareCustomerID string
 }
 
 type CustomerRepository interface {
-	Put(customer Customer) (string, error)
+	PutCustomer(customer Customer) (string, error)
 }

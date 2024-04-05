@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	square        = "square"
 	maxBodyLength = 1048576
 	bearerToken   = "Bearer %s"
 
@@ -22,33 +21,17 @@ type Client interface {
 	GetCustomer(customerId string, apiToken string) (Customer, error)
 }
 
-type ClientConfig struct {
-	BaseUrl       string
-	MaxBodyLength int64
-}
-
-func NewClientConfig() ClientConfig {
-	return ClientConfig{
-		BaseUrl:       squareApiBaseUrl,
-		MaxBodyLength: maxBodyLength,
-	}
-}
-
-func NewHttpClient() *http.Client {
-	return http.DefaultClient
-}
-
 type client struct {
 	baseUrl       string
 	maxBodyLength int64
 	httpClient    *http.Client
 }
 
-func NewClient(config ClientConfig, httpClient *http.Client) Client {
+func NewClient() Client {
 	return client{
-		baseUrl:       config.BaseUrl,
-		maxBodyLength: config.MaxBodyLength,
-		httpClient:    httpClient,
+		baseUrl:       squareApiBaseUrl,
+		maxBodyLength: maxBodyLength,
+		httpClient:    http.DefaultClient,
 	}
 }
 
@@ -84,4 +67,48 @@ func (client client) readBody(resp *http.Response) ([]byte, error) {
 		return nil, err
 	}
 	return buf, nil
+}
+
+type customerContainer struct {
+	Customer struct {
+		ID           string `json:"id"`
+		GivenName    string `json:"given_name"`
+		FamilyName   string `json:"family_name"`
+		EmailAddress string `json:"email_address"`
+		PhoneNumber  string `json:"phone_number"`
+	} `json:"customer"`
+}
+
+func (client client) GetCustomer(squareCustomerID string, apiToken string) (Customer, error) {
+	path := client.baseUrl + fmt.Sprintf(getCustomerRouteFormat, squareCustomerID)
+
+	var customerContainer customerContainer
+	err := client.fetchJson(path, apiToken, &customerContainer)
+	if err != nil {
+		return Customer{}, err
+	}
+
+	return Customer{
+		SquareCustomerID: customerContainer.Customer.ID,
+		FirstName:        customerContainer.Customer.GivenName,
+		LastName:         customerContainer.Customer.FamilyName,
+		Email:            customerContainer.Customer.EmailAddress,
+		Phone:            customerContainer.Customer.PhoneNumber,
+	}, nil
+}
+
+type orderContainer struct {
+	Order Order `json:"order"`
+}
+
+func (client client) GetOrder(squareOrderID string, apiToken string) (Order, error) {
+	path := client.baseUrl + fmt.Sprintf(getOrderRouteFormat, squareOrderID)
+
+	var orderContainer orderContainer
+	err := client.fetchJson(path, apiToken, &orderContainer)
+	if err != nil {
+		return Order{}, err
+	}
+
+	return orderContainer.Order, nil
 }

@@ -6,7 +6,7 @@ type Merchant struct {
 	SquareAPIToken            string
 }
 
-type MerchantsRepository interface {
-	Put(merchant Merchant) error
-	Get(squareMerchantID string) (Merchant, error)
+type MerchantRepository interface {
+	PutSquareMerchant(merchant Merchant) error
+	GetSquareMerchant(squareMerchantID string) (Merchant, error)
 }

@@ -1,11 +1,11 @@
 {
   "order": {
-    "id": "order_id",
-    "location_id": "location_id",
+    "id": "squareOrderID",
+    "location_id": "squareLocationID",
     "line_items": [
       {
-        "uid": "item_uid_1",
-        "catalog_object_id": "catalog_object_id_1",
+        "uid": "squareItemUID1",
+        "catalog_object_id": "squareCatalogObjectID1",
         "catalog_version": 1548899645103,
         "quantity": "1",
         "name": "Item 1",
@@ -37,8 +37,8 @@
         "item_type": "ITEM"
       },
       {
-        "uid": "item_uid_2",
-        "catalog_object_id": "catalog_object_id_2",
+        "uid": "squareItemUID2",
+        "catalog_object_id": "squareCatalogObjectID2",
         "catalog_version": 1544630580847,
         "quantity": "2",
         "name": "Item 2",
@@ -92,9 +92,9 @@
     "closed_at": "2019-02-04T05:32:08.000Z",
     "tenders": [
       {
-        "id": "tender_id",
-        "location_id": "location_id",
-        "transaction_id": "transaction_id",
+        "id": "squareTenderID",
+        "location_id": "squareLocationID",
+        "transaction_id": "squareTransactionID",
         "created_at": "2019-02-04T05:32:06Z",
         "amount_money": {
           "amount": 7000,
@@ -104,7 +104,7 @@
           "amount": 0,
           "currency": "USD"
         },
-        "customer_id": "customer_id",
+        "customer_id": "squareCustomerID",
         "type": "CASH",
         "cash_details": {
           "buyer_tendered_money": {
@@ -167,7 +167,7 @@
       }
     },
     "source": {},
-    "customer_id": "customer_id",
+    "customer_id": "squareCustomerID",
     "net_amount_due_money": {
       "amount": 0,
       "currency": "USD"

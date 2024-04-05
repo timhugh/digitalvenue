@@ -1,7 +1,14 @@
-package square
+package square_test
 
 import (
+	"bytes"
+	"github.com/go-test/deep"
+	"github.com/matryer/is"
+	"github.com/timhugh/digitalvenue/square"
+	"github.com/timhugh/digitalvenue/square/squaretest"
+	"io"
 	"net/http"
+	"testing"
 )
 
 type RoundTripFunc func(req *http.Request) *http.Response
@@ -13,5 +20,51 @@ func (f RoundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 func NewTestClient(fn RoundTripFunc) *http.Client {
 	return &http.Client{
 		Transport: RoundTripFunc(fn),
+	}
+}
+
+func TestClient_GetCustomer_Success(t *testing.T) {
+	is := is.New(t)
+
+	httpClient := NewTestClient(func(r *http.Request) *http.Response {
+		is.Equal(r.Method, http.MethodGet)
+		is.Equal(r.Header.Get("Authorization"), "Bearer api_token")
+		is.Equal(r.URL.Path, "/v2/customers/squareCustomerID")
+
+		return &http.Response{
+			Body: io.NopCloser(bytes.NewBufferString(squaretest.CustomerJson)),
+		}
+	})
+
+	squareClient := square.NewClient(square.NewClientConfig(), httpClient)
+
+	customer, err := squareClient.GetCustomer("squareCustomerID", "api_token")
+	is.NoErr(err)
+
+	expectedCustomer := squaretest.NewSquareCustomer()
+	is.Equal(customer, expectedCustomer)
+}
+
+func TestClient_GetOrder_Success(t *testing.T) {
+	is := is.New(t)
+
+	httpClient := NewTestClient(func(r *http.Request) *http.Response {
+		is.Equal(r.Method, http.MethodGet)
+		is.Equal(r.Header.Get("Authorization"), "Bearer api_token")
+		is.Equal(r.URL.Path, "/v2/orders/squareOrderID")
+
+		return &http.Response{
+			Body: io.NopCloser(bytes.NewBufferString(squaretest.OrderJson)),
+		}
+	})
+
+	squareClient := square.NewClient(square.NewClientConfig(), httpClient)
+
+	order, err := squareClient.GetOrder("squareOrderID", "api_token")
+	is.NoErr(err)
+
+	expectedOrder := squaretest.NewSquareOrder()
+	if diff := deep.Equal(order, expectedOrder); diff != nil {
+		t.Error(diff)
 	}
 }

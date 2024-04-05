@@ -5,40 +5,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/timhugh/digitalvenue/aws/dynamodb/square"
 	"github.com/timhugh/digitalvenue/core"
-	"os"
 )
 
-type OrderRepositoryConfig struct {
-	TableName string
-}
-
-func NewOrderRepositoryConfig() OrderRepositoryConfig {
-	return OrderRepositoryConfig{
-		TableName: os.Getenv(OrdersTableName),
-	}
-}
-
-type OrderRepository struct {
-	tableName string
-	client    *dynamodb.Client
-}
-
-func NewOrderRepository(config OrderRepositoryConfig, client *dynamodb.Client) core.OrderRepository {
-	return OrderRepository{
-		tableName: config.TableName,
-		client:    client,
-	}
-}
-
-func (repo OrderRepository) Put(order core.Order) (string, error) {
-
+func (repo *Repository) PutOrder(order core.Order) (string, error) {
 	orderItems := make([]types.AttributeValue, len(order.Items))
 	for i, item := range order.Items {
 		var itemID string
 		if item.ItemID == "" {
-			itemID = core.GenerateID()
+			itemID = repo.idGenerator.GenerateID()
 		} else {
 			itemID = item.ItemID
 		}
@@ -47,14 +22,14 @@ func (repo OrderRepository) Put(order core.Order) (string, error) {
 			ItemID: &types.AttributeValueMemberS{Value: itemID},
 			Name:   &types.AttributeValueMemberS{Value: item.Name},
 			Meta: &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
-				square.SquareItemID: &types.AttributeValueMemberS{Value: item.Meta.SquareItemID},
+				SquareItemID: &types.AttributeValueMemberS{Value: item.Meta.SquareItemID},
 			}},
 		}}
 	}
 
 	var orderID string
 	if order.OrderID == "" {
-		orderID = core.GenerateID()
+		orderID = repo.idGenerator.GenerateID()
 	} else {
 		orderID = order.OrderID
 	}
@@ -66,13 +41,13 @@ func (repo OrderRepository) Put(order core.Order) (string, error) {
 			CustomerID: &types.AttributeValueMemberS{Value: order.CustomerID},
 			Items:      &types.AttributeValueMemberL{Value: orderItems},
 			Meta: &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
-				square.SquareOrderID:    &types.AttributeValueMemberS{Value: order.Meta.SquareOrderID},
-				square.SquarePaymentID:  &types.AttributeValueMemberS{Value: order.Meta.SquarePaymentID},
-				square.SquareMerchantID: &types.AttributeValueMemberS{Value: order.Meta.SquareMerchantID},
-				square.SquareCustomerID: &types.AttributeValueMemberS{Value: order.Meta.SquareCustomerID},
+				SquareOrderID:    &types.AttributeValueMemberS{Value: order.Meta.SquareOrderID},
+				SquarePaymentID:  &types.AttributeValueMemberS{Value: order.Meta.SquarePaymentID},
+				SquareMerchantID: &types.AttributeValueMemberS{Value: order.Meta.SquareMerchantID},
+				SquareCustomerID: &types.AttributeValueMemberS{Value: order.Meta.SquareCustomerID},
 			}},
 		},
-		TableName: aws.String(repo.tableName),
+		TableName: aws.String(repo.ordersTableName),
 	}
 
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)

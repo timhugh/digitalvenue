@@ -1,4 +1,4 @@
-package square
+package dynamodb
 
 import (
 	"context"
@@ -8,39 +8,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/timhugh/digitalvenue/square"
-	"os"
 )
 
-type PaymentsRepositoryConfig struct {
-	TableName string
-}
-
-func NewPaymentsRepositoryConfig() PaymentsRepositoryConfig {
-	return PaymentsRepositoryConfig{
-		TableName: os.Getenv(SquarePaymentsTableName),
-	}
-}
-
-type PaymentsRepository struct {
-	tableName string
-	client    *dynamodb.Client
-}
-
-func NewPaymentsRepository(config PaymentsRepositoryConfig, client *dynamodb.Client) square.PaymentsRepository {
-	return PaymentsRepository{
-		tableName: config.TableName,
-		client:    client,
-	}
-}
-
-func (repo PaymentsRepository) Put(payment square.Payment) error {
+func (repo *Repository) PutSquarePayment(payment square.Payment) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquarePaymentID:  &types.AttributeValueMemberS{Value: payment.SquarePaymentID},
 			SquareMerchantID: &types.AttributeValueMemberS{Value: payment.SquareMerchantID},
 			SquareOrderID:    &types.AttributeValueMemberS{Value: payment.SquareOrderID},
 		},
-		TableName: aws.String(repo.tableName),
+		TableName: aws.String(repo.squarePaymentsTableName),
 	}
 
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
@@ -51,14 +28,14 @@ func (repo PaymentsRepository) Put(payment square.Payment) error {
 	return nil
 }
 
-func (repo PaymentsRepository) Get(squarePaymentID string) (square.Payment, error) {
+func (repo *Repository) GetSquarePayment(squarePaymentID string) (square.Payment, error) {
 	var payment = square.Payment{}
 
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
 			SquarePaymentID: &types.AttributeValueMemberS{Value: squarePaymentID},
 		},
-		TableName: aws.String(repo.tableName),
+		TableName: aws.String(repo.squarePaymentsTableName),
 	}
 
 	result, err := repo.client.GetItem(context.TODO(), getItemInput)

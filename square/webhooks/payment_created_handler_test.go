@@ -12,13 +12,13 @@ func TestPaymentCreatedService_HandleEvent(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
 
-	paymentsRepo := mock.Mock[square.PaymentsRepository]()
+	paymentsRepo := mock.Mock[square.PaymentRepository]()
 	paymentCaptor := mock.Captor[square.Payment]()
-	mock.WhenSingle(paymentsRepo.Put(paymentCaptor.Capture())).ThenReturn(nil)
+	mock.WhenSingle(paymentsRepo.PutSquarePayment(paymentCaptor.Capture())).ThenReturn(nil)
 
 	paymentCreatedQueue := mock.Mock[square.PaymentCreatedQueue]()
 	paymentEventIDCaptor := mock.Captor[string]()
-	mock.WhenSingle(paymentCreatedQueue.Publish(paymentEventIDCaptor.Capture())).ThenReturn(nil)
+	mock.WhenSingle(paymentCreatedQueue.PublishSquarePaymentCreated(paymentEventIDCaptor.Capture())).ThenReturn(nil)
 
 	log := zerolog.Logger{}
 

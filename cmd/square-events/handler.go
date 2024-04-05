@@ -6,23 +6,25 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/webhooks"
+	"os"
 )
 
 const squareSignatureHeader = "x-square-hmacsha256-signature"
+const squareWebhookNotificationURL = "SQUARE_WEBHOOK_NOTIFICATION_URL"
 
 type handler struct {
-	config          eventServiceConfig
-	merchantRepo    square.MerchantsRepository
-	log             zerolog.Logger
-	handlerProvider webhooks.HandlerProvider
+	webhookNotificationURL string
+	merchantRepo           square.MerchantRepository
+	log                    zerolog.Logger
+	handlerProvider        webhooks.HandlerProvider
 }
 
-func newHandler(config eventServiceConfig, merchantRepo square.MerchantsRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) handler {
+func newHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) handler {
 	return handler{
-		config:          config,
-		merchantRepo:    merchantRepo,
-		log:             log,
-		handlerProvider: handlerProvider,
+		webhookNotificationURL: os.Getenv(squareWebhookNotificationURL),
+		merchantRepo:           merchantRepo,
+		log:                    log,
+		handlerProvider:        handlerProvider,
 	}
 }
 
@@ -38,14 +40,14 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 		Str("merchant_id", webhookEvent.MerchantID()).
 		Logger()
 
-	merchant, err := handler.merchantRepo.Get(webhookEvent.MerchantID())
+	merchant, err := handler.merchantRepo.GetSquareMerchant(webhookEvent.MerchantID())
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to find merchant")
 		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantID())
 	}
 
 	signature := request.Headers[squareSignatureHeader]
-	err = webhooks.Validate(request.Body, handler.config.webhookNotificationURL, merchant.SquareWebhookSignatureKey, signature)
+	err = webhooks.Validate(request.Body, handler.webhookNotificationURL, merchant.SquareWebhookSignatureKey, signature)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to validate event")
 		return errorResponse("invalid signature: %s", signature)

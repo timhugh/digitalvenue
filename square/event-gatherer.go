@@ -12,20 +12,22 @@ type EventGatherer interface {
 
 type eventGatherer struct {
 	log          zerolog.Logger
-	paymentRepo  PaymentsRepository
-	merchantRepo MerchantsRepository
+	paymentRepo  PaymentRepository
+	merchantRepo MerchantRepository
 	orderRepo    core.OrderRepository
 	customerRepo core.CustomerRepository
 	squareApi    Client
+	orderMapper  OrderMapper
 }
 
 func NewEventGatherer(
 	log zerolog.Logger,
-	paymentRepo PaymentsRepository,
-	merchantRepo MerchantsRepository,
+	paymentRepo PaymentRepository,
+	merchantRepo MerchantRepository,
 	orderRepo core.OrderRepository,
 	customerRepo core.CustomerRepository,
 	squareApi Client,
+	orderMapper OrderMapper,
 ) EventGatherer {
 	return eventGatherer{
 		log:          log.With().Str("caller", "eventGatherer.Gather").Logger(),
@@ -34,6 +36,7 @@ func NewEventGatherer(
 		orderRepo:    orderRepo,
 		customerRepo: customerRepo,
 		squareApi:    squareApi,
+		orderMapper:  orderMapper,
 	}
 }
 
@@ -42,12 +45,12 @@ func (gatherer eventGatherer) Gather(squarePaymentID string) error {
 
 	log.Info().Msg("Processing square payment event")
 
-	payment, err := gatherer.paymentRepo.Get(squarePaymentID)
+	payment, err := gatherer.paymentRepo.GetSquarePayment(squarePaymentID)
 	if err != nil {
 		return err
 	}
 
-	merchant, err := gatherer.merchantRepo.Get(payment.SquareMerchantID)
+	merchant, err := gatherer.merchantRepo.GetSquareMerchant(payment.SquareMerchantID)
 	if err != nil {
 		return err
 	}
@@ -63,19 +66,19 @@ func (gatherer eventGatherer) Gather(squarePaymentID string) error {
 	}
 
 	customer := MapCustomer(squareCustomer)
-	customerID, err := gatherer.customerRepo.Put(customer)
+	customerID, err := gatherer.customerRepo.PutCustomer(customer)
 	if err != nil {
 		return err
 	}
 
-	order, err := MapOrder(squareOrder)
+	order, err := gatherer.orderMapper.MapOrder(squareOrder)
 	if err != nil {
 		return err
 	}
 	order.CustomerID = customerID
 	order.Meta.SquarePaymentID = squarePaymentID
 	order.Meta.SquareMerchantID = merchant.SquareMerchantID
-	orderID, err := gatherer.orderRepo.Put(order)
+	orderID, err := gatherer.orderRepo.PutOrder(order)
 	if err != nil {
 		return err
 	}

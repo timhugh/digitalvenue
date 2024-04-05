@@ -6,9 +6,9 @@ type Payment struct {
 	SquareOrderID    string
 }
 
-type PaymentsRepository interface {
-	Put(payment Payment) error
-	Get(squarePaymentID string) (Payment, error)
+type PaymentRepository interface {
+	PutSquarePayment(payment Payment) error
+	GetSquarePayment(squarePaymentID string) (Payment, error)
 }
 
 type PaymentCreatedEvent struct {
@@ -16,5 +16,5 @@ type PaymentCreatedEvent struct {
 }
 
 type PaymentCreatedQueue interface {
-	Publish(squarePaymentId string) error
+	PublishSquarePaymentCreated(squarePaymentId string) error
 }

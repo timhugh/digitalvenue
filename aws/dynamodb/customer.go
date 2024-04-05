@@ -5,37 +5,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/timhugh/digitalvenue/aws/dynamodb/square"
 	"github.com/timhugh/digitalvenue/core"
-	"os"
 )
 
-type CustomerRepositoryConfig struct {
-	TableName string
-}
-
-func NewCustomerRepositoryConfig() CustomerRepositoryConfig {
-	return CustomerRepositoryConfig{
-		TableName: os.Getenv(CustomersTableName),
-	}
-}
-
-type customerRepository struct {
-	tableName string
-	client    *dynamodb.Client
-}
-
-func NewCustomerRepository(config CustomerRepositoryConfig, client *dynamodb.Client) core.CustomerRepository {
-	return customerRepository{
-		tableName: config.TableName,
-		client:    client,
-	}
-}
-
-func (repo customerRepository) Put(customer core.Customer) (string, error) {
+func (repo *Repository) PutCustomer(customer core.Customer) (string, error) {
 	var customerID string
 	if customer.CustomerID == "" {
-		customerID = core.GenerateID()
+		customerID = repo.idGenerator.GenerateID()
 	} else {
 		customerID = customer.CustomerID
 	}
@@ -48,10 +24,10 @@ func (repo customerRepository) Put(customer core.Customer) (string, error) {
 			Email:      &types.AttributeValueMemberS{Value: customer.Email},
 			Phone:      &types.AttributeValueMemberS{Value: customer.Phone},
 			Meta: &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
-				square.SquareCustomerID: &types.AttributeValueMemberS{Value: customer.Meta.SquareCustomerID},
+				SquareCustomerID: &types.AttributeValueMemberS{Value: customer.Meta.SquareCustomerID},
 			}},
 		},
-		TableName: aws.String(repo.tableName),
+		TableName: aws.String(repo.customersTableName),
 	}
 
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)

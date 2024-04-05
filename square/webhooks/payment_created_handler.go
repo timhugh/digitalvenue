@@ -7,20 +7,20 @@ import (
 )
 
 type PaymentCreatedHandler struct {
-	paymentsRepository  square.PaymentsRepository
+	paymentsRepository  square.PaymentRepository
 	paymentCreatedQueue square.PaymentCreatedQueue
 	log                 zerolog.Logger
 }
 
-func NewPaymentCreatedHandler(paymentsRepository square.PaymentsRepository, paymentCreatedQueue square.PaymentCreatedQueue, log zerolog.Logger) PaymentCreatedHandler {
-	return PaymentCreatedHandler{
+func NewPaymentCreatedHandler(paymentsRepository square.PaymentRepository, paymentCreatedQueue square.PaymentCreatedQueue, log zerolog.Logger) *PaymentCreatedHandler {
+	return &PaymentCreatedHandler{
 		paymentsRepository:  paymentsRepository,
 		paymentCreatedQueue: paymentCreatedQueue,
 		log:                 log,
 	}
 }
 
-func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error {
+func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error {
 	paymentCreatedEvent, ok := event.(PaymentCreatedEvent)
 	if !ok {
 		return fmt.Errorf("event is not PaymentCreatedEvent")
@@ -44,12 +44,12 @@ func (handler PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error 
 		SquareMerchantID: paymentCreatedEvent.MerchantID(),
 	}
 
-	err := handler.paymentsRepository.Put(payment)
+	err := handler.paymentsRepository.PutSquarePayment(payment)
 	if err != nil {
 		return fmt.Errorf("failed to create payment: %w", err)
 	}
 
-	if err := handler.paymentCreatedQueue.Publish(payment.SquarePaymentID); err != nil {
+	if err := handler.paymentCreatedQueue.PublishSquarePaymentCreated(payment.SquarePaymentID); err != nil {
 		return fmt.Errorf("failed to publish payment created event: %w", err)
 	}
 

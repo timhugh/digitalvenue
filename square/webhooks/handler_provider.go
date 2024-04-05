@@ -12,17 +12,17 @@ type HandlerProvider interface {
 	GetHandler(eventType string) (EventHandler, error)
 }
 
-type DefaultHandlerProvider struct {
-	paymentCreatedHandler PaymentCreatedHandler
+type handlerProvider struct {
+	paymentCreatedHandler *PaymentCreatedHandler
 }
 
-func NewHandlerProvider(paymentCreatedHandler PaymentCreatedHandler) HandlerProvider {
-	return DefaultHandlerProvider{
+func NewHandlerProvider(paymentCreatedHandler *PaymentCreatedHandler) HandlerProvider {
+	return handlerProvider{
 		paymentCreatedHandler: paymentCreatedHandler,
 	}
 }
 
-func (provider DefaultHandlerProvider) GetHandler(eventType string) (EventHandler, error) {
+func (provider handlerProvider) GetHandler(eventType string) (EventHandler, error) {
 	switch eventType {
 	case PaymentCreated:
 		return provider.paymentCreatedHandler, nil

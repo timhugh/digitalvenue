@@ -26,5 +26,5 @@ type OrderItemMeta struct {
 }
 
 type OrderRepository interface {
-	Put(order Order) (string, error)
+	PutOrder(order Order) (string, error)
 }

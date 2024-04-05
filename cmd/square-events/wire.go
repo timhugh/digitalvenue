@@ -9,8 +9,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/aws"
 	"github.com/timhugh/digitalvenue/aws/dynamodb"
-	"github.com/timhugh/digitalvenue/aws/dynamodb/square"
 	"github.com/timhugh/digitalvenue/aws/sqs"
+	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/webhooks"
 )
 
@@ -21,19 +21,22 @@ func newLogger() zerolog.Logger {
 func initializeHandler() (handler, error) {
 	wire.Build(
 		newLogger,
+
 		aws.NewConfig,
+
 		dynamodb.NewClient,
-		square.NewMerchantsRepository,
-		square.NewMerchantsRepositoryConfig,
-		square.NewPaymentsRepository,
-		square.NewPaymentsRepositoryConfig,
-		newEventServiceConfig,
-		newHandler,
+		dynamodb.NewRepository,
+		wire.Bind(new(square.MerchantRepository), new(*dynamodb.Repository)),
+		wire.Bind(new(square.PaymentRepository), new(*dynamodb.Repository)),
+
 		sqs.NewClient,
-		sqs.NewSquarePaymentCreatedQueue,
-		sqs.NewSquarePaymentCreatedQueueConfig,
+		sqs.NewQueue,
+		wire.Bind(new(square.PaymentCreatedQueue), new(*sqs.Queue)),
+
 		webhooks.NewHandlerProvider,
 		webhooks.NewPaymentCreatedHandler,
+
+		newHandler,
 	)
 	return handler{}, nil
 }
