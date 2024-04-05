@@ -3,19 +3,16 @@ package webhooks
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/rs/zerolog"
 )
 
 const (
 	PaymentCreated = "payment.created"
 )
 
-// FIXME: passing the logger feels a little gross -- maybe this should become a class
-func NewWebhookEvent(body string, log zerolog.Logger) (WebhookEvent[any], error) {
+func NewWebhookEvent(body string) (WebhookEvent[any], error) {
 	var metadata WebhookEventMetadata
 	if err := json.Unmarshal([]byte(body), &metadata); err != nil {
-		log.Warn().Err(err).Msg("Failed to unmarshal webhook event metadata")
-		return nil, fmt.Errorf("malformed request json")
+		return nil, fmt.Errorf("malformed request json: %w", err)
 	}
 
 	switch metadata.EventType {

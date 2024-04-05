@@ -16,7 +16,7 @@ type eventGatherer struct {
 	merchantRepo MerchantRepository
 	orderRepo    core.OrderRepository
 	customerRepo core.CustomerRepository
-	squareApi    Client
+	squareApi    APIClient
 	orderMapper  OrderMapper
 }
 
@@ -26,7 +26,7 @@ func NewEventGatherer(
 	merchantRepo MerchantRepository,
 	orderRepo core.OrderRepository,
 	customerRepo core.CustomerRepository,
-	squareApi Client,
+	squareApi APIClient,
 	orderMapper OrderMapper,
 ) EventGatherer {
 	return eventGatherer{

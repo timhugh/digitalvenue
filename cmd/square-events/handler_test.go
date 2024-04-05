@@ -16,7 +16,7 @@ import (
 var webhookEventRawJSON, _ = os.ReadFile("test-event.json")
 var webhookEventJSON = string(webhookEventRawJSON)
 
-const goodSignature = "/p9MrQ6sTzL2iuGBPa5YoadntDIMv5ms+ihDe3MLoLc="
+const goodSignature = "iMAgIyK1/6pZwJ+fVJhCbYocGMHSg7f/cT+3IBmErc8="
 
 func TestHandler(t *testing.T) {
 	testCases := []struct {
@@ -48,7 +48,7 @@ func TestHandler(t *testing.T) {
 				Body: "this isn't even json",
 			},
 			expectedStatus: 400,
-			expectedBody:   `{"error": "unable to process event: malformed request json"}`,
+			expectedBody:   `{"error": "unable to process event"}`,
 		},
 		{
 			name: "unknown merchant",
@@ -81,15 +81,9 @@ func TestHandler(t *testing.T) {
 			},
 			merchant:       square.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
-			expectedBody:   `{"error": "unable to process event: unknown event type: not.a.real.event"}`,
+			expectedBody:   `{"error": "unable to process event"}`,
 		},
 	}
-
-	config := eventServiceConfig{
-		webhookNotificationURL: "http://localhost:8080/events",
-	}
-
-	log := zerolog.Logger{}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -104,7 +98,12 @@ func TestHandler(t *testing.T) {
 			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
 			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[squarewebhooks.WebhookEvent[any]]())).ThenReturn(nil)
 
-			handler := newHandler(config, mockMerchantRepo, mockHandlerProvider, log)
+			handler := handler{
+				log:                    zerolog.Logger{},
+				webhookNotificationURL: squareWebhookNotificationURL,
+				merchantRepo:           mockMerchantRepo,
+				handlerProvider:        mockHandlerProvider,
+			}
 
 			response, err := handler.handle(testCase.request)
 			is.NoErr(err)

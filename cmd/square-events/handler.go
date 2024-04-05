@@ -29,10 +29,10 @@ func newHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks
 }
 
 func (handler handler) handle(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	webhookEvent, err := webhooks.NewWebhookEvent(request.Body, handler.log)
+	webhookEvent, err := webhooks.NewWebhookEvent(request.Body)
 	if err != nil {
 		handler.log.Warn().Err(err).Msg("Failed to create webhook event")
-		return errorResponse("unable to process event: %s", err.Error())
+		return errorResponse("unable to process event")
 	}
 	log := handler.log.With().
 		Str("event_id", webhookEvent.EventID()).

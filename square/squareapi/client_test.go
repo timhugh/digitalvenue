@@ -1,15 +1,21 @@
-package square_test
+package squareapi
 
 import (
 	"bytes"
 	"github.com/go-test/deep"
 	"github.com/matryer/is"
-	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/squaretest"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 )
+
+var OrderRawJson, _ = os.ReadFile("test-order-response.json")
+var OrderJson = string(OrderRawJson)
+
+var CustomerRawJson, _ = os.ReadFile("test-customer-response.json")
+var CustomerJson = string(CustomerRawJson)
 
 type RoundTripFunc func(req *http.Request) *http.Response
 
@@ -32,11 +38,15 @@ func TestClient_GetCustomer_Success(t *testing.T) {
 		is.Equal(r.URL.Path, "/v2/customers/squareCustomerID")
 
 		return &http.Response{
-			Body: io.NopCloser(bytes.NewBufferString(squaretest.CustomerJson)),
+			Body: io.NopCloser(bytes.NewBufferString(CustomerJson)),
 		}
 	})
 
-	squareClient := square.NewClient(square.NewClientConfig(), httpClient)
+	squareClient := Client{
+		baseUrl:       squareApiBaseUrl,
+		maxBodyLength: maxBodyLength,
+		httpClient:    httpClient,
+	}
 
 	customer, err := squareClient.GetCustomer("squareCustomerID", "api_token")
 	is.NoErr(err)
@@ -54,11 +64,15 @@ func TestClient_GetOrder_Success(t *testing.T) {
 		is.Equal(r.URL.Path, "/v2/orders/squareOrderID")
 
 		return &http.Response{
-			Body: io.NopCloser(bytes.NewBufferString(squaretest.OrderJson)),
+			Body: io.NopCloser(bytes.NewBufferString(OrderJson)),
 		}
 	})
 
-	squareClient := square.NewClient(square.NewClientConfig(), httpClient)
+	squareClient := Client{
+		baseUrl:       squareApiBaseUrl,
+		maxBodyLength: maxBodyLength,
+		httpClient:    httpClient,
+	}
 
 	order, err := squareClient.GetOrder("squareOrderID", "api_token")
 	is.NoErr(err)

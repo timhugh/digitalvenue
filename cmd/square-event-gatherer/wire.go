@@ -11,6 +11,7 @@ import (
 	"github.com/timhugh/digitalvenue/aws/dynamodb"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/square"
+	"github.com/timhugh/digitalvenue/square/squareapi"
 )
 
 func newLogger() zerolog.Logger {
@@ -34,7 +35,8 @@ func initializeHandler() (handler, error) {
 		dynamodb.NewCustomerRepository,
 		wire.Bind(new(core.CustomerRepository), new(*dynamodb.CustomerRepository)),
 
-		square.NewClient,
+		squareapi.NewClient,
+		wire.Bind(new(square.APIClient), new(*squareapi.Client)),
 		square.NewOrderMapper,
 
 		newHandler,
