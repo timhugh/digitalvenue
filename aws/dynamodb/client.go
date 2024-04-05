@@ -3,8 +3,6 @@ package dynamodb
 import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/timhugh/digitalvenue/core"
-	"os"
 )
 
 const (
@@ -38,26 +36,4 @@ const (
 
 func NewClient(config aws.Config) *dynamodb.Client {
 	return dynamodb.NewFromConfig(config)
-}
-
-type Repository struct {
-	client      *dynamodb.Client
-	idGenerator core.IDGenerator
-
-	customersTableName       string
-	ordersTableName          string
-	squarePaymentsTableName  string
-	squareMerchantsTableName string
-}
-
-func NewRepository(client *dynamodb.Client) *Repository {
-	return &Repository{
-		client:      client,
-		idGenerator: core.NewIDGenerator(),
-
-		customersTableName:       os.Getenv(CustomersTableName),
-		ordersTableName:          os.Getenv(OrdersTableName),
-		squarePaymentsTableName:  os.Getenv(SquarePaymentsTableName),
-		squareMerchantsTableName: os.Getenv(SquareMerchantsTableName),
-	}
 }

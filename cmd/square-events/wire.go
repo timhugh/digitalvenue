@@ -25,13 +25,14 @@ func initializeHandler() (handler, error) {
 		aws.NewConfig,
 
 		dynamodb.NewClient,
-		dynamodb.NewRepository,
-		wire.Bind(new(square.MerchantRepository), new(*dynamodb.Repository)),
-		wire.Bind(new(square.PaymentRepository), new(*dynamodb.Repository)),
+		dynamodb.NewSquareMerchantRepository,
+		wire.Bind(new(square.MerchantRepository), new(*dynamodb.SquareMerchantRepository)),
+		dynamodb.NewSquarePaymentRepository,
+		wire.Bind(new(square.PaymentRepository), new(*dynamodb.SquarePaymentRepository)),
 
 		sqs.NewClient,
-		sqs.NewQueue,
-		wire.Bind(new(square.PaymentCreatedQueue), new(*sqs.Queue)),
+		sqs.NewSquarePaymentCreatedQueue,
+		wire.Bind(new(square.PaymentCreatedQueue), new(*sqs.SquarePaymentCreatedQueue)),
 
 		webhooks.NewHandlerProvider,
 		webhooks.NewPaymentCreatedHandler,

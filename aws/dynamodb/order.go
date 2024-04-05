@@ -8,7 +8,21 @@ import (
 	"github.com/timhugh/digitalvenue/core"
 )
 
-func (repo *Repository) PutOrder(order core.Order) (string, error) {
+type OrderRepository struct {
+	client      *dynamodb.Client
+	idGenerator core.IDGenerator
+	tableName   string
+}
+
+func NewOrderRepository(client *dynamodb.Client) *OrderRepository {
+	return &OrderRepository{
+		client:      client,
+		idGenerator: core.NewIDGenerator(),
+		tableName:   core.Getenv(OrdersTableName),
+	}
+}
+
+func (repo *OrderRepository) PutOrder(order core.Order) (string, error) {
 	orderItems := make([]types.AttributeValue, len(order.Items))
 	for i, item := range order.Items {
 		var itemID string
@@ -47,7 +61,7 @@ func (repo *Repository) PutOrder(order core.Order) (string, error) {
 				SquareCustomerID: &types.AttributeValueMemberS{Value: order.Meta.SquareCustomerID},
 			}},
 		},
-		TableName: aws.String(repo.ordersTableName),
+		TableName: aws.String(repo.tableName),
 	}
 
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)

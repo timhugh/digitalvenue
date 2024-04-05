@@ -8,7 +8,21 @@ import (
 	"github.com/timhugh/digitalvenue/core"
 )
 
-func (repo *Repository) PutCustomer(customer core.Customer) (string, error) {
+type CustomerRepository struct {
+	client      *dynamodb.Client
+	idGenerator core.IDGenerator
+	tableName   string
+}
+
+func NewCustomerRepository(client *dynamodb.Client) *CustomerRepository {
+	return &CustomerRepository{
+		client:      client,
+		idGenerator: core.NewIDGenerator(),
+		tableName:   core.Getenv(CustomersTableName),
+	}
+}
+
+func (repo *CustomerRepository) PutCustomer(customer core.Customer) (string, error) {
 	var customerID string
 	if customer.CustomerID == "" {
 		customerID = repo.idGenerator.GenerateID()
@@ -27,7 +41,7 @@ func (repo *Repository) PutCustomer(customer core.Customer) (string, error) {
 				SquareCustomerID: &types.AttributeValueMemberS{Value: customer.Meta.SquareCustomerID},
 			}},
 		},
-		TableName: aws.String(repo.customersTableName),
+		TableName: aws.String(repo.tableName),
 	}
 
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)

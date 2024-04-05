@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/rs/zerolog"
+	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/webhooks"
-	"os"
 )
 
 const squareSignatureHeader = "x-square-hmacsha256-signature"
@@ -21,7 +21,7 @@ type handler struct {
 
 func newHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) handler {
 	return handler{
-		webhookNotificationURL: os.Getenv(squareWebhookNotificationURL),
+		webhookNotificationURL: core.Getenv(squareWebhookNotificationURL),
 		merchantRepo:           merchantRepo,
 		log:                    log,
 		handlerProvider:        handlerProvider,

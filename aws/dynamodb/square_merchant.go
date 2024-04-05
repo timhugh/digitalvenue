@@ -7,17 +7,32 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/square"
 )
 
-func (repo *Repository) PutSquareMerchant(merchant square.Merchant) error {
+type SquareMerchantRepository struct {
+	client      *dynamodb.Client
+	idGenerator core.IDGenerator
+	tableName   string
+}
+
+func NewSquareMerchantRepository(client *dynamodb.Client) *SquareMerchantRepository {
+	return &SquareMerchantRepository{
+		client:      client,
+		idGenerator: core.NewIDGenerator(),
+		tableName:   core.Getenv(SquareMerchantsTableName),
+	}
+}
+
+func (repo *SquareMerchantRepository) PutSquareMerchant(merchant square.Merchant) error {
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			SquareMerchantID:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantID},
 			SquareWebhookSignatureKey: &types.AttributeValueMemberS{Value: merchant.SquareWebhookSignatureKey},
 			SquareAPIToken:            &types.AttributeValueMemberS{Value: merchant.SquareAPIToken},
 		},
-		TableName: aws.String(repo.squareMerchantsTableName),
+		TableName: aws.String(repo.tableName),
 	}
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
 	if err != nil {
@@ -27,14 +42,14 @@ func (repo *Repository) PutSquareMerchant(merchant square.Merchant) error {
 	return nil
 }
 
-func (repo *Repository) GetSquareMerchant(squareMerchantID string) (square.Merchant, error) {
+func (repo *SquareMerchantRepository) GetSquareMerchant(squareMerchantID string) (square.Merchant, error) {
 	var merchant = square.Merchant{}
 
 	getItemInput := &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
 			SquareMerchantID: &types.AttributeValueMemberS{Value: squareMerchantID},
 		},
-		TableName: aws.String(repo.squareMerchantsTableName),
+		TableName: aws.String(repo.tableName),
 	}
 
 	getItemOutput, err := repo.client.GetItem(context.TODO(), getItemInput)
