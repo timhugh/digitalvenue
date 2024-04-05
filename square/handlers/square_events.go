@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -12,15 +12,15 @@ import (
 const squareSignatureHeader = "x-square-hmacsha256-signature"
 const squareWebhookNotificationURL = "SQUARE_WEBHOOK_NOTIFICATION_URL"
 
-type handler struct {
+type SquareEventsHandler struct {
 	webhookNotificationURL string
 	merchantRepo           square.MerchantRepository
 	log                    zerolog.Logger
 	handlerProvider        webhooks.HandlerProvider
 }
 
-func newHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) handler {
-	return handler{
+func NewSquareEventsHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) SquareEventsHandler {
+	return SquareEventsHandler{
 		webhookNotificationURL: core.Getenv(squareWebhookNotificationURL),
 		merchantRepo:           merchantRepo,
 		log:                    log,
@@ -28,7 +28,7 @@ func newHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks
 	}
 }
 
-func (handler handler) handle(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (handler SquareEventsHandler) Handle(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	webhookEvent, err := webhooks.NewWebhookEvent(request.Body)
 	if err != nil {
 		handler.log.Warn().Err(err).Msg("Failed to create webhook event")
@@ -39,6 +39,7 @@ func (handler handler) handle(request events.APIGatewayProxyRequest) (events.API
 		Str("event", webhookEvent.EventType()).
 		Str("merchant_id", webhookEvent.MerchantID()).
 		Logger()
+	log.Info().Msg("Begin processing event")
 
 	merchant, err := handler.merchantRepo.GetSquareMerchant(webhookEvent.MerchantID())
 	if err != nil {

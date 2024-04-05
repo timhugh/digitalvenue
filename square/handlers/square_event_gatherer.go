@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"github.com/aws/aws-lambda-go/events"
@@ -6,19 +6,19 @@ import (
 	"github.com/timhugh/digitalvenue/square"
 )
 
-type handler struct {
+type SquareEventGathererHandler struct {
 	log      zerolog.Logger
 	gatherer square.EventGatherer
 }
 
-func newHandler(log zerolog.Logger, gatherer square.EventGatherer) handler {
-	return handler{
+func NewSquareEventGathererHandler(log zerolog.Logger, gatherer square.EventGatherer) SquareEventGathererHandler {
+	return SquareEventGathererHandler{
 		log:      log,
 		gatherer: gatherer,
 	}
 }
 
-func (handler handler) handle(request events.SQSEvent) (events.SQSEventResponse, error) {
+func (handler SquareEventGathererHandler) Handle(request events.SQSEvent) (events.SQSEventResponse, error) {
 	failures := make([]events.SQSBatchItemFailure, 0)
 
 	for _, record := range request.Records {

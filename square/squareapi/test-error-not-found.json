@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "code": "NOT_FOUND",
+      "detail": "Order not found for id some_order_id",
+      "category": "INVALID_REQUEST_ERROR"
+    }
+  ]
+}

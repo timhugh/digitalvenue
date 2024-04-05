@@ -1,6 +1,3 @@
-//go:build localDynamoDB
-// +build localDynamoDB
-
 package aws
 
 import (
@@ -10,8 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 )
 
+func DefaultConfig() (aws.Config, error) {
+	return config.LoadDefaultConfig(context.TODO())
+}
+
 // For testing with local DynamoDB
-func NewConfig() (aws.Config, error) {
+func LocalConfig() (aws.Config, error) {
 	return config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion("us-west-2"),
 		config.WithEndpointResolver(aws.EndpointResolverFunc(

@@ -24,7 +24,7 @@ aws dynamodb put-item --endpoint-url http://localhost:8000 --table-name "$SQUARE
 {
   "SquareMerchantID": {"S": "$SQUARE_MERCHANT_ID"},
   "SquareWebhookSignatureKey": {"S": "$SQUARE_WEBHOOK_SIGNATURE_KEY"},
-  "SquareAPIKey": {"S": "$SQUARE_API_ACCESS_TOKEN"}
+  "SquareAPIToken": {"S": "$SQUARE_API_ACCESS_TOKEN"}
 }
 EOF
 )"

@@ -17,6 +17,14 @@ const (
 	getCustomerRouteFormat = "/v2/customers/%s" // squareCustomerID
 )
 
+type ApiError struct {
+	Errors []struct {
+		Code     string `json:"code"`
+		Detail   string `json:"detail"`
+		Category string `json:"category"`
+	} `json:"errors"`
+}
+
 type Client struct {
 	baseUrl       string
 	maxBodyLength int64
@@ -46,6 +54,15 @@ func (client *Client) fetchJson(path string, apiToken string, target interface{}
 	body, err := client.readBody(resp)
 	if err != nil {
 		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		var apiError ApiError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("API error: %s", apiError.Errors[0].Detail)
 	}
 
 	err = json.Unmarshal(body, target)

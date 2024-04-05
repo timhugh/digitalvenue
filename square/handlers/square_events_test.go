@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -13,12 +13,12 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-var webhookEventRawJSON, _ = os.ReadFile("test-event.json")
+var webhookEventRawJSON, _ = os.ReadFile("square_event_test_body.json")
 var webhookEventJSON = string(webhookEventRawJSON)
 
 const goodSignature = "iMAgIyK1/6pZwJ+fVJhCbYocGMHSg7f/cT+3IBmErc8="
 
-func TestHandler(t *testing.T) {
+func TestSquareEventsHandler(t *testing.T) {
 	testCases := []struct {
 		name string
 		// given
@@ -98,14 +98,14 @@ func TestHandler(t *testing.T) {
 			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
 			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[squarewebhooks.WebhookEvent[any]]())).ThenReturn(nil)
 
-			handler := handler{
+			handler := SquareEventsHandler{
 				log:                    zerolog.Logger{},
 				webhookNotificationURL: squareWebhookNotificationURL,
 				merchantRepo:           mockMerchantRepo,
 				handlerProvider:        mockHandlerProvider,
 			}
 
-			response, err := handler.handle(testCase.request)
+			response, err := handler.Handle(testCase.request)
 			is.NoErr(err)
 			is.Equal(response.StatusCode, testCase.expectedStatus)
 			is.Equal(response.Body, testCase.expectedBody)

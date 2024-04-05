@@ -1,6 +1,0 @@
-POST {{host}}
-Content-Type: application/json
-
-{
-  "body": "{{paymentId}}"
-}

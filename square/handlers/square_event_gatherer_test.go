@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"github.com/matryer/is"
@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-func TestHandler(t *testing.T) {
+func TestSquareEventGathererHandler(t *testing.T) {
 	testCases := []struct {
 		name             string
 		request          events.SQSEvent
@@ -36,9 +36,9 @@ func TestHandler(t *testing.T) {
 			mock.SetUp(t)
 
 			gatherer := mock.Mock[square.EventGatherer]()
-			handler := newHandler(log, gatherer)
+			handler := NewSquareEventGathererHandler(log, gatherer)
 
-			response, err := handler.handle(testCase.request)
+			response, err := handler.Handle(testCase.request)
 			is.NoErr(err)
 			is.Equal(testCase.expectedResponse, response)
 		})

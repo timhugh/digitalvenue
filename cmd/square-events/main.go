@@ -9,5 +9,5 @@ func main() {
 	if err != nil {
 		panic("Failed to initialize handler: " + err.Error())
 	}
-	lambda.Start(handler.handle)
+	lambda.Start(handler.Handle)
 }
