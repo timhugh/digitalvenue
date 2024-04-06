@@ -1,8 +1,6 @@
 package webhooks
 
-import (
-	"fmt"
-)
+import "errors"
 
 type EventHandler interface {
 	HandleEvent(event WebhookEvent[any]) error
@@ -27,6 +25,6 @@ func (provider handlerProvider) GetHandler(eventType string) (EventHandler, erro
 	case PaymentCreated:
 		return provider.paymentCreatedHandler, nil
 	default:
-		return nil, fmt.Errorf("unknown event type")
+		return nil, errors.New("unknown event type")
 	}
 }

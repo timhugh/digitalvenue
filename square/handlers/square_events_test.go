@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	"errors"
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/rs/zerolog"
@@ -58,7 +58,7 @@ func TestSquareEventsHandler(t *testing.T) {
 					squareSignatureHeader: goodSignature,
 				},
 			},
-			merchantFetchError: fmt.Errorf("who dat"),
+			merchantFetchError: errors.New("who dat"),
 			expectedStatus:     400,
 			expectedBody:       `{"error": "failed to find merchant with ID 'merchant_id'"}`,
 		},

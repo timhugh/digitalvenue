@@ -13,9 +13,10 @@ const (
 	SquareLocationID = "squareLocationID"
 	SquareOrderID    = "squareOrderID"
 
-	SquareItemUID1 = "squareItemUID1"
-	SquareItemUID2 = "squareItemUID2"
-	SquareAPIToken = "squareAPIToken"
+	SquareItemUID1            = "squareItemUID1"
+	SquareItemUID2            = "squareItemUID2"
+	SquareAPIToken            = "squareAPIToken"
+	SquareWebhookSignatureKey = "squareWebhookSignatureKey"
 )
 
 func NewSquarePayment() square.Payment {
@@ -28,8 +29,9 @@ func NewSquarePayment() square.Payment {
 
 func NewSquareMerchant() square.Merchant {
 	return square.Merchant{
-		SquareMerchantID: SquareMerchantID,
-		SquareAPIToken:   SquareAPIToken,
+		SquareMerchantID:          SquareMerchantID,
+		SquareAPIToken:            SquareAPIToken,
+		SquareWebhookSignatureKey: SquareWebhookSignatureKey,
 	}
 }
 
@@ -65,30 +67,24 @@ func NewSquareCustomer() square.Customer {
 
 func NewOrder() core.Order {
 	order := test.NewOrder()
-	order.Meta.SquareOrderID = SquareOrderID
-	order.Meta.SquareCustomerID = SquareCustomerID
+	order.Meta = map[string]string{
+		square.OrderIDKey:    SquareOrderID,
+		square.CustomerIDKey: SquareCustomerID,
+		square.PaymentIDKey:  SquarePaymentID,
+		square.MerchantIDKey: SquareMerchantID,
+	}
 
-	order.Items[0].Meta.SquareItemID = SquareItemUID1
-	order.Items[1].Meta.SquareItemID = SquareItemUID2
-	order.Items[2].Meta.SquareItemID = SquareItemUID2
-
-	return order
-}
-
-func NewOrderGathered() core.Order {
-	order := NewOrder()
-
-	order.CustomerID = test.CustomerID
-
-	order.Meta.SquareMerchantID = SquareMerchantID
-	order.Meta.SquarePaymentID = SquarePaymentID
-	order.Meta.SquareCustomerID = SquareCustomerID
+	order.Items[0].Meta = map[string]string{square.ItemIDKey: SquareItemUID1}
+	order.Items[1].Meta = map[string]string{square.ItemIDKey: SquareItemUID2}
+	order.Items[2].Meta = map[string]string{square.ItemIDKey: SquareItemUID2}
 
 	return order
 }
 
 func NewCustomer() core.Customer {
 	customer := test.NewCustomer()
-	customer.Meta.SquareCustomerID = SquareCustomerID
+	customer.Meta = map[string]string{
+		"SquareCustomerID": SquareCustomerID,
+	}
 	return customer
 }

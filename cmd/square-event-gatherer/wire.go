@@ -4,6 +4,7 @@
 package main
 
 import (
+	awsdynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/wire"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -27,6 +28,7 @@ func initializeHandler() (handlers.SquareEventGathererHandler, error) {
 		aws.DefaultConfig,
 
 		dynamodb.NewClient,
+		wire.Bind(new(dynamodb.Client), new(*awsdynamodb.Client)),
 		dynamodb.NewSquareMerchantRepository,
 		wire.Bind(new(square.MerchantRepository), new(*dynamodb.SquareMerchantRepository)),
 		dynamodb.NewSquarePaymentRepository,
@@ -38,7 +40,6 @@ func initializeHandler() (handlers.SquareEventGathererHandler, error) {
 
 		squareapi.NewClient,
 		wire.Bind(new(square.APIClient), new(*squareapi.Client)),
-		square.NewOrderMapper,
 
 		handlers.NewSquareEventGathererHandler,
 	)

@@ -7,11 +7,7 @@ type Customer struct {
 	LastName   string
 	Email      string
 	Phone      string
-	Meta       CustomerMeta
-}
-
-type CustomerMeta struct {
-	SquareCustomerID string
+	Meta       map[string]string
 }
 
 type CustomerRepository interface {

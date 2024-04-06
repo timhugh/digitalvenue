@@ -17,7 +17,6 @@ type eventGatherer struct {
 	orderRepo    core.OrderRepository
 	customerRepo core.CustomerRepository
 	squareApi    APIClient
-	orderMapper  OrderMapper
 }
 
 func NewEventGatherer(
@@ -27,7 +26,6 @@ func NewEventGatherer(
 	orderRepo core.OrderRepository,
 	customerRepo core.CustomerRepository,
 	squareApi APIClient,
-	orderMapper OrderMapper,
 ) EventGatherer {
 	return eventGatherer{
 		log:          log.With().Str("caller", "eventGatherer.Gather").Logger(),
@@ -36,7 +34,6 @@ func NewEventGatherer(
 		orderRepo:    orderRepo,
 		customerRepo: customerRepo,
 		squareApi:    squareApi,
-		orderMapper:  orderMapper,
 	}
 }
 
@@ -71,13 +68,12 @@ func (gatherer eventGatherer) Gather(squarePaymentID string) error {
 		return err
 	}
 
-	order, err := gatherer.orderMapper.MapOrder(squareOrder)
+	order, err := MapOrder(squareOrder, payment.SquarePaymentID, merchant.SquareMerchantID)
 	if err != nil {
 		return err
 	}
+
 	order.CustomerID = customerID
-	order.Meta.SquarePaymentID = squarePaymentID
-	order.Meta.SquareMerchantID = merchant.SquareMerchantID
 	orderID, err := gatherer.orderRepo.PutOrder(order)
 	if err != nil {
 		return err

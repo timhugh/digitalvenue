@@ -12,7 +12,7 @@ const (
 func NewWebhookEvent(body string) (WebhookEvent[any], error) {
 	var metadata WebhookEventMetadata
 	if err := json.Unmarshal([]byte(body), &metadata); err != nil {
-		return nil, fmt.Errorf("malformed request json: %w", err)
+		return nil, err
 	}
 
 	switch metadata.EventType {

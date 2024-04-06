@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -26,7 +26,7 @@ func Validate(body string, notificationURL string, signatureKey string, signatur
 			Str("expectedSignature", goodSignature).
 			Str("actualSignature", signature).
 			Msg("Signature mismatch")
-		return fmt.Errorf("signature mismatch")
+		return errors.New("signature mismatch")
 	}
 
 	return nil

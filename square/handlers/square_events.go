@@ -19,16 +19,21 @@ type SquareEventsHandler struct {
 	handlerProvider        webhooks.HandlerProvider
 }
 
-func NewSquareEventsHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) SquareEventsHandler {
-	return SquareEventsHandler{
-		webhookNotificationURL: core.Getenv(squareWebhookNotificationURL),
+func NewSquareEventsHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) (*SquareEventsHandler, error) {
+	squareWebhookNotificationURL, err := core.RequireEnv(squareWebhookNotificationURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SquareEventsHandler{
+		webhookNotificationURL: squareWebhookNotificationURL,
 		merchantRepo:           merchantRepo,
 		log:                    log,
 		handlerProvider:        handlerProvider,
-	}
+	}, nil
 }
 
-func (handler SquareEventsHandler) Handle(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (handler *SquareEventsHandler) Handle(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	webhookEvent, err := webhooks.NewWebhookEvent(request.Body)
 	if err != nil {
 		handler.log.Warn().Err(err).Msg("Failed to create webhook event")

@@ -13,11 +13,16 @@ type SquarePaymentCreatedQueue struct {
 	queueURL string
 }
 
-func NewSquarePaymentCreatedQueue(client *sqs.Client) *SquarePaymentCreatedQueue {
+func NewSquarePaymentCreatedQueue(client *sqs.Client) (*SquarePaymentCreatedQueue, error) {
+	tableName, err := core.RequireEnv(squarePaymentCreatedQueueURL)
+	if err != nil {
+		return nil, err
+	}
+
 	return &SquarePaymentCreatedQueue{
 		client:   client,
-		queueURL: core.Getenv(squarePaymentCreatedQueueURL),
-	}
+		queueURL: tableName,
+	}, nil
 }
 
 func (queue *SquarePaymentCreatedQueue) PublishSquarePaymentCreated(squarePaymentID string) error {

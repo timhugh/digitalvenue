@@ -9,17 +9,22 @@ import (
 )
 
 type CustomerRepository struct {
-	client      *dynamodb.Client
+	client      Client
 	idGenerator core.IDGenerator
 	tableName   string
 }
 
-func NewCustomerRepository(client *dynamodb.Client) *CustomerRepository {
+func NewCustomerRepository(client Client) (*CustomerRepository, error) {
+	tableName, err := core.RequireEnv(CustomersTableNameKey)
+	if err != nil {
+		return nil, err
+	}
+
 	return &CustomerRepository{
 		client:      client,
 		idGenerator: core.NewIDGenerator(),
-		tableName:   core.Getenv(CustomersTableName),
-	}
+		tableName:   tableName,
+	}, nil
 }
 
 func (repo *CustomerRepository) PutCustomer(customer core.Customer) (string, error) {
@@ -30,6 +35,11 @@ func (repo *CustomerRepository) PutCustomer(customer core.Customer) (string, err
 		customerID = customer.CustomerID
 	}
 
+	var meta = make(map[string]types.AttributeValue)
+	for key, value := range customer.Meta {
+		meta[key] = &types.AttributeValueMemberS{Value: value}
+	}
+
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			CustomerID: &types.AttributeValueMemberS{Value: customerID},
@@ -37,9 +47,7 @@ func (repo *CustomerRepository) PutCustomer(customer core.Customer) (string, err
 			LastName:   &types.AttributeValueMemberS{Value: customer.LastName},
 			Email:      &types.AttributeValueMemberS{Value: customer.Email},
 			Phone:      &types.AttributeValueMemberS{Value: customer.Phone},
-			Meta: &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
-				SquareCustomerID: &types.AttributeValueMemberS{Value: customer.Meta.SquareCustomerID},
-			}},
+			Meta:       &types.AttributeValueMemberM{Value: meta},
 		},
 		TableName: aws.String(repo.tableName),
 	}

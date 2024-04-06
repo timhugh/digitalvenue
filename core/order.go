@@ -5,24 +5,13 @@ type Order struct {
 	TenantID   string
 	CustomerID string
 	Items      []OrderItem
-	Meta       OrderMeta
-}
-
-type OrderMeta struct {
-	SquareOrderID    string
-	SquarePaymentID  string
-	SquareMerchantID string
-	SquareCustomerID string
+	Meta       map[string]string
 }
 
 type OrderItem struct {
 	ItemID string
 	Name   string
-	Meta   OrderItemMeta
-}
-
-type OrderItemMeta struct {
-	SquareItemID string
+	Meta   map[string]string
 }
 
 type OrderRepository interface {

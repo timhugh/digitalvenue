@@ -1,14 +1,14 @@
 package core
 
 import (
-	"github.com/rs/zerolog/log"
+	"fmt"
 	"os"
 )
 
-func Getenv(key string) string {
+func RequireEnv(key string) (string, error) {
 	val := os.Getenv(key)
 	if val == "" {
-		log.Fatal().Msgf("Environment variable %s is required", key)
+		return "", fmt.Errorf("missing required environment variable %s", key)
 	}
-	return val
+	return val, nil
 }

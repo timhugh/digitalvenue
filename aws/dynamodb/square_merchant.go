@@ -2,7 +2,6 @@ package dynamodb
 
 import (
 	"context"
-	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -12,17 +11,22 @@ import (
 )
 
 type SquareMerchantRepository struct {
-	client      *dynamodb.Client
+	client      Client
 	idGenerator core.IDGenerator
 	tableName   string
 }
 
-func NewSquareMerchantRepository(client *dynamodb.Client) *SquareMerchantRepository {
+func NewSquareMerchantRepository(client Client) (*SquareMerchantRepository, error) {
+	tableName, err := core.RequireEnv(SquareMerchantsTableNameKey)
+	if err != nil {
+		return nil, err
+	}
+
 	return &SquareMerchantRepository{
 		client:      client,
 		idGenerator: core.NewIDGenerator(),
-		tableName:   core.Getenv(SquareMerchantsTableName),
-	}
+		tableName:   tableName,
+	}, nil
 }
 
 func (repo *SquareMerchantRepository) PutSquareMerchant(merchant square.Merchant) error {
@@ -54,13 +58,9 @@ func (repo *SquareMerchantRepository) GetSquareMerchant(squareMerchantID string)
 
 	getItemOutput, err := repo.client.GetItem(context.TODO(), getItemInput)
 	if err != nil {
-		return merchant, fmt.Errorf("unable to retrieve merchant with id '%s': %w", squareMerchantID, err)
+		return merchant, err
 	}
 
-	err = attributevalue.UnmarshalMap(getItemOutput.Item, &merchant)
-	if err != nil {
-		return merchant, fmt.Errorf("failed to unmarshal merchant: %w", err)
-	}
-
+	_ = attributevalue.UnmarshalMap(getItemOutput.Item, &merchant)
 	return merchant, err
 }

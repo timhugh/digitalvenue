@@ -2,7 +2,6 @@ package webhooks
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type PaymentCreatedEvent struct {
@@ -34,7 +33,7 @@ func (event *PaymentCreatedEvent) UnmarshalJSON(data []byte) error {
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return fmt.Errorf("error unmarshalling payment created event: %w", err)
+		return err
 	}
 
 	event.eventType = raw.EventType

@@ -1,7 +1,7 @@
 package webhooks
 
 import (
-	"fmt"
+	"errors"
 	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/square"
 )
@@ -23,11 +23,11 @@ func NewPaymentCreatedHandler(paymentsRepository square.PaymentRepository, payme
 func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error {
 	paymentCreatedEvent, ok := event.(PaymentCreatedEvent)
 	if !ok {
-		return fmt.Errorf("event is not PaymentCreatedEvent")
+		return errors.New("event is not PaymentCreatedEvent")
 	}
 	paymentData, ok := paymentCreatedEvent.Data().(PaymentData)
 	if !ok {
-		return fmt.Errorf("data type is not PaymentData")
+		return errors.New("data type is not PaymentData")
 	}
 
 	handler.log.Debug().
@@ -44,13 +44,12 @@ func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error
 		SquareMerchantID: paymentCreatedEvent.MerchantID(),
 	}
 
-	err := handler.paymentsRepository.PutSquarePayment(payment)
-	if err != nil {
-		return fmt.Errorf("failed to create payment: %w", err)
+	if err := handler.paymentsRepository.PutSquarePayment(payment); err != nil {
+		return err
 	}
 
 	if err := handler.paymentCreatedQueue.PublishSquarePaymentCreated(payment.SquarePaymentID); err != nil {
-		return fmt.Errorf("failed to publish payment created event: %w", err)
+		return err
 	}
 
 	return nil

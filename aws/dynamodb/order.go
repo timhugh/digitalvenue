@@ -9,17 +9,22 @@ import (
 )
 
 type OrderRepository struct {
-	client      *dynamodb.Client
+	client      Client
 	idGenerator core.IDGenerator
 	tableName   string
 }
 
-func NewOrderRepository(client *dynamodb.Client) *OrderRepository {
+func NewOrderRepository(client Client) (*OrderRepository, error) {
+	tableName, err := core.RequireEnv(OrdersTableNameKey)
+	if err != nil {
+		return nil, err
+	}
+
 	return &OrderRepository{
 		client:      client,
 		idGenerator: core.NewIDGenerator(),
-		tableName:   core.Getenv(OrdersTableName),
-	}
+		tableName:   tableName,
+	}, nil
 }
 
 func (repo *OrderRepository) PutOrder(order core.Order) (string, error) {
@@ -32,12 +37,15 @@ func (repo *OrderRepository) PutOrder(order core.Order) (string, error) {
 			itemID = item.ItemID
 		}
 
+		meta := make(map[string]types.AttributeValue)
+		for key, value := range item.Meta {
+			meta[key] = &types.AttributeValueMemberS{Value: value}
+		}
+
 		orderItems[i] = &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
 			ItemID: &types.AttributeValueMemberS{Value: itemID},
 			Name:   &types.AttributeValueMemberS{Value: item.Name},
-			Meta: &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
-				SquareItemID: &types.AttributeValueMemberS{Value: item.Meta.SquareItemID},
-			}},
+			Meta:   &types.AttributeValueMemberM{Value: meta},
 		}}
 	}
 
@@ -48,18 +56,18 @@ func (repo *OrderRepository) PutOrder(order core.Order) (string, error) {
 		orderID = order.OrderID
 	}
 
+	meta := make(map[string]types.AttributeValue)
+	for key, value := range order.Meta {
+		meta[key] = &types.AttributeValueMemberS{Value: value}
+	}
+
 	putItemInput := dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			OrderID:    &types.AttributeValueMemberS{Value: orderID},
 			TenantID:   &types.AttributeValueMemberS{Value: order.TenantID},
 			CustomerID: &types.AttributeValueMemberS{Value: order.CustomerID},
 			Items:      &types.AttributeValueMemberL{Value: orderItems},
-			Meta: &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
-				SquareOrderID:    &types.AttributeValueMemberS{Value: order.Meta.SquareOrderID},
-				SquarePaymentID:  &types.AttributeValueMemberS{Value: order.Meta.SquarePaymentID},
-				SquareMerchantID: &types.AttributeValueMemberS{Value: order.Meta.SquareMerchantID},
-				SquareCustomerID: &types.AttributeValueMemberS{Value: order.Meta.SquareCustomerID},
-			}},
+			Meta:       &types.AttributeValueMemberM{Value: meta},
 		},
 		TableName: aws.String(repo.tableName),
 	}

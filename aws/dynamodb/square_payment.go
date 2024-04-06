@@ -2,7 +2,6 @@ package dynamodb
 
 import (
 	"context"
-	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -12,17 +11,22 @@ import (
 )
 
 type SquarePaymentRepository struct {
-	client      *dynamodb.Client
+	client      Client
 	idGenerator core.IDGenerator
 	tableName   string
 }
 
-func NewSquarePaymentRepository(client *dynamodb.Client) *SquarePaymentRepository {
+func NewSquarePaymentRepository(client Client) (*SquarePaymentRepository, error) {
+	tableName, err := core.RequireEnv(SquarePaymentsTableNameKey)
+	if err != nil {
+		return nil, err
+	}
+
 	return &SquarePaymentRepository{
 		client:      client,
 		idGenerator: core.NewIDGenerator(),
-		tableName:   core.Getenv(SquarePaymentsTableName),
-	}
+		tableName:   tableName,
+	}, nil
 }
 
 func (repo *SquarePaymentRepository) PutSquarePayment(payment square.Payment) error {
@@ -37,7 +41,7 @@ func (repo *SquarePaymentRepository) PutSquarePayment(payment square.Payment) er
 
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
 	if err != nil {
-		return fmt.Errorf("failed to create payment: %w", err)
+		return err
 	}
 
 	return nil
@@ -55,13 +59,10 @@ func (repo *SquarePaymentRepository) GetSquarePayment(squarePaymentID string) (s
 
 	result, err := repo.client.GetItem(context.TODO(), getItemInput)
 	if err != nil {
-		return payment, fmt.Errorf("failed to get payment with id '%s': %w", squarePaymentID, err)
+		return payment, err
 	}
 
-	err = attributevalue.UnmarshalMap(result.Item, &payment)
-	if err != nil {
-		return payment, fmt.Errorf("failed to unmarshal payment: %w", err)
-	}
+	_ = attributevalue.UnmarshalMap(result.Item, &payment)
 
 	return payment, nil
 }

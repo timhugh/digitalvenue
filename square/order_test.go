@@ -1,10 +1,10 @@
 package square_test
 
 import (
-	"github.com/go-test/deep"
 	"github.com/matryer/is"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/squaretest"
+	"github.com/timhugh/digitalvenue/test"
 	"testing"
 )
 
@@ -13,12 +13,20 @@ func TestMapOrder(t *testing.T) {
 
 	squareOrder := squaretest.NewSquareOrder()
 
-	mapper := square.NewOrderMapper()
-	order, err := mapper.MapOrder(squareOrder)
+	order, err := square.MapOrder(squareOrder, squaretest.SquarePaymentID, squaretest.SquareMerchantID)
 	is.NoErr(err)
 
 	expectedOrder := squaretest.NewOrder()
-	if diff := deep.Equal(order, expectedOrder); diff != nil {
-		t.Error(diff)
-	}
+	err = test.Diff(order, expectedOrder)
+	is.NoErr(err)
+}
+
+func TestMapOrder_FailsWithNonIntegerQuantity(t *testing.T) {
+	is := is.New(t)
+
+	squareOrder := squaretest.NewSquareOrder()
+	squareOrder.OrderItems[0].Quantity = "not an int"
+
+	_, err := square.MapOrder(squareOrder, squaretest.SquarePaymentID, squaretest.SquareMerchantID)
+	is.True(err != nil)
 }

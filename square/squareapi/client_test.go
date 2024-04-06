@@ -2,9 +2,9 @@ package squareapi
 
 import (
 	"bytes"
-	"github.com/go-test/deep"
 	"github.com/matryer/is"
 	"github.com/timhugh/digitalvenue/square/squaretest"
+	"github.com/timhugh/digitalvenue/test"
 	"io"
 	"net/http"
 	"os"
@@ -83,9 +83,8 @@ func TestClient_GetOrder_Success(t *testing.T) {
 	is.NoErr(err)
 
 	expectedOrder := squaretest.NewSquareOrder()
-	if diff := deep.Equal(order, expectedOrder); diff != nil {
-		t.Error(diff)
-	}
+	err = test.Diff(expectedOrder, order)
+	is.NoErr(err)
 }
 
 func TestClient_GetOrder_ErrorNotFound(t *testing.T) {

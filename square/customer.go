@@ -2,6 +2,10 @@ package square
 
 import "github.com/timhugh/digitalvenue/core"
 
+const (
+	CustomerIDKey = "SquareCustomerID"
+)
+
 type Customer struct {
 	SquareCustomerID string
 	FirstName        string
@@ -16,8 +20,8 @@ func MapCustomer(customer Customer) core.Customer {
 		LastName:  customer.LastName,
 		Email:     customer.Email,
 		Phone:     customer.Phone,
-		Meta: core.CustomerMeta{
-			SquareCustomerID: customer.SquareCustomerID,
+		Meta: map[string]string{
+			CustomerIDKey: customer.SquareCustomerID,
 		},
 	}
 }
