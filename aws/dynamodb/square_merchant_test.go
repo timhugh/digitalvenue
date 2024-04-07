@@ -84,7 +84,7 @@ func TestSquareMerchantRepository_GetSquareMerchant_GetItemError(t *testing.T) {
 	is.NoErr(err)
 
 	_, err = repo.GetSquareMerchant(squaretest.SquareMerchantID)
-	is.Equal(err, thrownError)
+	is.True(errors.Is(err, thrownError))
 }
 
 func TestSquareMerchantRepository_PutSquareMerchant(t *testing.T) {
@@ -127,5 +127,5 @@ func TestSquareMerchantRepository_PutSquareMerchant_PutItemError(t *testing.T) {
 	is.NoErr(err)
 
 	err = repo.PutSquareMerchant(square.Merchant{})
-	is.Equal(err, thrownError)
+	is.True(errors.Is(err, thrownError))
 }

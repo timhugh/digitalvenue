@@ -2,7 +2,7 @@ package webhooks
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -12,7 +12,7 @@ const (
 func NewWebhookEvent(body string) (WebhookEvent[any], error) {
 	var metadata WebhookEventMetadata
 	if err := json.Unmarshal([]byte(body), &metadata); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to unmarshal webhook event metadata")
 	}
 
 	switch metadata.EventType {
@@ -24,7 +24,7 @@ func NewWebhookEvent(body string) (WebhookEvent[any], error) {
 		event.body = body
 		return event, nil
 	default:
-		return nil, fmt.Errorf("unknown event type: %s", metadata.EventType)
+		return nil, errors.Errorf("unknown event type: %s", metadata.EventType)
 	}
 }
 

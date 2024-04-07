@@ -1,14 +1,14 @@
 package core
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"os"
 )
 
 func RequireEnv(key string) (string, error) {
 	val := os.Getenv(key)
 	if val == "" {
-		return "", fmt.Errorf("missing required environment variable %s", key)
+		return "", errors.Errorf("missing required environment variable %s", key)
 	}
 	return val, nil
 }

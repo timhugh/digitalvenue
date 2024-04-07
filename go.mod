@@ -33,6 +33,7 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/ovechkin-dm/go-dyno v0.0.21 // indirect
 	github.com/petermattis/goid v0.0.0-20230904192822-1876fd5063bc // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 )
 

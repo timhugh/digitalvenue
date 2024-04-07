@@ -7,11 +7,11 @@ const (
 )
 
 type Customer struct {
-	SquareCustomerID string
-	FirstName        string
-	LastName         string
-	Email            string
-	Phone            string
+	SquareCustomerID string `json:"id"`
+	FirstName        string `json:"given_name"`
+	LastName         string `json:"family_name"`
+	Email            string `json:"email_address"`
+	Phone            string `json:"phone_number"`
 }
 
 func MapCustomer(customer Customer) core.Customer {

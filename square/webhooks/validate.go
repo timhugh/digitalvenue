@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -14,15 +14,14 @@ func Validate(body string, notificationURL string, signatureKey string, signatur
 	payload := new(bytes.Buffer)
 	err := json.Compact(payload, []byte(body))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to compact json")
 	}
 
 	appended := append([]byte(notificationURL), payload.Bytes()...)
 
 	goodSignature := generateSignature(signatureKey, appended)
 	if goodSignature != signature {
-		// TODO: this logger isn't injected
-		log.Warn().
+		log.Debug().
 			Str("expectedSignature", goodSignature).
 			Str("actualSignature", signature).
 			Msg("Signature mismatch")

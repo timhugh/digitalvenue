@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/square"
 )
@@ -40,7 +41,7 @@ func (repo *SquareMerchantRepository) PutSquareMerchant(merchant square.Merchant
 	}
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to put square merchant")
 	}
 
 	return nil
@@ -58,9 +59,12 @@ func (repo *SquareMerchantRepository) GetSquareMerchant(squareMerchantID string)
 
 	getItemOutput, err := repo.client.GetItem(context.TODO(), getItemInput)
 	if err != nil {
-		return merchant, err
+		return merchant, errors.Wrap(err, "failed to get square merchant")
 	}
 
-	_ = attributevalue.UnmarshalMap(getItemOutput.Item, &merchant)
-	return merchant, err
+	err = attributevalue.UnmarshalMap(getItemOutput.Item, &merchant)
+	if err != nil {
+		return merchant, errors.Wrap(err, "failed to unmarshal square merchant")
+	}
+	return merchant, nil
 }

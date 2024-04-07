@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/test"
 	"os"
@@ -115,5 +116,5 @@ func TestCustomerRepository_PutCustomer_PutError(t *testing.T) {
 	mock.WhenDouble(mockDynamoDBClient.PutItem(mock.Any[context.Context](), mock.Any[*dynamodb.PutItemInput]())).ThenReturn(nil, thrownError)
 
 	_, err = repo.PutCustomer(core.Customer{})
-	is.Equal(err, thrownError)
+	is.True(errors.Is(err, thrownError))
 }

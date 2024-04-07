@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/core"
 )
 
@@ -74,7 +75,7 @@ func (repo *OrderRepository) PutOrder(order core.Order) (string, error) {
 
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to put order")
 	}
 
 	return orderID, nil

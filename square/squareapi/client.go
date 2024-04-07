@@ -3,6 +3,7 @@ package squareapi
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/square"
 	"io"
 	"net/http"
@@ -25,10 +26,14 @@ type ApiError struct {
 	} `json:"errors"`
 }
 
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 type Client struct {
 	baseUrl       string
 	maxBodyLength int64
-	httpClient    *http.Client
+	httpClient    httpClient
 }
 
 func NewClient() *Client {
@@ -42,32 +47,33 @@ func NewClient() *Client {
 func (client *Client) fetchJson(path string, apiToken string, target interface{}) error {
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to create http request")
 	}
 	req.Header.Set("Authorization", fmt.Sprintf(bearerToken, apiToken))
 
 	resp, err := client.httpClient.Do(req)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error when executing http request")
 	}
 
 	body, err := client.readBody(resp)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to read http response body")
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		var apiError ApiError
 		err = json.Unmarshal(body, &apiError)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to unmarshal API error JSON")
 		}
-		return fmt.Errorf("API error: %s", apiError.Errors[0].Detail)
+		// TODO: this is just the first error; should probably return all of them if there are more
+		return errors.Errorf("API error: %s", apiError.Errors[0].Detail)
 	}
 
 	err = json.Unmarshal(body, target)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to unmarshal http response JSON")
 	}
 
 	return nil
@@ -82,42 +88,26 @@ func (client *Client) readBody(resp *http.Response) ([]byte, error) {
 	return buf, nil
 }
 
-type customerContainer struct {
-	Customer struct {
-		ID           string `json:"id"`
-		GivenName    string `json:"given_name"`
-		FamilyName   string `json:"family_name"`
-		EmailAddress string `json:"email_address"`
-		PhoneNumber  string `json:"phone_number"`
-	} `json:"customer"`
-}
-
 func (client *Client) GetCustomer(squareCustomerID string, apiToken string) (square.Customer, error) {
 	path := client.baseUrl + fmt.Sprintf(getCustomerRouteFormat, squareCustomerID)
 
-	var customerContainer customerContainer
+	var customerContainer struct {
+		Customer square.Customer `json:"customer"`
+	}
 	err := client.fetchJson(path, apiToken, &customerContainer)
 	if err != nil {
 		return square.Customer{}, err
 	}
 
-	return square.Customer{
-		SquareCustomerID: customerContainer.Customer.ID,
-		FirstName:        customerContainer.Customer.GivenName,
-		LastName:         customerContainer.Customer.FamilyName,
-		Email:            customerContainer.Customer.EmailAddress,
-		Phone:            customerContainer.Customer.PhoneNumber,
-	}, nil
-}
-
-type orderContainer struct {
-	Order square.Order `json:"order"`
+	return customerContainer.Customer, nil
 }
 
 func (client *Client) GetOrder(squareOrderID string, apiToken string) (square.Order, error) {
 	path := client.baseUrl + fmt.Sprintf(getOrderRouteFormat, squareOrderID)
 
-	var orderContainer orderContainer
+	var orderContainer struct {
+		Order square.Order `json:"order"`
+	}
 	err := client.fetchJson(path, apiToken, &orderContainer)
 	if err != nil {
 		return square.Order{}, err

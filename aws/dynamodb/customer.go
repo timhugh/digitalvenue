@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/core"
 )
 
@@ -54,7 +55,7 @@ func (repo *CustomerRepository) PutCustomer(customer core.Customer) (string, err
 
 	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to put customer")
 	}
 
 	return customerID, nil

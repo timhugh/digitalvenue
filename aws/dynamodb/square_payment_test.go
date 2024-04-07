@@ -84,7 +84,7 @@ func TestSquarePaymentRepository_GetSquarePayment_GetItemError(t *testing.T) {
 	is.NoErr(err)
 
 	_, err = repo.GetSquarePayment(squaretest.SquarePaymentID)
-	is.Equal(err, thrownError)
+	is.True(errors.Is(err, thrownError))
 }
 
 func TestSquarePaymentRepository_PutSquarePayment(t *testing.T) {

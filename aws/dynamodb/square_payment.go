@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/square"
 )
@@ -59,10 +60,13 @@ func (repo *SquarePaymentRepository) GetSquarePayment(squarePaymentID string) (s
 
 	result, err := repo.client.GetItem(context.TODO(), getItemInput)
 	if err != nil {
-		return payment, err
+		return payment, errors.Wrap(err, "failed to get square payment")
 	}
 
-	_ = attributevalue.UnmarshalMap(result.Item, &payment)
+	err = attributevalue.UnmarshalMap(result.Item, &payment)
+	if err != nil {
+		return payment, errors.Wrap(err, "failed to unmarshal square payment")
+	}
 
 	return payment, nil
 }

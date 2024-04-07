@@ -1,7 +1,7 @@
 package webhooks
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/square"
 )
@@ -45,11 +45,11 @@ func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error
 	}
 
 	if err := handler.paymentsRepository.PutSquarePayment(payment); err != nil {
-		return err
+		return errors.Wrap(err, "failed to save payment")
 	}
 
 	if err := handler.paymentCreatedQueue.PublishSquarePaymentCreated(payment.SquarePaymentID); err != nil {
-		return err
+		return errors.Wrap(err, "failed to publish payment created event")
 	}
 
 	return nil

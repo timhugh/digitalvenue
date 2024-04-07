@@ -2,9 +2,9 @@ package sqs
 
 import (
 	"context"
-	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/core"
 )
 
@@ -31,7 +31,7 @@ func (queue *SquarePaymentCreatedQueue) PublishSquarePaymentCreated(squarePaymen
 		QueueUrl:    aws.String(queue.queueURL),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to send message to sqs: %w", err)
+		return errors.Wrap(err, "failed to send message to sqs")
 	}
 
 	return nil
