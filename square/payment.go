@@ -16,5 +16,5 @@ type PaymentCreatedEvent struct {
 }
 
 type PaymentCreatedQueue interface {
-	PublishSquarePaymentCreated(squarePaymentId string) error
+	Publish(squarePaymentId string) error
 }

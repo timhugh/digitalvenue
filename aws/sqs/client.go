@@ -7,6 +7,7 @@ import (
 
 const (
 	squarePaymentCreatedQueueURL = "SQUARE_PAYMENT_CREATED_QUEUE_URL"
+	orderCreatedQueueURL         = "ORDER_CREATED_QUEUE_URL"
 )
 
 func NewClient(config aws.Config) *sqs.Client {

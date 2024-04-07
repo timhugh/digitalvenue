@@ -11,12 +11,13 @@ type PaymentGatherer interface {
 }
 
 type paymentGatherer struct {
-	log          zerolog.Logger
-	paymentRepo  PaymentRepository
-	merchantRepo MerchantRepository
-	orderRepo    core.OrderRepository
-	customerRepo core.CustomerRepository
-	squareApi    APIClient
+	log               zerolog.Logger
+	paymentRepo       PaymentRepository
+	merchantRepo      MerchantRepository
+	orderRepo         core.OrderRepository
+	customerRepo      core.CustomerRepository
+	squareApi         APIClient
+	orderCreatedQueue core.OrderCreatedQueue
 }
 
 func NewPaymentGatherer(
@@ -26,14 +27,16 @@ func NewPaymentGatherer(
 	orderRepo core.OrderRepository,
 	customerRepo core.CustomerRepository,
 	squareApi APIClient,
+	orderCreatedQueue core.OrderCreatedQueue,
 ) PaymentGatherer {
 	return paymentGatherer{
-		log:          log.With().Str("caller", "paymentGatherer.Gather").Logger(),
-		paymentRepo:  paymentRepo,
-		merchantRepo: merchantRepo,
-		orderRepo:    orderRepo,
-		customerRepo: customerRepo,
-		squareApi:    squareApi,
+		log:               log.With().Str("caller", "paymentGatherer.Gather").Logger(),
+		paymentRepo:       paymentRepo,
+		merchantRepo:      merchantRepo,
+		orderRepo:         orderRepo,
+		customerRepo:      customerRepo,
+		squareApi:         squareApi,
+		orderCreatedQueue: orderCreatedQueue,
 	}
 }
 
@@ -81,7 +84,9 @@ func (gatherer paymentGatherer) Gather(squarePaymentID string) error {
 
 	log.Info().Str("order_id", orderID).Msg("Order created")
 
-	// publish gathered event to SQS
+	if err := gatherer.orderCreatedQueue.Publish(orderID); err != nil {
+		return err
+	}
 
 	return nil
 }

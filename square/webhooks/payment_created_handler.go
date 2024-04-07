@@ -48,7 +48,7 @@ func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error
 		return errors.Wrap(err, "failed to save payment")
 	}
 
-	if err := handler.paymentCreatedQueue.PublishSquarePaymentCreated(payment.SquarePaymentID); err != nil {
+	if err := handler.paymentCreatedQueue.Publish(payment.SquarePaymentID); err != nil {
 		return errors.Wrap(err, "failed to publish payment created event")
 	}
 
