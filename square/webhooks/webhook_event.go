@@ -12,7 +12,7 @@ const (
 func NewWebhookEvent(body string) (WebhookEvent[any], error) {
 	var metadata WebhookEventMetadata
 	if err := json.Unmarshal([]byte(body), &metadata); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal webhook event metadata")
+		return nil, errors.New("failed to unmarshal webhook event metadata")
 	}
 
 	switch metadata.EventType {

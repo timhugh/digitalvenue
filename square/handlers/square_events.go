@@ -37,7 +37,7 @@ func (handler *SquareEventsHandler) Handle(request events.APIGatewayProxyRequest
 	webhookEvent, err := webhooks.NewWebhookEvent(request.Body)
 	if err != nil {
 		handler.log.Warn().Err(err).Msg("Failed to create webhook event")
-		return errorResponse("unable to process event")
+		return errorResponse("unable to process event: %s", err.Error())
 	}
 	log := handler.log.With().
 		Str("event_id", webhookEvent.EventID()).
