@@ -2,6 +2,7 @@ APP_NAME = digitalvenue
 ENVIRONMENT = dev
 CODE_BUCKET = $(APP_NAME)-codebucket
 ROOT = $(shell git rev-parse --show-toplevel)
+SERVICES = $(shell ls cmd)
 
 .PHONY: validate
 validate:
@@ -38,13 +39,9 @@ deploy: package
 			CodeBucketName=$(CODE_BUCKET)
 
 .PHONY: build
-build: build/echo.zip build/square-events.zip build/square-event-gatherer.zip
-build/echo.zip: cmd/echo
-	$(MAKE) -C cmd/echo OUT=$(ROOT)/$@
-build/square-events.zip: cmd/square-events
-	$(MAKE) -C cmd/square-events OUT=$(ROOT)/$@
-build/square-event-gatherer.zip: cmd/square-event-gatherer
-	$(MAKE) -C cmd/square-event-gatherer OUT=$(ROOT)/$@
+build: $(addprefix build/, $(addsuffix .zip, $(SERVICES)))
+build/%.zip: cmd/%
+	$(MAKE) -C $< OUT=$(ROOT)/$@
 
 .PHONY: test
 test: build
@@ -52,14 +49,8 @@ test: build
 	go vet ./...
 
 .PHONY: clean
-clean: clean-echo clean-square-events clean-square-event-gatherer
+clean: $(addprefix clean-, $(SERVICES))
 	rm -f template.yml
 	rm -rf build/
-.PHONY: clean-echo
-clean-echo:
-	$(MAKE) -C cmd/echo clean
-.PHONY: clean-square-events
-clean-square-events:
-	$(MAKE) -C cmd/square-events clean
-clean-square-event-gatherer:
-	$(MAKE) -C cmd/square-event-gatherer clean
+clean-%:
+	$(MAKE) -C cmd/$* clean
