@@ -12,7 +12,6 @@ import (
 	"github.com/timhugh/digitalvenue/aws/dynamodb"
 	"github.com/timhugh/digitalvenue/aws/sqs"
 	"github.com/timhugh/digitalvenue/square"
-	"github.com/timhugh/digitalvenue/square/handlers"
 	"github.com/timhugh/digitalvenue/square/webhooks"
 )
 
@@ -20,7 +19,7 @@ func newLogger() zerolog.Logger {
 	return log.With().Str("service", "square-events").Logger()
 }
 
-func initializeHandler() (*handlers.SquareEventsHandler, error) {
+func initializeHandler() (*SquareEventsHandler, error) {
 	wire.Build(
 		newLogger,
 
@@ -40,7 +39,7 @@ func initializeHandler() (*handlers.SquareEventsHandler, error) {
 		webhooks.NewHandlerProvider,
 		webhooks.NewPaymentCreatedHandler,
 
-		handlers.NewSquareEventsHandler,
+		NewSquareEventsHandler,
 	)
-	return &handlers.SquareEventsHandler{}, nil
+	return &SquareEventsHandler{}, nil
 }

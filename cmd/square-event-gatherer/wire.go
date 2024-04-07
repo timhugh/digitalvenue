@@ -12,7 +12,6 @@ import (
 	"github.com/timhugh/digitalvenue/aws/dynamodb"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/square"
-	"github.com/timhugh/digitalvenue/square/handlers"
 	"github.com/timhugh/digitalvenue/square/squareapi"
 )
 
@@ -20,7 +19,7 @@ func newLogger() zerolog.Logger {
 	return log.With().Str("service", "square-event-gatherer").Logger()
 }
 
-func initializeHandler() (handlers.SquareEventGathererHandler, error) {
+func initializeHandler() (SquareEventGathererHandler, error) {
 	wire.Build(
 		newLogger,
 		square.NewEventGatherer,
@@ -41,7 +40,7 @@ func initializeHandler() (handlers.SquareEventGathererHandler, error) {
 		squareapi.NewClient,
 		wire.Bind(new(square.APIClient), new(*squareapi.Client)),
 
-		handlers.NewSquareEventGathererHandler,
+		NewSquareEventGathererHandler,
 	)
-	return handlers.SquareEventGathererHandler{}, nil
+	return SquareEventGathererHandler{}, nil
 }
