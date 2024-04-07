@@ -35,7 +35,7 @@ func TestSquareEventGathererHandler(t *testing.T) {
 			is := is.New(t)
 			mock.SetUp(t)
 
-			gatherer := mock.Mock[square.EventGatherer]()
+			gatherer := mock.Mock[square.PaymentGatherer]()
 			handler := NewSquareEventGathererHandler(log, gatherer)
 
 			response, err := handler.Handle(testCase.request)

@@ -6,11 +6,11 @@ import (
 	"github.com/timhugh/digitalvenue/core"
 )
 
-type EventGatherer interface {
+type PaymentGatherer interface {
 	Gather(squarePaymentID string) error
 }
 
-type eventGatherer struct {
+type paymentGatherer struct {
 	log          zerolog.Logger
 	paymentRepo  PaymentRepository
 	merchantRepo MerchantRepository
@@ -19,16 +19,16 @@ type eventGatherer struct {
 	squareApi    APIClient
 }
 
-func NewEventGatherer(
+func NewPaymentGatherer(
 	log zerolog.Logger,
 	paymentRepo PaymentRepository,
 	merchantRepo MerchantRepository,
 	orderRepo core.OrderRepository,
 	customerRepo core.CustomerRepository,
 	squareApi APIClient,
-) EventGatherer {
-	return eventGatherer{
-		log:          log.With().Str("caller", "eventGatherer.Gather").Logger(),
+) PaymentGatherer {
+	return paymentGatherer{
+		log:          log.With().Str("caller", "paymentGatherer.Gather").Logger(),
 		paymentRepo:  paymentRepo,
 		merchantRepo: merchantRepo,
 		orderRepo:    orderRepo,
@@ -37,10 +37,10 @@ func NewEventGatherer(
 	}
 }
 
-func (gatherer eventGatherer) Gather(squarePaymentID string) error {
+func (gatherer paymentGatherer) Gather(squarePaymentID string) error {
 	log := log.With().Str("square_payment_id", squarePaymentID).Logger()
 
-	log.Info().Msg("Processing square payment event")
+	log.Info().Msg("Processing new square payment")
 
 	payment, err := gatherer.paymentRepo.GetSquarePayment(squarePaymentID)
 	if err != nil {

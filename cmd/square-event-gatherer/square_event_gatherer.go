@@ -8,10 +8,10 @@ import (
 
 type SquareEventGathererHandler struct {
 	log      zerolog.Logger
-	gatherer square.EventGatherer
+	gatherer square.PaymentGatherer
 }
 
-func NewSquareEventGathererHandler(log zerolog.Logger, gatherer square.EventGatherer) SquareEventGathererHandler {
+func NewSquareEventGathererHandler(log zerolog.Logger, gatherer square.PaymentGatherer) SquareEventGathererHandler {
 	return SquareEventGathererHandler{
 		log:      log,
 		gatherer: gatherer,

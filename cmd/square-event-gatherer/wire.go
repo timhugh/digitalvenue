@@ -22,7 +22,7 @@ func newLogger() zerolog.Logger {
 func initializeHandler() (SquareEventGathererHandler, error) {
 	wire.Build(
 		newLogger,
-		square.NewEventGatherer,
+		square.NewPaymentGatherer,
 
 		aws.DefaultConfig,
 
