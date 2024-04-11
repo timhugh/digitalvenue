@@ -17,8 +17,8 @@ type squarePayment struct {
 }
 
 func (repo *Repository) GetSquarePayment(squareMerchantID string, squarePaymentID string) (*square.Payment, error) {
-	pk := "SquareMerchant#" + squareMerchantID
-	sk := "SquarePayment#" + squarePaymentID
+	pk := PrefixID("SquareMerchant", squareMerchantID)
+	sk := PrefixID("SquarePayment", squarePaymentID)
 	input := &dynamodb.GetItemInput{
 		TableName: aws.String(repo.tableName),
 		Key: map[string]types.AttributeValue{
@@ -41,8 +41,8 @@ func (repo *Repository) GetSquarePayment(squareMerchantID string, squarePaymentI
 }
 
 func (repo *Repository) PutSquarePayment(payment *square.Payment) error {
-	pk := "SquareMerchant#" + payment.SquareMerchantID
-	sk := "SquarePayment#" + payment.SquarePaymentID
+	pk := PrefixID("SquareMerchant", payment.SquareMerchantID)
+	sk := PrefixID("SquarePayment", payment.SquarePaymentID)
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String(repo.tableName),
 		Item: map[string]types.AttributeValue{

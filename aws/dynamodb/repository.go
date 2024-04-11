@@ -53,11 +53,15 @@ func (repo *Repository) getItem(itemType string, getItemInput *dynamodb.GetItemI
 	return nil
 }
 
-func removeIDPrefix(prefixedID string) (string, error) {
+func UnprefixID(prefixedID string) (string, error) {
 	parts := strings.Split(prefixedID, "#")
 	if len(parts) <= 1 {
 		return "", errors.New("invalid prefixed ID")
 	}
 
 	return parts[1], nil
+}
+
+func PrefixID(prefix string, id string) string {
+	return prefix + "#" + id
 }

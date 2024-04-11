@@ -34,7 +34,7 @@ func (repo *Repository) GetSquareMerchant(squareMerchantID string) (*square.Merc
 		return nil, err
 	}
 
-	tenantID, err := removeIDPrefix(item.TenantID)
+	tenantID, err := UnprefixID(item.TenantID)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid tenant ID")
 	}
