@@ -4,6 +4,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/timhugh/digitalvenue/dv_aws"
 	"github.com/timhugh/digitalvenue/dv_aws/dv_dynamodb"
 	"github.com/timhugh/digitalvenue/square"
 )
@@ -66,7 +67,7 @@ func (handler SquareEventGathererHandler) Handle(request events.DynamoDBEvent) (
 }
 
 func buildSquarePayment(record events.DynamoDBEventRecord) (*square.Payment, error) {
-	attrs, err := getAttributes("SquarePayment", record.Change.NewImage, "PK", "SK", "SquareOrderID")
+	attrs, err := dv_aws.GetImageAttributes("SquarePayment", record.Change.NewImage, "PK", "SK", "SquareOrderID")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get square payment attributes from dynamodb event new image")
 	}
@@ -85,32 +86,4 @@ func buildSquarePayment(record events.DynamoDBEventRecord) (*square.Payment, err
 		SquareMerchantID: squareMerchantID,
 		SquareOrderID:    attrs["SquareOrderID"],
 	}, nil
-}
-
-func getAttributes(itemType string, image map[string]events.DynamoDBAttributeValue, attrNames ...string) (map[string]string, error) {
-	missing := make([]string, 0)
-
-	if image == nil {
-		return nil, errors.New("image is nil")
-	}
-
-	if itemTypeAttr, ok := image["Type"]; !ok || itemTypeAttr.String() != itemType {
-		return nil, errors.Errorf("image is not a %s", itemType)
-	}
-
-	attrs := make(map[string]string)
-	for _, attrName := range attrNames {
-		attr, ok := image[attrName]
-		if !ok {
-			missing = append(missing, attrName)
-			continue
-		}
-		attrs[attrName] = attr.String()
-	}
-
-	if len(missing) > 0 {
-		return nil, errors.Errorf("missing attributes: %v", missing)
-	}
-
-	return attrs, nil
 }

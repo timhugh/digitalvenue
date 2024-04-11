@@ -37,6 +37,7 @@ services:
     depends_on:
       - square-events
       - square-event-gatherer
+      - ticket-generator
 
   square-events:
     build:
@@ -57,6 +58,18 @@ services:
       dockerfile: Dockerfile
     container_name: square-event-gatherer
     command: [ "go", "run", "./cmd/square-event-gatherer" ]
+    environment:
+      LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
+      CORE_DATA_TABLE_NAME: core-data-dev
+    depends_on:
+      - dynamodb-local
+
+  ticket-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ticket-generator
+    command: [ "go", "run", "./cmd/ticket-generator" ]
     environment:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
