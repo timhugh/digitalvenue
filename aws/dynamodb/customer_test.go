@@ -63,7 +63,7 @@ func TestRepository_GetCustomer_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if err := test.Diff(test.NewCustomer(), *actualCustomer); err != nil {
+	if err := test.Diff(test.NewCustomer(), actualCustomer); err != nil {
 		t.Error(err)
 	}
 
@@ -96,7 +96,7 @@ func TestRepository_GetCustomer_SuccessWithMetadata(t *testing.T) {
 		"ExampleKey": "ExampleValue",
 	}
 
-	if err := test.Diff(expectedCustomer, *actualCustomer); err != nil {
+	if err := test.Diff(expectedCustomer, actualCustomer); err != nil {
 		t.Error(err)
 	}
 

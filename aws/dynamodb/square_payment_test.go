@@ -59,7 +59,7 @@ func TestRepository_GetSquarePayment_BasicSuccess(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if err := test.Diff(squaretest.NewSquarePayment(), *payment); err != nil {
+	if err := test.Diff(squaretest.NewSquarePayment(), payment); err != nil {
 		t.Error(err)
 	}
 

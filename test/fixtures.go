@@ -23,8 +23,8 @@ const (
 	ItemID3   = "itemID3"
 )
 
-func NewOrder() core.Order {
-	return core.Order{
+func NewOrder() *core.Order {
+	return &core.Order{
 		ID:         OrderID,
 		TenantID:   TenantID,
 		CustomerID: CustomerID,
@@ -45,8 +45,8 @@ func NewOrder() core.Order {
 	}
 }
 
-func NewCustomer() core.Customer {
-	return core.Customer{
+func NewCustomer() *core.Customer {
+	return &core.Customer{
 		TenantID: TenantID,
 		ID:       CustomerID,
 		Name:     CustomerName,

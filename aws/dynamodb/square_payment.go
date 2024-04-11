@@ -47,7 +47,7 @@ func (repo *Repository) GetSquarePayment(squareMerchantID string, squarePaymentI
 	}, nil
 }
 
-func (repo *Repository) PutSquarePayment(payment square.Payment) error {
+func (repo *Repository) PutSquarePayment(payment *square.Payment) error {
 	pk := "SquareMerchant#" + payment.SquareMerchantID
 	sk := "SquarePayment#" + payment.SquarePaymentID
 	tenantID := "Tenant#" + payment.TenantID

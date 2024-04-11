@@ -48,7 +48,7 @@ func TestRepository_GetSquareMerchant_BasicSuccess(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if err := test.Diff(squaretest.NewSquareMerchant(), *merchant); err != nil {
+	if err := test.Diff(squaretest.NewSquareMerchant(), merchant); err != nil {
 		t.Error(err)
 	}
 

@@ -90,7 +90,7 @@ func NewOrder() *core.Order {
 	order.Items[2].ID = SquareItemUID2_2
 	order.Items[2].Meta = map[string]string{square.ItemIDKey: SquareItemUID2}
 
-	return &order
+	return order
 }
 
 func NewCustomer() *core.Customer {
@@ -101,5 +101,5 @@ func NewCustomer() *core.Customer {
 		"SquareCustomerID": SquareCustomerID,
 	}
 
-	return &customer
+	return customer
 }

@@ -23,7 +23,7 @@ func TestSquareEventsHandler(t *testing.T) {
 		name string
 		// given
 		request            events.APIGatewayProxyRequest
-		merchant           square.Merchant
+		merchant           *square.Merchant
 		merchantFetchError error
 		// then
 		expectedStatus int
@@ -38,7 +38,7 @@ func TestSquareEventsHandler(t *testing.T) {
 					"Content-Type":        "application/json",
 				},
 			},
-			merchant:       square.Merchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       &square.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 200,
 			expectedBody:   `{"status": "success"}`,
 		},
@@ -70,7 +70,7 @@ func TestSquareEventsHandler(t *testing.T) {
 					squareSignatureHeader: "invalid_signature",
 				},
 			},
-			merchant:       square.Merchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       &square.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
 			expectedBody:   `{"error": "invalid signature: invalid_signature"}`,
 		},
@@ -79,7 +79,7 @@ func TestSquareEventsHandler(t *testing.T) {
 			request: events.APIGatewayProxyRequest{
 				Body: `{"type": "not.a.real.event"}`,
 			},
-			merchant:       square.Merchant{SquareWebhookSignatureKey: "signature_key"},
+			merchant:       &square.Merchant{SquareWebhookSignatureKey: "signature_key"},
 			expectedStatus: 400,
 			expectedBody:   `{"error": "unable to process event: unknown event type: not.a.real.event"}`,
 		},

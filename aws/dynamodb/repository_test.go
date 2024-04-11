@@ -29,7 +29,12 @@ func initRepositoryTest(t *testing.T) (*Repository, Client) {
 }
 
 func TestNewRepository_RequiresTableName(t *testing.T) {
-	_, err := NewRepository(nil)
+	err := os.Unsetenv("CORE_DATA_TABLE_NAME")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = NewRepository(nil)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}

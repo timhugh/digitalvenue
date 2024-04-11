@@ -55,7 +55,7 @@ func (repo *Repository) GetCustomer(tenantID string, customerID string) (*core.C
 	}, nil
 }
 
-func (repo *Repository) PutCustomer(customer core.Customer) error {
+func (repo *Repository) PutCustomer(customer *core.Customer) error {
 	tenantKey := "Tenant#" + customer.TenantID
 	customerKey := "Customer#" + customer.ID
 

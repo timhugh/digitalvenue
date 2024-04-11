@@ -9,7 +9,7 @@ import (
 	"github.com/timhugh/digitalvenue/core"
 )
 
-func (repo *Repository) PutOrder(order core.Order) error {
+func (repo *Repository) PutOrder(order *core.Order) error {
 	tenantKey := "Tenant#" + order.TenantID
 	orderKey := "Order#" + order.ID
 
