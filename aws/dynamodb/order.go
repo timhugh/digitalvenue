@@ -9,74 +9,53 @@ import (
 	"github.com/timhugh/digitalvenue/core"
 )
 
-type OrderRepository struct {
-	client      Client
-	idGenerator core.IDGenerator
-	tableName   string
-}
+func (repo *Repository) PutOrder(order core.Order) error {
+	tenantKey := "Tenant#" + order.TenantID
+	orderKey := "Order#" + order.ID
 
-func NewOrderRepository(client Client) (*OrderRepository, error) {
-	tableName, err := core.RequireEnv(OrdersTableNameKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return &OrderRepository{
-		client:      client,
-		idGenerator: core.NewIDGenerator(),
-		tableName:   tableName,
-	}, nil
-}
-
-func (repo *OrderRepository) PutOrder(order core.Order) (string, error) {
 	orderItems := make([]types.AttributeValue, len(order.Items))
 	for i, item := range order.Items {
-		var itemID string
-		if item.ItemID == "" {
-			itemID = repo.idGenerator.GenerateID()
-		} else {
-			itemID = item.ItemID
+		var meta map[string]types.AttributeValue
+		if item.Meta != nil {
+			meta = make(map[string]types.AttributeValue)
+			for k, v := range item.Meta {
+				meta[k] = &types.AttributeValueMemberS{Value: v}
+			}
 		}
 
-		meta := make(map[string]types.AttributeValue)
-		for key, value := range item.Meta {
-			meta[key] = &types.AttributeValueMemberS{Value: value}
+		orderItems[i] = &types.AttributeValueMemberM{
+			Value: map[string]types.AttributeValue{
+				"ItemID": &types.AttributeValueMemberS{Value: item.ID},
+				"Name":   &types.AttributeValueMemberS{Value: item.Name},
+				"Meta":   &types.AttributeValueMemberM{Value: meta},
+			},
 		}
-
-		orderItems[i] = &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
-			ItemID: &types.AttributeValueMemberS{Value: itemID},
-			Name:   &types.AttributeValueMemberS{Value: item.Name},
-			Meta:   &types.AttributeValueMemberM{Value: meta},
-		}}
 	}
 
-	var orderID string
-	if order.OrderID == "" {
-		orderID = repo.idGenerator.GenerateID()
-	} else {
-		orderID = order.OrderID
+	var meta map[string]types.AttributeValue
+	if order.Meta != nil {
+		meta = make(map[string]types.AttributeValue)
+		for k, v := range order.Meta {
+			meta[k] = &types.AttributeValueMemberS{Value: v}
+		}
 	}
 
-	meta := make(map[string]types.AttributeValue)
-	for key, value := range order.Meta {
-		meta[key] = &types.AttributeValueMemberS{Value: value}
-	}
-
-	putItemInput := dynamodb.PutItemInput{
-		Item: map[string]types.AttributeValue{
-			OrderID:    &types.AttributeValueMemberS{Value: orderID},
-			TenantID:   &types.AttributeValueMemberS{Value: order.TenantID},
-			CustomerID: &types.AttributeValueMemberS{Value: order.CustomerID},
-			Items:      &types.AttributeValueMemberL{Value: orderItems},
-			Meta:       &types.AttributeValueMemberM{Value: meta},
-		},
+	input := &dynamodb.PutItemInput{
 		TableName: aws.String(repo.tableName),
+		Item: map[string]types.AttributeValue{
+			"PK":         &types.AttributeValueMemberS{Value: tenantKey},
+			"SK":         &types.AttributeValueMemberS{Value: orderKey},
+			"Type":       &types.AttributeValueMemberS{Value: "Order"},
+			"CustomerID": &types.AttributeValueMemberS{Value: order.CustomerID},
+			"Meta":       &types.AttributeValueMemberM{Value: meta},
+			"OrderItems": &types.AttributeValueMemberL{Value: orderItems},
+		},
 	}
 
-	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
+	_, err := repo.client.PutItem(context.TODO(), input)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to put order")
+		return errors.Wrap(err, "failed to put item")
 	}
 
-	return orderID, nil
+	return nil
 }

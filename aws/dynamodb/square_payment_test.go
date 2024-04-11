@@ -2,130 +2,160 @@ package dynamodb
 
 import (
 	"context"
-	"errors"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
-	"github.com/timhugh/digitalvenue/square"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/square/squaretest"
 	"github.com/timhugh/digitalvenue/test"
-	"os"
 	"testing"
 )
 
-const squarePaymentTableName = "square-payments-test"
-
-func initSquarePaymentRepositoryTest(t *testing.T) *is.I {
-	is := is.New(t)
-	mock.SetUp(t)
-
-	err := os.Setenv(SquarePaymentsTableNameKey, squarePaymentTableName)
-	is.NoErr(err)
-
-	return is
-}
-
-func TestSquarePaymentRepository_NewSquarePaymentRepository_RequiresTableName(t *testing.T) {
-	is := initSquarePaymentRepositoryTest(t)
-
-	err := os.Unsetenv(SquarePaymentsTableNameKey)
-	is.NoErr(err)
-
-	_, err = NewSquarePaymentRepository(mock.Mock[Client]())
-	is.Equal(err.Error(), "missing required environment variable SQUARE_PAYMENTS_TABLE_NAME")
-}
-
-func TestSquarePaymentRepository_GetSquarePayment(t *testing.T) {
-	is := initSquarePaymentRepositoryTest(t)
-
-	mockDynamoDBClient := mock.Mock[Client]()
-	getItemInputCaptor := mock.Captor[*dynamodb.GetItemInput]()
-	getItemOutput := dynamodb.GetItemOutput{
+func squarePaymentGetItemOutput() *dynamodb.GetItemOutput {
+	return &dynamodb.GetItemOutput{
 		Item: map[string]types.AttributeValue{
-			SquarePaymentID:  &types.AttributeValueMemberS{Value: squaretest.SquarePaymentID},
-			SquareMerchantID: &types.AttributeValueMemberS{Value: squaretest.SquareMerchantID},
-			SquareOrderID:    &types.AttributeValueMemberS{Value: squaretest.SquareOrderID},
+			"PK":            &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
+			"SK":            &types.AttributeValueMemberS{Value: "SquarePayment#" + squaretest.SquarePaymentID},
+			"Type":          &types.AttributeValueMemberS{Value: "SquarePayment"},
+			"TenantID":      &types.AttributeValueMemberS{Value: "Tenant#" + test.TenantID},
+			"SquareOrderID": &types.AttributeValueMemberS{Value: squaretest.SquareOrderID},
 		},
 	}
-	mock.WhenDouble(mockDynamoDBClient.GetItem(mock.Any[context.Context](), getItemInputCaptor.Capture())).ThenReturn(&getItemOutput, nil)
+}
 
-	repo, err := NewSquarePaymentRepository(mockDynamoDBClient)
-	is.NoErr(err)
-
-	payment, err := repo.GetSquarePayment(squaretest.SquarePaymentID)
-	is.NoErr(err)
-
-	getItemInput := getItemInputCaptor.Last()
-	expectedGetItemInput := &dynamodb.GetItemInput{
+func squarePaymentGetItemInput() *dynamodb.GetItemInput {
+	return &dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
 		Key: map[string]types.AttributeValue{
-			SquarePaymentID: &types.AttributeValueMemberS{Value: squaretest.SquarePaymentID},
+			"PK": &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
+			"SK": &types.AttributeValueMemberS{Value: "SquarePayment#" + squaretest.SquarePaymentID},
 		},
-		TableName: aws.String(squarePaymentTableName),
 	}
-	err = test.Diff(expectedGetItemInput, getItemInput)
-	is.NoErr(err)
-
-	expectedPayment := squaretest.NewSquarePayment()
-	err = test.Diff(expectedPayment, payment)
-	is.NoErr(err)
 }
 
-func TestSquarePaymentRepository_GetSquarePayment_GetItemError(t *testing.T) {
-	is := initSquarePaymentRepositoryTest(t)
-
-	thrownError := errors.New("some client error")
-
-	mockDynamoDBClient := mock.Mock[Client]()
-	mock.WhenDouble(mockDynamoDBClient.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).ThenReturn(nil, thrownError)
-
-	repo, err := NewSquarePaymentRepository(mockDynamoDBClient)
-	is.NoErr(err)
-
-	_, err = repo.GetSquarePayment(squaretest.SquarePaymentID)
-	is.True(errors.Is(err, thrownError))
+func squarePaymentPutItemInput() *dynamodb.PutItemInput {
+	return &dynamodb.PutItemInput{
+		TableName: aws.String(tableName),
+		Item: map[string]types.AttributeValue{
+			"PK":            &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
+			"SK":            &types.AttributeValueMemberS{Value: "SquarePayment#" + squaretest.SquarePaymentID},
+			"Type":          &types.AttributeValueMemberS{Value: "SquarePayment"},
+			"TenantID":      &types.AttributeValueMemberS{Value: "Tenant#" + test.TenantID},
+			"SquareOrderID": &types.AttributeValueMemberS{Value: squaretest.SquareOrderID},
+		},
+	}
 }
 
-func TestSquarePaymentRepository_PutSquarePayment(t *testing.T) {
-	is := initSquarePaymentRepositoryTest(t)
+func TestRepository_GetSquarePayment_BasicSuccess(t *testing.T) {
+	repo, client := initRepositoryTest(t)
 
-	mockDynamoDBClient := mock.Mock[Client]()
+	getItemInputCaptor := mock.Captor[*dynamodb.GetItemInput]()
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), getItemInputCaptor.Capture())).
+		ThenReturn(squarePaymentGetItemOutput(), nil)
+
+	payment, err := repo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if err := test.Diff(squaretest.NewSquarePayment(), *payment); err != nil {
+		t.Error(err)
+	}
+
+	if err := test.Diff(squarePaymentGetItemInput(), getItemInputCaptor.Last()); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestRepository_GetSquarePayment_GetItemError(t *testing.T) {
+	repo, client := initRepositoryTest(t)
+
+	inducedError := errors.New("induced error")
+
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
+		ThenReturn(nil, inducedError)
+
+	_, err := repo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)
+	if !errors.Is(err, inducedError) {
+		t.Errorf("expected error %v, got %v", inducedError, err)
+	}
+}
+
+func TestRepository_GetSquarePayment_NoItemError(t *testing.T) {
+	repo, client := initRepositoryTest(t)
+
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
+		ThenReturn(&dynamodb.GetItemOutput{}, nil)
+
+	payment, err := repo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+
+	if payment != nil {
+		t.Errorf("expected nil, got %+v", payment)
+	}
+}
+
+func TestRepository_GetSquarePayment_IncorrectItemTypeError(t *testing.T) {
+	repo, client := initRepositoryTest(t)
+
+	wrongItem := squarePaymentGetItemOutput()
+	wrongItem.Item["Type"] = &types.AttributeValueMemberS{Value: "SquareMerchant"}
+
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
+		ThenReturn(wrongItem, nil)
+
+	_, err := repo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+}
+
+func TestRepository_GetSquarePayment_InvalidTenantIDError(t *testing.T) {
+	repo, client := initRepositoryTest(t)
+
+	outputWithInvalidTenantID := squarePaymentGetItemOutput()
+	outputWithInvalidTenantID.Item["TenantID"] = &types.AttributeValueMemberS{Value: "InvalidTenantID"}
+
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
+		ThenReturn(outputWithInvalidTenantID, nil)
+
+	_, err := repo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+}
+
+func TestRepository_PutSquarePayment_BasicSuccess(t *testing.T) {
+	repo, client := initRepositoryTest(t)
+
 	putItemInputCaptor := mock.Captor[*dynamodb.PutItemInput]()
-	mock.WhenDouble(mockDynamoDBClient.PutItem(mock.Any[context.Context](), putItemInputCaptor.Capture())).ThenReturn(nil, nil)
-
-	repo, err := NewSquarePaymentRepository(mockDynamoDBClient)
-	is.NoErr(err)
+	mock.WhenDouble(client.PutItem(mock.Any[context.Context](), putItemInputCaptor.Capture())).
+		ThenReturn(nil, nil)
 
 	payment := squaretest.NewSquarePayment()
-
-	err = repo.PutSquarePayment(payment)
-	is.NoErr(err)
-
-	putItemInput := putItemInputCaptor.Last()
-	expectedPutItemInput := &dynamodb.PutItemInput{
-		Item: map[string]types.AttributeValue{
-			SquarePaymentID:  &types.AttributeValueMemberS{Value: squaretest.SquarePaymentID},
-			SquareMerchantID: &types.AttributeValueMemberS{Value: squaretest.SquareMerchantID},
-			SquareOrderID:    &types.AttributeValueMemberS{Value: squaretest.SquareOrderID},
-		},
-		TableName: aws.String(squarePaymentTableName),
+	err := repo.PutSquarePayment(payment)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	err = test.Diff(expectedPutItemInput, putItemInput)
-	is.NoErr(err)
+
+	if err := test.Diff(squarePaymentPutItemInput(), putItemInputCaptor.Last()); err != nil {
+		t.Error(err)
+	}
 }
 
-func TestSquarePaymentRepository_PutSquarePayment_PutItemError(t *testing.T) {
-	is := initSquarePaymentRepositoryTest(t)
+func TestRepository_PutSquarePayment_PutItemError(t *testing.T) {
+	repo, client := initRepositoryTest(t)
 
-	thrownError := errors.New("some client error")
+	inducedError := errors.New("induced error")
 
-	mockDynamoDBClient := mock.Mock[Client]()
-	mock.WhenDouble(mockDynamoDBClient.PutItem(mock.Any[context.Context](), mock.Any[*dynamodb.PutItemInput]())).ThenReturn(nil, thrownError)
+	mock.WhenDouble(client.PutItem(mock.Any[context.Context](), mock.Any[*dynamodb.PutItemInput]())).
+		ThenReturn(nil, inducedError)
 
-	repo, err := NewSquarePaymentRepository(mockDynamoDBClient)
-	is.NoErr(err)
-
-	err = repo.PutSquarePayment(square.Payment{})
-	is.Equal(thrownError, err)
+	err := repo.PutSquarePayment(squaretest.NewSquarePayment())
+	if !errors.Is(err, inducedError) {
+		t.Errorf("expected error %v, got %v", inducedError, err)
+	}
 }

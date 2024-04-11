@@ -2,130 +2,120 @@ package dynamodb
 
 import (
 	"context"
-	"errors"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
-	"github.com/timhugh/digitalvenue/square"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/square/squaretest"
 	"github.com/timhugh/digitalvenue/test"
-	"os"
 	"testing"
 )
 
-const squareMerchantTableName = "square-merchants-test"
-
-func initSquareMerchantRepositoryTest(t *testing.T) *is.I {
-	is := is.New(t)
-	mock.SetUp(t)
-
-	err := os.Setenv(SquareMerchantsTableNameKey, squareMerchantTableName)
-	is.NoErr(err)
-
-	return is
-}
-
-func TestSquareMerchantRepository_NewSquareMerchantRepository_RequiresTableName(t *testing.T) {
-	is := initSquareMerchantRepositoryTest(t)
-
-	err := os.Unsetenv(SquareMerchantsTableNameKey)
-	is.NoErr(err)
-
-	_, err = NewSquareMerchantRepository(mock.Mock[Client]())
-	is.Equal(err.Error(), "missing required environment variable SQUARE_MERCHANTS_TABLE_NAME")
-}
-
-func TestSquareMerchantRepository_GetSquareMerchant(t *testing.T) {
-	is := initSquareMerchantRepositoryTest(t)
-
-	mockDynamoDBClient := mock.Mock[Client]()
-	getItemInputCaptor := mock.Captor[*dynamodb.GetItemInput]()
-	getItemOutput := dynamodb.GetItemOutput{
+func squareMerchantGetItemOutput() *dynamodb.GetItemOutput {
+	return &dynamodb.GetItemOutput{
 		Item: map[string]types.AttributeValue{
-			SquareMerchantID:          &types.AttributeValueMemberS{Value: squaretest.SquareMerchantID},
-			SquareWebhookSignatureKey: &types.AttributeValueMemberS{Value: squaretest.SquareWebhookSignatureKey},
-			SquareAPIToken:            &types.AttributeValueMemberS{Value: squaretest.SquareAPIToken},
+			"PK":                        &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
+			"SK":                        &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
+			"Type":                      &types.AttributeValueMemberS{Value: "SquareMerchant"},
+			"TenantID":                  &types.AttributeValueMemberS{Value: "Tenant#" + test.TenantID},
+			"Name":                      &types.AttributeValueMemberS{Value: test.TenantName},
+			"SquareAPIToken":            &types.AttributeValueMemberS{Value: squaretest.SquareAPIToken},
+			"SquareWebhookSignatureKey": &types.AttributeValueMemberS{Value: squaretest.SquareWebhookSignatureKey},
 		},
 	}
-	mock.WhenDouble(mockDynamoDBClient.GetItem(mock.Any[context.Context](), getItemInputCaptor.Capture())).ThenReturn(&getItemOutput, nil)
+}
 
-	repo, err := NewSquareMerchantRepository(mockDynamoDBClient)
-	is.NoErr(err)
+func squareMerchantGetItemInput() *dynamodb.GetItemInput {
+	return &dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
+			"SK": &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
+		},
+	}
+}
+
+func TestRepository_GetSquareMerchant_BasicSuccess(t *testing.T) {
+	repo, client := initRepositoryTest(t)
+
+	getItemInputCaptor := mock.Captor[*dynamodb.GetItemInput]()
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), getItemInputCaptor.Capture())).
+		ThenReturn(squareMerchantGetItemOutput(), nil)
 
 	merchant, err := repo.GetSquareMerchant(squaretest.SquareMerchantID)
-	is.NoErr(err)
-
-	getItemInput := getItemInputCaptor.Last()
-	expectedGetItemInput := &dynamodb.GetItemInput{
-		Key: map[string]types.AttributeValue{
-			SquareMerchantID: &types.AttributeValueMemberS{Value: squaretest.SquareMerchantID},
-		},
-		TableName: aws.String(squareMerchantTableName),
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	err = test.Diff(expectedGetItemInput, getItemInput)
-	is.NoErr(err)
 
-	expectedMerchant := squaretest.NewSquareMerchant()
-	err = test.Diff(expectedMerchant, merchant)
-	is.NoErr(err)
+	if err := test.Diff(squaretest.NewSquareMerchant(), *merchant); err != nil {
+		t.Error(err)
+	}
+
+	if err := test.Diff(squareMerchantGetItemInput(), getItemInputCaptor.Last()); err != nil {
+		t.Error(err)
+	}
 }
 
-func TestSquareMerchantRepository_GetSquareMerchant_GetItemError(t *testing.T) {
-	is := initSquareMerchantRepositoryTest(t)
+func TestRepository_GetSquareMerchant_GetItemError(t *testing.T) {
+	repo, client := initRepositoryTest(t)
 
-	thrownError := errors.New("some client error")
+	inducedError := errors.New("induced error")
 
-	mockDynamoDBClient := mock.Mock[Client]()
-	mock.WhenDouble(mockDynamoDBClient.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).ThenReturn(nil, thrownError)
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
+		ThenReturn(nil, inducedError)
 
-	repo, err := NewSquareMerchantRepository(mockDynamoDBClient)
-	is.NoErr(err)
-
-	_, err = repo.GetSquareMerchant(squaretest.SquareMerchantID)
-	is.True(errors.Is(err, thrownError))
+	_, err := repo.GetSquareMerchant(squaretest.SquareMerchantID)
+	if !errors.Is(err, inducedError) {
+		t.Errorf("expected error %v, got %v", inducedError, err)
+	}
 }
 
-func TestSquareMerchantRepository_PutSquareMerchant(t *testing.T) {
-	is := initSquareMerchantRepositoryTest(t)
+func TestRepository_GetSquareMerchant_NoItemError(t *testing.T) {
+	repo, client := initRepositoryTest(t)
 
-	mockDynamoDBClient := mock.Mock[Client]()
-	putItemInputCaptor := mock.Captor[*dynamodb.PutItemInput]()
-	mock.WhenDouble(mockDynamoDBClient.PutItem(mock.Any[context.Context](), putItemInputCaptor.Capture())).ThenReturn(nil, nil)
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
+		ThenReturn(&dynamodb.GetItemOutput{}, nil)
 
-	repo, err := NewSquareMerchantRepository(mockDynamoDBClient)
-	is.NoErr(err)
+	merchant, err := repo.GetSquareMerchant(squaretest.SquareMerchantID)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
 
-	merchant := squaretest.NewSquareMerchant()
+	if merchant != nil {
+		t.Errorf("expected nil, got %+v", merchant)
+	}
+}
 
-	err = repo.PutSquareMerchant(merchant)
-	is.NoErr(err)
+func TestRepository_GetSquareMerchant_IncorrectItemTypeError(t *testing.T) {
+	repo, client := initRepositoryTest(t)
 
-	putItemInput := putItemInputCaptor.Last()
-	expectedPutItemInput := &dynamodb.PutItemInput{
+	wrongItem := &dynamodb.GetItemOutput{
 		Item: map[string]types.AttributeValue{
-			SquareMerchantID:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantID},
-			SquareWebhookSignatureKey: &types.AttributeValueMemberS{Value: merchant.SquareWebhookSignatureKey},
-			SquareAPIToken:            &types.AttributeValueMemberS{Value: merchant.SquareAPIToken},
+			"Type": &types.AttributeValueMemberS{Value: "NotSquareMerchant"},
 		},
-		TableName: aws.String(squareMerchantTableName),
 	}
-	err = test.Diff(expectedPutItemInput, putItemInput)
-	is.NoErr(err)
+
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
+		ThenReturn(wrongItem, nil)
+
+	_, err := repo.GetSquareMerchant(squaretest.SquareMerchantID)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
 }
 
-func TestSquareMerchantRepository_PutSquareMerchant_PutItemError(t *testing.T) {
-	is := initSquareMerchantRepositoryTest(t)
+func TestRepository_GetSquareMerchant_InvalidTenantIDError(t *testing.T) {
+	repo, client := initRepositoryTest(t)
 
-	thrownError := errors.New("some client error")
+	outputWithInvalidTenantID := squareMerchantGetItemOutput()
+	outputWithInvalidTenantID.Item["TenantID"] = &types.AttributeValueMemberS{Value: "InvalidTenantID"}
 
-	mockDynamoDBClient := mock.Mock[Client]()
-	mock.WhenDouble(mockDynamoDBClient.PutItem(mock.Any[context.Context](), mock.Any[*dynamodb.PutItemInput]())).ThenReturn(nil, thrownError)
+	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
+		ThenReturn(outputWithInvalidTenantID, nil)
 
-	repo, err := NewSquareMerchantRepository(mockDynamoDBClient)
-	is.NoErr(err)
-
-	err = repo.PutSquareMerchant(square.Merchant{})
-	is.True(errors.Is(err, thrownError))
+	_, err := repo.GetSquareMerchant(squaretest.SquareMerchantID)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
 }

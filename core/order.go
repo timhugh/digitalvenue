@@ -1,7 +1,7 @@
 package core
 
 type Order struct {
-	OrderID    string
+	ID         string
 	TenantID   string
 	CustomerID string
 	Items      []OrderItem
@@ -9,15 +9,11 @@ type Order struct {
 }
 
 type OrderItem struct {
-	ItemID string
-	Name   string
-	Meta   map[string]string
+	ID   string
+	Name string
+	Meta map[string]string
 }
 
 type OrderRepository interface {
 	PutOrder(order Order) (string, error)
-}
-
-type OrderCreatedQueue interface {
-	Publish(orderID string) error
 }

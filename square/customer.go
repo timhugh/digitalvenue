@@ -16,10 +16,9 @@ type Customer struct {
 
 func MapCustomer(customer Customer) core.Customer {
 	return core.Customer{
-		FirstName: customer.FirstName,
-		LastName:  customer.LastName,
-		Email:     customer.Email,
-		Phone:     customer.Phone,
+		Name:  customer.FirstName + " " + customer.LastName,
+		Email: customer.Email,
+		Phone: customer.Phone,
 		Meta: map[string]string{
 			CustomerIDKey: customer.SquareCustomerID,
 		},

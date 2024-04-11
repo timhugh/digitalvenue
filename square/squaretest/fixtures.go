@@ -24,12 +24,15 @@ func NewSquarePayment() square.Payment {
 		SquareMerchantID: SquareMerchantID,
 		SquareOrderID:    SquareOrderID,
 		SquarePaymentID:  SquarePaymentID,
+		TenantID:         test.TenantID,
 	}
 }
 
 func NewSquareMerchant() square.Merchant {
 	return square.Merchant{
-		SquareMerchantID:          SquareMerchantID,
+		ID:                        SquareMerchantID,
+		TenantID:                  test.TenantID,
+		Name:                      test.TenantName,
 		SquareAPIToken:            SquareAPIToken,
 		SquareWebhookSignatureKey: SquareWebhookSignatureKey,
 	}

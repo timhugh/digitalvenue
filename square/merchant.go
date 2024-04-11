@@ -1,7 +1,9 @@
 package square
 
 type Merchant struct {
-	SquareMerchantID          string
+	ID                        string
+	TenantID                  string
+	Name                      string
 	SquareWebhookSignatureKey string
 	SquareAPIToken            string
 }

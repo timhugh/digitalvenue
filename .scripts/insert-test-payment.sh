@@ -22,6 +22,7 @@ fi
 
 aws dynamodb put-item --endpoint-url http://localhost:8000 --table-name "$SQUARE_PAYMENTS_TABLE_NAME" --item "$(cat <<EOF
 {
+  "TenantID": {"S": "test"},
   "SquarePaymentID": {"S": "$SQUARE_PAYMENT_ID"},
   "SquareMerchantID": {"S": "$SQUARE_MERCHANT_ID"},
   "SquareOrderID": {"S": "$SQUARE_ORDER_ID"}

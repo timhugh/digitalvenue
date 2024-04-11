@@ -1,70 +1,49 @@
 package dynamodb
 
 import (
-	"context"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
-	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/square"
 )
 
-type SquareMerchantRepository struct {
-	client      Client
-	idGenerator core.IDGenerator
-	tableName   string
+type squareMerchant struct {
+	PK                        string
+	SK                        string
+	Type                      string
+	TenantID                  string
+	Name                      string
+	SquareAPIToken            string
+	SquareWebhookSignatureKey string
 }
 
-func NewSquareMerchantRepository(client Client) (*SquareMerchantRepository, error) {
-	tableName, err := core.RequireEnv(SquareMerchantsTableNameKey)
+func (repo *Repository) GetSquareMerchant(squareMerchantID string) (*square.Merchant, error) {
+	merchantKey := "SquareMerchant#" + squareMerchantID
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String(repo.tableName),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: merchantKey},
+			"SK": &types.AttributeValueMemberS{Value: merchantKey},
+		},
+	}
+
+	item := squareMerchant{}
+	err := repo.getItem("SquareMerchant", input, &item)
 	if err != nil {
 		return nil, err
 	}
 
-	return &SquareMerchantRepository{
-		client:      client,
-		idGenerator: core.NewIDGenerator(),
-		tableName:   tableName,
+	tenantID, err := removeIDPrefix(item.TenantID)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid tenant ID")
+	}
+
+	return &square.Merchant{
+		TenantID:                  tenantID,
+		Name:                      item.Name,
+		ID:                        squareMerchantID,
+		SquareWebhookSignatureKey: item.SquareWebhookSignatureKey,
+		SquareAPIToken:            item.SquareAPIToken,
 	}, nil
-}
-
-func (repo *SquareMerchantRepository) PutSquareMerchant(merchant square.Merchant) error {
-	putItemInput := dynamodb.PutItemInput{
-		Item: map[string]types.AttributeValue{
-			SquareMerchantID:          &types.AttributeValueMemberS{Value: merchant.SquareMerchantID},
-			SquareWebhookSignatureKey: &types.AttributeValueMemberS{Value: merchant.SquareWebhookSignatureKey},
-			SquareAPIToken:            &types.AttributeValueMemberS{Value: merchant.SquareAPIToken},
-		},
-		TableName: aws.String(repo.tableName),
-	}
-	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
-	if err != nil {
-		return errors.Wrap(err, "failed to put square merchant")
-	}
-
-	return nil
-}
-
-func (repo *SquareMerchantRepository) GetSquareMerchant(squareMerchantID string) (square.Merchant, error) {
-	var merchant = square.Merchant{}
-
-	getItemInput := &dynamodb.GetItemInput{
-		Key: map[string]types.AttributeValue{
-			SquareMerchantID: &types.AttributeValueMemberS{Value: squareMerchantID},
-		},
-		TableName: aws.String(repo.tableName),
-	}
-
-	getItemOutput, err := repo.client.GetItem(context.TODO(), getItemInput)
-	if err != nil {
-		return merchant, errors.Wrap(err, "failed to get square merchant")
-	}
-
-	err = attributevalue.UnmarshalMap(getItemOutput.Item, &merchant)
-	if err != nil {
-		return merchant, errors.Wrap(err, "failed to unmarshal square merchant")
-	}
-	return merchant, nil
 }

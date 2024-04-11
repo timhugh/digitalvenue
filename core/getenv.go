@@ -1,14 +1,21 @@
 package core
 
 import (
-	"github.com/pkg/errors"
 	"os"
 )
+
+type MissingEnvError struct {
+	Key string
+}
+
+func (e MissingEnvError) Error() string {
+	return "missing required environment variable " + e.Key
+}
 
 func RequireEnv(key string) (string, error) {
 	val := os.Getenv(key)
 	if val == "" {
-		return "", errors.Errorf("missing required environment variable %s", key)
+		return "", MissingEnvError{Key: key}
 	}
 	return val, nil
 }

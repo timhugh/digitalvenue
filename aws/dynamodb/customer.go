@@ -2,61 +2,89 @@ package dynamodb
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/core"
 )
 
-type CustomerRepository struct {
-	client      Client
-	idGenerator core.IDGenerator
-	tableName   string
+type customer struct {
+	PK         string
+	SK         string
+	Type       string
+	CustomerID string
+	Name       string
+	Email      string
+	Phone      string
+	Meta       map[string]string
 }
 
-func NewCustomerRepository(client Client) (*CustomerRepository, error) {
-	tableName, err := core.RequireEnv(CustomersTableNameKey)
+func (repo *Repository) GetCustomer(tenantID string, customerID string) (*core.Customer, error) {
+	tenantKey := "Tenant#" + tenantID
+	customerKey := "Customer#" + customerID
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String(repo.tableName),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: tenantKey},
+			"SK": &types.AttributeValueMemberS{Value: customerKey},
+		},
+	}
+
+	item := customer{}
+	err := repo.getItem("Customer", input, &item)
 	if err != nil {
 		return nil, err
 	}
 
-	return &CustomerRepository{
-		client:      client,
-		idGenerator: core.NewIDGenerator(),
-		tableName:   tableName,
+	var meta map[string]string
+	if item.Meta != nil {
+		meta = make(map[string]string)
+		for k, v := range item.Meta {
+			meta[k] = v
+		}
+	}
+
+	return &core.Customer{
+		TenantID: tenantID,
+		ID:       customerID,
+		Name:     item.Name,
+		Email:    item.Email,
+		Phone:    item.Phone,
+		Meta:     meta,
 	}, nil
 }
 
-func (repo *CustomerRepository) PutCustomer(customer core.Customer) (string, error) {
-	var customerID string
-	if customer.CustomerID == "" {
-		customerID = repo.idGenerator.GenerateID()
-	} else {
-		customerID = customer.CustomerID
+func (repo *Repository) PutCustomer(customer core.Customer) error {
+	tenantKey := "Tenant#" + customer.TenantID
+	customerKey := "Customer#" + customer.ID
+
+	var meta map[string]types.AttributeValue
+	if customer.Meta != nil {
+		meta = make(map[string]types.AttributeValue)
+		for k, v := range customer.Meta {
+			meta[k] = &types.AttributeValueMemberS{Value: v}
+		}
 	}
 
-	var meta = make(map[string]types.AttributeValue)
-	for key, value := range customer.Meta {
-		meta[key] = &types.AttributeValueMemberS{Value: value}
-	}
-
-	putItemInput := dynamodb.PutItemInput{
-		Item: map[string]types.AttributeValue{
-			CustomerID: &types.AttributeValueMemberS{Value: customerID},
-			FirstName:  &types.AttributeValueMemberS{Value: customer.FirstName},
-			LastName:   &types.AttributeValueMemberS{Value: customer.LastName},
-			Email:      &types.AttributeValueMemberS{Value: customer.Email},
-			Phone:      &types.AttributeValueMemberS{Value: customer.Phone},
-			Meta:       &types.AttributeValueMemberM{Value: meta},
-		},
+	input := &dynamodb.PutItemInput{
 		TableName: aws.String(repo.tableName),
+		Item: map[string]types.AttributeValue{
+			"PK":         &types.AttributeValueMemberS{Value: tenantKey},
+			"SK":         &types.AttributeValueMemberS{Value: customerKey},
+			"Type":       &types.AttributeValueMemberS{Value: "Customer"},
+			"CustomerID": &types.AttributeValueMemberS{Value: customer.ID},
+			"Name":       &types.AttributeValueMemberS{Value: customer.Name},
+			"Email":      &types.AttributeValueMemberS{Value: customer.Email},
+			"Phone":      &types.AttributeValueMemberS{Value: customer.Phone},
+			"Meta":       &types.AttributeValueMemberM{Value: meta},
+		},
 	}
 
-	_, err := repo.client.PutItem(context.TODO(), &putItemInput)
+	_, err := repo.client.PutItem(context.TODO(), input)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to put customer")
+		return errors.Wrap(err, "failed to put item")
 	}
 
-	return customerID, nil
+	return nil
 }
