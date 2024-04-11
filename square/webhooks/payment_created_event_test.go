@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"github.com/matryer/is"
+	"github.com/timhugh/digitalvenue/test"
 	"testing"
 )
 
@@ -11,17 +12,12 @@ func TestPaymentCreatedEvent_Unmarshal(t *testing.T) {
 	event, err := NewWebhookEvent(paymentCreatedEventJson)
 	is.NoErr(err)
 
-	paymentCreatedEvent, ok := event.(PaymentCreatedEvent)
+	paymentCreatedEvent, ok := event.(*PaymentCreatedEvent)
 	is.True(ok)
 
-	is.Equal(paymentCreatedEvent.EventID(), "event_id")
-	is.Equal(paymentCreatedEvent.EventType(), "payment.created")
-	is.Equal(paymentCreatedEvent.MerchantID(), "merchant_id")
+	expectedEvent := newPaymentCreatedEvent()
 
-	data := paymentCreatedEvent.Data()
-	paymentData, ok := data.(PaymentData)
-	is.True(ok)
-	is.Equal(paymentData.PaymentID, "payment_id")
-	is.Equal(paymentData.LocationID, "location_id")
-	is.Equal(paymentData.OrderID, "order_id")
+	if err := test.Diff(expectedEvent, paymentCreatedEvent); err != nil {
+		t.Fatal(err)
+	}
 }

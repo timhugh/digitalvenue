@@ -52,6 +52,9 @@ func (handler *SquareEventsHandler) Handle(request events.APIGatewayProxyRequest
 		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantID())
 	}
 
+	webhookEvent.SetTenantID(merchant.TenantID)
+	log = log.With().Str("tenant_id", merchant.TenantID).Logger()
+
 	signature := request.Headers[squareSignatureHeader]
 	err = webhooks.Validate(request.Body, handler.webhookNotificationURL, merchant.SquareWebhookSignatureKey, signature)
 	if err != nil {

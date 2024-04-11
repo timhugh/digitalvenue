@@ -13,11 +13,11 @@ func TestMapOrder(t *testing.T) {
 
 	squareOrder := squaretest.NewSquareOrder()
 
-	order, err := square.MapOrder(squareOrder, squaretest.SquarePaymentID, squaretest.SquareMerchantID)
+	order, err := square.MapOrder(squareOrder, squaretest.SquarePaymentID, squaretest.SquareMerchantID, test.TenantID, squaretest.SquareCustomerID)
 	is.NoErr(err)
 
 	expectedOrder := squaretest.NewOrder()
-	err = test.Diff(order, expectedOrder)
+	err = test.Diff(expectedOrder, order)
 	is.NoErr(err)
 }
 
@@ -27,6 +27,6 @@ func TestMapOrder_FailsWithNonIntegerQuantity(t *testing.T) {
 	squareOrder := squaretest.NewSquareOrder()
 	squareOrder.OrderItems[0].Quantity = "not an int"
 
-	_, err := square.MapOrder(squareOrder, squaretest.SquarePaymentID, squaretest.SquareMerchantID)
+	_, err := square.MapOrder(squareOrder, squaretest.SquarePaymentID, squaretest.SquareMerchantID, test.TenantID, test.CustomerID)
 	is.True(err != nil)
 }

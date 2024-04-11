@@ -14,11 +14,13 @@ type Customer struct {
 	Phone            string `json:"phone_number"`
 }
 
-func MapCustomer(customer Customer) core.Customer {
-	return core.Customer{
-		Name:  customer.FirstName + " " + customer.LastName,
-		Email: customer.Email,
-		Phone: customer.Phone,
+func MapCustomer(customer *Customer, tenantID string) *core.Customer {
+	return &core.Customer{
+		ID:       customer.SquareCustomerID, // We use the SquareCustomerID as the ID for customers that come from Square to make duplicate detection easier
+		TenantID: tenantID,
+		Name:     customer.FirstName + " " + customer.LastName,
+		Email:    customer.Email,
+		Phone:    customer.Phone,
 		Meta: map[string]string{
 			CustomerIDKey: customer.SquareCustomerID,
 		},

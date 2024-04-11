@@ -22,7 +22,7 @@ func NewWebhookEvent(body string) (WebhookEvent[any], error) {
 			return nil, err
 		}
 		event.body = body
-		return event, nil
+		return &event, nil
 	default:
 		return nil, errors.Errorf("unknown event type: %s", metadata.EventType)
 	}
@@ -38,6 +38,8 @@ type WebhookEvent[DataType any] interface {
 	EventID() string
 	EventType() string
 	MerchantID() string
+	TenantID() string
+	SetTenantID(tenantID string)
 	Data() DataType
 }
 
@@ -45,7 +47,9 @@ type webhookEventBase struct {
 	eventType  string
 	merchantID string
 	eventID    string
-	body       string
+	tenantID   string
+
+	body string
 }
 
 func (base webhookEventBase) EventID() string {
@@ -58,4 +62,12 @@ func (base webhookEventBase) EventType() string {
 
 func (base webhookEventBase) MerchantID() string {
 	return base.merchantID
+}
+
+func (base webhookEventBase) TenantID() string {
+	return base.tenantID
+}
+
+func (base *webhookEventBase) SetTenantID(tenantID string) {
+	base.tenantID = tenantID
 }

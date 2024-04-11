@@ -88,7 +88,7 @@ func (client *Client) readBody(resp *http.Response) ([]byte, error) {
 	return buf, nil
 }
 
-func (client *Client) GetCustomer(squareCustomerID string, apiToken string) (square.Customer, error) {
+func (client *Client) GetCustomer(squareCustomerID string, apiToken string) (*square.Customer, error) {
 	path := client.baseUrl + fmt.Sprintf(getCustomerRouteFormat, squareCustomerID)
 
 	var customerContainer struct {
@@ -96,13 +96,13 @@ func (client *Client) GetCustomer(squareCustomerID string, apiToken string) (squ
 	}
 	err := client.fetchJson(path, apiToken, &customerContainer)
 	if err != nil {
-		return square.Customer{}, err
+		return nil, err
 	}
 
-	return customerContainer.Customer, nil
+	return &customerContainer.Customer, nil
 }
 
-func (client *Client) GetOrder(squareOrderID string, apiToken string) (square.Order, error) {
+func (client *Client) GetOrder(squareOrderID string, apiToken string) (*square.Order, error) {
 	path := client.baseUrl + fmt.Sprintf(getOrderRouteFormat, squareOrderID)
 
 	var orderContainer struct {
@@ -110,8 +110,8 @@ func (client *Client) GetOrder(squareOrderID string, apiToken string) (square.Or
 	}
 	err := client.fetchJson(path, apiToken, &orderContainer)
 	if err != nil {
-		return square.Order{}, err
+		return nil, err
 	}
 
-	return orderContainer.Order, nil
+	return &orderContainer.Order, nil
 }

@@ -62,13 +62,13 @@ func (gatherer paymentGatherer) Gather(squareMerchantID string, squarePaymentID 
 		return err
 	}
 
-	customer := MapCustomer(squareCustomer)
+	customer := MapCustomer(squareCustomer, merchant.TenantID)
 	err = gatherer.customerRepo.PutCustomer(customer)
 	if err != nil {
 		return err
 	}
 
-	order, err := MapOrder(squareOrder, payment.SquarePaymentID, merchant.ID)
+	order, err := MapOrder(squareOrder, payment.SquarePaymentID, merchant.ID, merchant.TenantID, customer.ID)
 	if err != nil {
 		return err
 	}

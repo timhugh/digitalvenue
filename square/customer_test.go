@@ -4,6 +4,7 @@ import (
 	"github.com/matryer/is"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/squaretest"
+	"github.com/timhugh/digitalvenue/test"
 	"testing"
 )
 
@@ -12,7 +13,7 @@ func TestMapCustomer(t *testing.T) {
 
 	squareCustomer := squaretest.NewSquareCustomer()
 
-	customer := square.MapCustomer(squareCustomer)
+	customer := square.MapCustomer(squareCustomer, test.TenantID)
 
 	expectedCustomer := squaretest.NewCustomer()
 	is.Equal(customer, expectedCustomer)

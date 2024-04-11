@@ -1,11 +1,11 @@
 {
-  "merchant_id": "merchant_id",
+  "merchant_id": "squareMerchantID",
   "type": "payment.created",
-  "event_id": "event_id",
+  "event_id": "squareEventID",
   "created_at": "2020-02-06T21:27:30.792Z",
   "data": {
     "type": "payment",
-    "id": "payment_id",
+    "id": "squarePaymentID",
     "object": {
       "payment": {
         "amount_money": {
@@ -45,9 +45,9 @@
         "delay_action": "CANCEL",
         "delay_duration": "PT168H",
         "delayed_until": "2020-11-29T21:16:51.086Z",
-        "id": "payment_id",
-        "location_id": "location_id",
-        "order_id": "order_id",
+        "id": "squarePaymentID",
+        "location_id": "squareLocationID",
+        "order_id": "squareOrderID",
         "receipt_number": "hYy9",
         "risk_evaluation": {
           "created_at": "2020-11-22T21:16:51.198Z",

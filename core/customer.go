@@ -10,5 +10,5 @@ type Customer struct {
 }
 
 type CustomerRepository interface {
-	PutCustomer(customer Customer) error
+	PutCustomer(customer *Customer) error
 }

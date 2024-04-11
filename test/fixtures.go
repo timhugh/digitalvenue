@@ -5,22 +5,22 @@ import (
 )
 
 const (
-	TenantID   = "tenant_id"
+	TenantID   = "tenantID"
 	TenantName = "Test Tenant"
 
-	CustomerID        = "customer_id"
+	CustomerID        = "customerID"
 	CustomerName      = "Tim Heuett"
 	CustomerFirstName = "Tim"
 	CustomerLastName  = "Heuett"
 	CustomerEmail     = "info@timheuett.com"
 	CustomerPhone     = "+12062062062"
 
-	OrderID   = "order_id"
-	ItemID1   = "item_id_1"
+	OrderID   = "orderID"
+	ItemID1   = "itemID1"
 	ItemName1 = "Item 1"
-	ItemID2   = "item_id_2"
+	ItemID2   = "itemID2"
 	ItemName2 = "Item 2"
-	ItemID3   = "item_id_3"
+	ItemID3   = "itemID3"
 )
 
 func NewOrder() core.Order {

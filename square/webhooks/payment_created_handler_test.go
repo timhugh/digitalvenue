@@ -5,49 +5,25 @@ import (
 	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/square"
+	"github.com/timhugh/digitalvenue/square/squaretest"
 	"testing"
 )
 
-func TestPaymentCreatedService_HandleEvent(t *testing.T) {
+func TestPaymentCreatedHandler_HandleEvent(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
 
 	paymentsRepo := mock.Mock[square.PaymentRepository]()
-	paymentCaptor := mock.Captor[square.Payment]()
+	paymentCaptor := mock.Captor[*square.Payment]()
 	mock.WhenSingle(paymentsRepo.PutSquarePayment(paymentCaptor.Capture())).ThenReturn(nil)
 
-	paymentCreatedQueue := mock.Mock[square.PaymentCreatedQueue]()
-	paymentEventIDCaptor := mock.Captor[string]()
-	mock.WhenSingle(paymentCreatedQueue.Publish(paymentEventIDCaptor.Capture())).ThenReturn(nil)
-
-	log := zerolog.Logger{}
-
 	service := PaymentCreatedHandler{
-		paymentsRepository:  paymentsRepo,
-		paymentCreatedQueue: paymentCreatedQueue,
-		log:                 log,
+		paymentsRepository: paymentsRepo,
+		log:                zerolog.Logger{},
 	}
 
-	event := PaymentCreatedEvent{
-		webhookEventBase: webhookEventBase{
-			eventType:  "payment.created",
-			merchantID: "merchant_id",
-			eventID:    "event_id",
-			body:       paymentCreatedEventJson,
-		},
-		data: PaymentData{
-			PaymentID:  "payment_id",
-			LocationID: "location_id",
-			OrderID:    "order_id",
-		},
-	}
-	err := service.HandleEvent(event)
+	err := service.HandleEvent(newPaymentCreatedEvent())
 	is.NoErr(err)
 
-	is.Equal(paymentCaptor.Last(), square.Payment{
-		SquarePaymentID:  "payment_id",
-		SquareOrderID:    "order_id",
-		SquareMerchantID: "merchant_id",
-	})
-	is.Equal(paymentEventIDCaptor.Last(), "payment_id")
+	is.Equal(squaretest.NewSquarePayment(), paymentCaptor.Last())
 }

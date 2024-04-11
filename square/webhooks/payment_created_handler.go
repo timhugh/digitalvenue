@@ -19,7 +19,7 @@ func NewPaymentCreatedHandler(paymentsRepository square.PaymentRepository, log z
 }
 
 func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error {
-	paymentCreatedEvent, ok := event.(PaymentCreatedEvent)
+	paymentCreatedEvent, ok := event.(*PaymentCreatedEvent)
 	if !ok {
 		return errors.New("event is not PaymentCreatedEvent")
 	}
@@ -31,18 +31,21 @@ func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error
 	handler.log.Debug().
 		Str("service", "events-service").
 		Str("event", "payment.created").
+		Str("event_id", event.EventID()).
 		Str("payment_id", paymentData.PaymentID).
 		Str("order_id", paymentData.OrderID).
 		Str("merchant_id", paymentCreatedEvent.MerchantID()).
+		Str("tenant_id", event.TenantID()).
 		Msg("Received event")
 
 	payment := square.Payment{
+		TenantID:         event.TenantID(),
 		SquarePaymentID:  paymentData.PaymentID,
 		SquareOrderID:    paymentData.OrderID,
 		SquareMerchantID: paymentCreatedEvent.MerchantID(),
 	}
 
-	if err := handler.paymentsRepository.PutSquarePayment(payment); err != nil {
+	if err := handler.paymentsRepository.PutSquarePayment(&payment); err != nil {
 		return errors.Wrap(err, "failed to save payment")
 	}
 

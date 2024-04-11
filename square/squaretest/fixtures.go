@@ -14,13 +14,16 @@ const (
 	SquareOrderID    = "squareOrderID"
 
 	SquareItemUID1            = "squareItemUID1"
+	SquareItemUID1_1          = "squareItemUID1-1"
 	SquareItemUID2            = "squareItemUID2"
+	SquareItemUID2_1          = "squareItemUID2-1"
+	SquareItemUID2_2          = "squareItemUID2-2"
 	SquareAPIToken            = "squareAPIToken"
 	SquareWebhookSignatureKey = "squareWebhookSignatureKey"
 )
 
-func NewSquarePayment() square.Payment {
-	return square.Payment{
+func NewSquarePayment() *square.Payment {
+	return &square.Payment{
 		SquareMerchantID: SquareMerchantID,
 		SquareOrderID:    SquareOrderID,
 		SquarePaymentID:  SquarePaymentID,
@@ -28,8 +31,8 @@ func NewSquarePayment() square.Payment {
 	}
 }
 
-func NewSquareMerchant() square.Merchant {
-	return square.Merchant{
+func NewSquareMerchant() *square.Merchant {
+	return &square.Merchant{
 		ID:                        SquareMerchantID,
 		TenantID:                  test.TenantID,
 		Name:                      test.TenantName,
@@ -38,8 +41,8 @@ func NewSquareMerchant() square.Merchant {
 	}
 }
 
-func NewSquareOrder() square.Order {
-	return square.Order{
+func NewSquareOrder() *square.Order {
+	return &square.Order{
 		SquareOrderID:    SquareOrderID,
 		SquareCustomerID: SquareCustomerID,
 		SquareLocationID: SquareLocationID,
@@ -58,8 +61,8 @@ func NewSquareOrder() square.Order {
 	}
 }
 
-func NewSquareCustomer() square.Customer {
-	return square.Customer{
+func NewSquareCustomer() *square.Customer {
+	return &square.Customer{
 		SquareCustomerID: SquareCustomerID,
 		FirstName:        test.CustomerFirstName,
 		LastName:         test.CustomerLastName,
@@ -68,8 +71,11 @@ func NewSquareCustomer() square.Customer {
 	}
 }
 
-func NewOrder() core.Order {
+func NewOrder() *core.Order {
 	order := test.NewOrder()
+	order.ID = SquareOrderID
+	order.CustomerID = SquareCustomerID
+
 	order.Meta = map[string]string{
 		square.OrderIDKey:    SquareOrderID,
 		square.CustomerIDKey: SquareCustomerID,
@@ -77,17 +83,23 @@ func NewOrder() core.Order {
 		square.MerchantIDKey: SquareMerchantID,
 	}
 
+	order.Items[0].ID = SquareItemUID1_1
 	order.Items[0].Meta = map[string]string{square.ItemIDKey: SquareItemUID1}
+	order.Items[1].ID = SquareItemUID2_1
 	order.Items[1].Meta = map[string]string{square.ItemIDKey: SquareItemUID2}
+	order.Items[2].ID = SquareItemUID2_2
 	order.Items[2].Meta = map[string]string{square.ItemIDKey: SquareItemUID2}
 
-	return order
+	return &order
 }
 
-func NewCustomer() core.Customer {
+func NewCustomer() *core.Customer {
 	customer := test.NewCustomer()
+
+	customer.ID = SquareCustomerID
 	customer.Meta = map[string]string{
 		"SquareCustomerID": SquareCustomerID,
 	}
-	return customer
+
+	return &customer
 }

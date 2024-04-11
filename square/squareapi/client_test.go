@@ -58,7 +58,7 @@ func TestClient_GetCustomer_Success(t *testing.T) {
 	is.NoErr(err)
 
 	expectedCustomer := squaretest.NewSquareCustomer()
-	is.Equal(customer, expectedCustomer)
+	is.Equal(expectedCustomer, customer)
 }
 
 func TestClient_GetOrder_Success(t *testing.T) {

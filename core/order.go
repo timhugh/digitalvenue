@@ -15,5 +15,5 @@ type OrderItem struct {
 }
 
 type OrderRepository interface {
-	PutOrder(order Order) error
+	PutOrder(order *Order) error
 }
