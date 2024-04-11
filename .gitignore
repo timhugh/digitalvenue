@@ -9,7 +9,7 @@ build*/
 template.yml
 
 # aws dynamo local storage
-docker/dynamodb/
+.docker/dynamodb/
 
 # wire gen files
 wire_gen.go

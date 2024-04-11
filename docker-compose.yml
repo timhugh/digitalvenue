@@ -8,7 +8,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./docker/dynamodb:/home/dynamodblocal/data
+      - ./.docker/dynamodb:/home/dynamodblocal/data
     working_dir: /home/dynamodblocal
 
   dynamodb-admin:
@@ -26,3 +26,39 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+
+  http-gateway:
+    image: nginx:latest
+    container_name: http-gateway
+    ports:
+      - "8080:80"
+    volumes:
+      - ./.docker/http-gateway/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - square-events
+      - square-event-gatherer
+
+  square-events:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: square-events
+    command: [ "go", "run", "./cmd/square-events" ]
+    environment:
+      LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
+      CORE_DATA_TABLE_NAME: core-data-dev
+      SQUARE_WEBHOOK_NOTIFICATION_URL: https://localhost:9000/events
+    depends_on:
+      - dynamodb-local
+
+  square-event-gatherer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: square-event-gatherer
+    command: [ "go", "run", "./cmd/square-event-gatherer" ]
+    environment:
+      LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
+      CORE_DATA_TABLE_NAME: core-data-dev
+    depends_on:
+      - dynamodb-local
