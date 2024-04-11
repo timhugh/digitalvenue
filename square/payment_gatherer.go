@@ -7,7 +7,7 @@ import (
 )
 
 type PaymentGatherer interface {
-	Gather(squarePaymentID string) error
+	Gather(squareMerchantID string, squarePaymentID string) error
 }
 
 type paymentGatherer struct {
@@ -37,12 +37,12 @@ func NewPaymentGatherer(
 	}
 }
 
-func (gatherer paymentGatherer) Gather(squarePaymentID string) error {
+func (gatherer paymentGatherer) Gather(squareMerchantID string, squarePaymentID string) error {
 	log := log.With().Str("square_payment_id", squarePaymentID).Logger()
 
 	log.Info().Msg("Processing new square payment")
 
-	payment, err := gatherer.paymentRepo.GetSquarePayment(squarePaymentID)
+	payment, err := gatherer.paymentRepo.GetSquarePayment(squareMerchantID, squarePaymentID)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (gatherer paymentGatherer) Gather(squarePaymentID string) error {
 	}
 
 	customer := MapCustomer(squareCustomer)
-	customerID, err := gatherer.customerRepo.PutCustomer(customer)
+	err = gatherer.customerRepo.PutCustomer(customer)
 	if err != nil {
 		return err
 	}
@@ -73,13 +73,12 @@ func (gatherer paymentGatherer) Gather(squarePaymentID string) error {
 		return err
 	}
 
-	order.CustomerID = customerID
-	orderID, err := gatherer.orderRepo.PutOrder(order)
+	err = gatherer.orderRepo.PutOrder(order)
 	if err != nil {
 		return err
 	}
 
-	log.Info().Str("order_id", orderID).Msg("Order created")
+	log.Info().Str("order_id", order.ID).Msg("Order created")
 
 	return nil
 }

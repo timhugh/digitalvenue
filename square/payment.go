@@ -9,5 +9,5 @@ type Payment struct {
 
 type PaymentRepository interface {
 	PutSquarePayment(payment Payment) error
-	GetSquarePayment(squarePaymentID string) (Payment, error)
+	GetSquarePayment(squareMerchantID string, squarePaymentID string) (*Payment, error)
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/aws"
 	"github.com/timhugh/digitalvenue/aws/dynamodb"
-	"github.com/timhugh/digitalvenue/aws/sqs"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/squareapi"
@@ -29,17 +28,11 @@ func initializeHandler() (SquareEventGathererHandler, error) {
 
 		dynamodb.NewClient,
 		wire.Bind(new(dynamodb.Client), new(*awsdynamodb.Client)),
-		dynamodb.NewSquareMerchantRepository,
-		wire.Bind(new(square.MerchantRepository), new(*dynamodb.SquareMerchantRepository)),
-		dynamodb.NewSquarePaymentRepository,
-		wire.Bind(new(square.PaymentRepository), new(*dynamodb.SquarePaymentRepository)),
-		dynamodb.NewOrderRepository,
-		wire.Bind(new(core.OrderRepository), new(*dynamodb.OrderRepository)),
-		dynamodb.NewCustomerRepository,
-		wire.Bind(new(core.CustomerRepository), new(*dynamodb.CustomerRepository)),
-		sqs.NewClient,
-		sqs.NewOrderCreatedQueue,
-		wire.Bind(new(core.OrderCreatedQueue), new(*sqs.OrderCreatedQueue)),
+		dynamodb.NewRepository,
+		wire.Bind(new(square.MerchantRepository), new(*dynamodb.Repository)),
+		wire.Bind(new(square.PaymentRepository), new(*dynamodb.Repository)),
+		wire.Bind(new(core.OrderRepository), new(*dynamodb.Repository)),
+		wire.Bind(new(core.CustomerRepository), new(*dynamodb.Repository)),
 
 		squareapi.NewClient,
 		wire.Bind(new(square.APIClient), new(*squareapi.Client)),

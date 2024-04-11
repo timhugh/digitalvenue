@@ -7,16 +7,14 @@ import (
 )
 
 type PaymentCreatedHandler struct {
-	paymentsRepository  square.PaymentRepository
-	paymentCreatedQueue square.PaymentCreatedQueue
-	log                 zerolog.Logger
+	paymentsRepository square.PaymentRepository
+	log                zerolog.Logger
 }
 
-func NewPaymentCreatedHandler(paymentsRepository square.PaymentRepository, paymentCreatedQueue square.PaymentCreatedQueue, log zerolog.Logger) *PaymentCreatedHandler {
+func NewPaymentCreatedHandler(paymentsRepository square.PaymentRepository, log zerolog.Logger) *PaymentCreatedHandler {
 	return &PaymentCreatedHandler{
-		paymentsRepository:  paymentsRepository,
-		paymentCreatedQueue: paymentCreatedQueue,
-		log:                 log,
+		paymentsRepository: paymentsRepository,
+		log:                log,
 	}
 }
 
@@ -48,9 +46,7 @@ func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error
 		return errors.Wrap(err, "failed to save payment")
 	}
 
-	if err := handler.paymentCreatedQueue.Publish(payment.SquarePaymentID); err != nil {
-		return errors.Wrap(err, "failed to publish payment created event")
-	}
+	handler.log.Info().Msg("Created payment successfully")
 
 	return nil
 }

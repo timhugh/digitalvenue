@@ -9,6 +9,5 @@ type Merchant struct {
 }
 
 type MerchantRepository interface {
-	PutSquareMerchant(merchant Merchant) error
-	GetSquareMerchant(squareMerchantID string) (Merchant, error)
+	GetSquareMerchant(squareMerchantID string) (*Merchant, error)
 }

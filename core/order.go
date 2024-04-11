@@ -15,5 +15,5 @@ type OrderItem struct {
 }
 
 type OrderRepository interface {
-	PutOrder(order Order) (string, error)
+	PutOrder(order Order) error
 }

@@ -22,13 +22,15 @@ func (handler SquareEventGathererHandler) Handle(request events.SQSEvent) (event
 	failures := make([]events.SQSBatchItemFailure, 0)
 
 	for _, record := range request.Records {
+		// TODO: nope
 		squarePaymentID := record.Body
+		squareMerchantID := record.Body
 		log := handler.log.With().
 			Str("messageId", record.MessageId).
 			Str("squarePaymentID", squarePaymentID).
 			Logger()
 
-		err := handler.gatherer.Gather(squarePaymentID)
+		err := handler.gatherer.Gather(squareMerchantID, squarePaymentID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to process payment")
 

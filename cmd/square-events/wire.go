@@ -10,7 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/aws"
 	"github.com/timhugh/digitalvenue/aws/dynamodb"
-	"github.com/timhugh/digitalvenue/aws/sqs"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/webhooks"
 )
@@ -27,14 +26,9 @@ func initializeHandler() (*SquareEventsHandler, error) {
 
 		dynamodb.NewClient,
 		wire.Bind(new(dynamodb.Client), new(*awsdynamodb.Client)),
-		dynamodb.NewSquareMerchantRepository,
-		wire.Bind(new(square.MerchantRepository), new(*dynamodb.SquareMerchantRepository)),
-		dynamodb.NewSquarePaymentRepository,
-		wire.Bind(new(square.PaymentRepository), new(*dynamodb.SquarePaymentRepository)),
-
-		sqs.NewClient,
-		sqs.NewSquarePaymentCreatedQueue,
-		wire.Bind(new(square.PaymentCreatedQueue), new(*sqs.SquarePaymentCreatedQueue)),
+		dynamodb.NewRepository,
+		wire.Bind(new(square.MerchantRepository), new(*dynamodb.Repository)),
+		wire.Bind(new(square.PaymentRepository), new(*dynamodb.Repository)),
 
 		webhooks.NewHandlerProvider,
 		webhooks.NewPaymentCreatedHandler,
