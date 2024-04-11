@@ -2,17 +2,14 @@ package square
 
 import (
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/core"
 )
 
 type PaymentGatherer interface {
-	Gather(squareMerchantID string, squarePaymentID string) error
+	Gather(payment *Payment, log zerolog.Logger) error
 }
 
 type paymentGatherer struct {
-	log          zerolog.Logger
-	paymentRepo  PaymentRepository
 	merchantRepo MerchantRepository
 	orderRepo    core.OrderRepository
 	customerRepo core.CustomerRepository
@@ -20,16 +17,12 @@ type paymentGatherer struct {
 }
 
 func NewPaymentGatherer(
-	log zerolog.Logger,
-	paymentRepo PaymentRepository,
 	merchantRepo MerchantRepository,
 	orderRepo core.OrderRepository,
 	customerRepo core.CustomerRepository,
 	squareApi APIClient,
 ) PaymentGatherer {
 	return paymentGatherer{
-		log:          log.With().Str("caller", "paymentGatherer.Gather").Logger(),
-		paymentRepo:  paymentRepo,
 		merchantRepo: merchantRepo,
 		orderRepo:    orderRepo,
 		customerRepo: customerRepo,
@@ -37,16 +30,8 @@ func NewPaymentGatherer(
 	}
 }
 
-func (gatherer paymentGatherer) Gather(squareMerchantID string, squarePaymentID string) error {
-	log := log.With().Str("square_payment_id", squarePaymentID).Logger()
-
+func (gatherer paymentGatherer) Gather(payment *Payment, log zerolog.Logger) error {
 	log.Info().Msg("Processing new square payment")
-
-	// TODO: the payment body will come in the event, so we don't need to fetch it here
-	payment, err := gatherer.paymentRepo.GetSquarePayment(squareMerchantID, squarePaymentID)
-	if err != nil {
-		return err
-	}
 
 	merchant, err := gatherer.merchantRepo.GetSquareMerchant(payment.SquareMerchantID)
 	if err != nil {

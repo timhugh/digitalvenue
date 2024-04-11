@@ -2,9 +2,10 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/timhugh/digitalvenue/dv_aws/dv_dynamodb"
 	"github.com/timhugh/digitalvenue/square"
-	"strings"
 )
 
 type SquareEventGathererHandler struct {
@@ -27,37 +28,26 @@ func (handler SquareEventGathererHandler) Handle(request events.DynamoDBEvent) (
 
 		if record.EventName != "INSERT" {
 			log.Warn().Str("eventName", record.EventName).Msg("skipping non-INSERT event")
-			failures = append(failures, events.DynamoDBBatchItemFailure{
-				ItemIdentifier: record.EventID,
-			})
-			continue
+			continue // Not retryable
 		}
 
-		newImage := record.Change.NewImage
-		// TODO: Type could be nil
-		if itemType := newImage["Type"].String(); itemType != "SquarePayment" {
-			log.Warn().Str("type", itemType).Msg("skipping non-SquarePayment event")
-			failures = append(failures, events.DynamoDBBatchItemFailure{
-				ItemIdentifier: record.EventID,
-			})
-			continue
+		payment, err := buildSquarePayment(record)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to build square payment")
+			continue // Not retryable
 		}
-
-		// TODO: PK and SK could be nil if newImage is empty (like if the stream view type gets changed)
-		pk := newImage["PK"].String()
-		sk := newImage["SK"].String()
-		// TODO: Malformed IDs will panic
-		squareMerchantID := strings.Split(pk, "#")[1]
-		squarePaymentID := strings.Split(sk, "#")[1]
 
 		log = handler.log.With().
-			Str("squarePaymentID", squarePaymentID).
+			Str("squarePaymentID", payment.SquarePaymentID).
+			Str("squareMerchantID", payment.SquareMerchantID).
+			Str("squareOrderID", payment.SquareOrderID).
 			Logger()
 
-		err := handler.gatherer.Gather(squareMerchantID, squarePaymentID)
+		err = handler.gatherer.Gather(payment, log)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to process payment")
 
+			// TODO: distinguish between retryable and non-retryable errors
 			failures = append(failures, events.DynamoDBBatchItemFailure{
 				ItemIdentifier: record.EventID,
 			})
@@ -73,4 +63,54 @@ func (handler SquareEventGathererHandler) Handle(request events.DynamoDBEvent) (
 		response.BatchItemFailures = failures
 	}
 	return response, nil
+}
+
+func buildSquarePayment(record events.DynamoDBEventRecord) (*square.Payment, error) {
+	attrs, err := getAttributes("SquarePayment", record.Change.NewImage, "PK", "SK", "SquareOrderID")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get square payment attributes from dynamodb event new image")
+	}
+
+	squarePaymentID, err := dv_dynamodb.UnprefixID(attrs["SK"])
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unprefix square payment ID")
+	}
+	squareMerchantID, err := dv_dynamodb.UnprefixID(attrs["PK"])
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unprefix square merchant ID")
+	}
+
+	return &square.Payment{
+		SquarePaymentID:  squarePaymentID,
+		SquareMerchantID: squareMerchantID,
+		SquareOrderID:    attrs["SquareOrderID"],
+	}, nil
+}
+
+func getAttributes(itemType string, image map[string]events.DynamoDBAttributeValue, attrNames ...string) (map[string]string, error) {
+	missing := make([]string, 0)
+
+	if image == nil {
+		return nil, errors.New("image is nil")
+	}
+
+	if itemTypeAttr, ok := image["Type"]; !ok || itemTypeAttr.String() != itemType {
+		return nil, errors.Errorf("image is not a %s", itemType)
+	}
+
+	attrs := make(map[string]string)
+	for _, attrName := range attrNames {
+		attr, ok := image[attrName]
+		if !ok {
+			missing = append(missing, attrName)
+			continue
+		}
+		attrs[attrName] = attr.String()
+	}
+
+	if len(missing) > 0 {
+		return nil, errors.Errorf("missing attributes: %v", missing)
+	}
+
+	return attrs, nil
 }

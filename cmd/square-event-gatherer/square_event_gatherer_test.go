@@ -66,13 +66,7 @@ func TestSquareEventGathererHandler(t *testing.T) {
 					buildWrongEventRecord(),
 				},
 			},
-			expectedResponse: events.DynamoDBEventResponse{
-				BatchItemFailures: []events.DynamoDBBatchItemFailure{
-					{
-						ItemIdentifier: "event-id",
-					},
-				},
-			},
+			expectedResponse: events.DynamoDBEventResponse{},
 		},
 		{
 			name: "wrong type",
@@ -81,13 +75,7 @@ func TestSquareEventGathererHandler(t *testing.T) {
 					buildWrongTypeRecord(),
 				},
 			},
-			expectedResponse: events.DynamoDBEventResponse{
-				BatchItemFailures: []events.DynamoDBBatchItemFailure{
-					{
-						ItemIdentifier: "event-id",
-					},
-				},
-			},
+			expectedResponse: events.DynamoDBEventResponse{},
 		},
 	}
 

@@ -1,23 +1,27 @@
-package aws
+package dv_aws
 
 import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/timhugh/digitalvenue/core"
 )
 
 func DefaultConfig() (aws.Config, error) {
+	localURL, err := core.RequireEnv("LOCAL_DYNAMODB_URL")
+	if err == nil {
+		return LocalConfig(localURL)
+	}
 	return config.LoadDefaultConfig(context.TODO())
 }
 
-// For testing with local DynamoDB
-func LocalConfig() (aws.Config, error) {
+func LocalConfig(localURL string) (aws.Config, error) {
 	return config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion("us-west-2"),
 		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
 			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: "http://localhost:8000"}, nil
+				return aws.Endpoint{URL: localURL}, nil
 			})),
 		config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
 			Value: aws.Credentials{
