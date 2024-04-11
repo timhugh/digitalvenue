@@ -5,23 +5,86 @@ import (
 	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/square"
+	"github.com/timhugh/digitalvenue/square/squaretest"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
 )
 
+func buildSuccessRecord() events.DynamoDBEventRecord {
+	return events.DynamoDBEventRecord{
+		EventID:   "event-id",
+		EventName: "INSERT",
+		Change: events.DynamoDBStreamRecord{
+			NewImage: map[string]events.DynamoDBAttributeValue{
+				"Type": events.NewStringAttribute("SquarePayment"),
+				"PK":   events.NewStringAttribute("Merchant#" + squaretest.SquareMerchantID),
+				"SK":   events.NewStringAttribute("SquarePayment#" + squaretest.SquarePaymentID),
+			},
+		},
+	}
+}
+
+func buildWrongEventRecord() events.DynamoDBEventRecord {
+	return events.DynamoDBEventRecord{
+		EventID:   "event-id",
+		EventName: "WRONG",
+	}
+}
+
+func buildWrongTypeRecord() events.DynamoDBEventRecord {
+	return events.DynamoDBEventRecord{
+		EventID:   "event-id",
+		EventName: "INSERT",
+		Change: events.DynamoDBStreamRecord{
+			NewImage: map[string]events.DynamoDBAttributeValue{
+				"Type": events.NewStringAttribute("NotSquarePayment"),
+			},
+		},
+	}
+}
+
 func TestSquareEventGathererHandler(t *testing.T) {
 	testCases := []struct {
 		name             string
-		request          events.SQSEvent
-		expectedResponse events.SQSEventResponse
+		request          events.DynamoDBEvent
+		expectedResponse events.DynamoDBEventResponse
 	}{
 		{
 			name: "basic success",
-			request: events.SQSEvent{
-				Records: []events.SQSMessage{
+			request: events.DynamoDBEvent{
+				Records: []events.DynamoDBEventRecord{
+					buildSuccessRecord(),
+				},
+			},
+			expectedResponse: events.DynamoDBEventResponse{},
+		},
+		{
+			name: "wrong event",
+			request: events.DynamoDBEvent{
+				Records: []events.DynamoDBEventRecord{
+					buildWrongEventRecord(),
+				},
+			},
+			expectedResponse: events.DynamoDBEventResponse{
+				BatchItemFailures: []events.DynamoDBBatchItemFailure{
 					{
-						Body: `{"type": "payment.created"}`,
+						ItemIdentifier: "event-id",
+					},
+				},
+			},
+		},
+		{
+			name: "wrong type",
+			request: events.DynamoDBEvent{
+				Records: []events.DynamoDBEventRecord{
+					buildWrongTypeRecord(),
+				},
+			},
+			expectedResponse: events.DynamoDBEventResponse{
+				BatchItemFailures: []events.DynamoDBBatchItemFailure{
+					{
+						ItemIdentifier: "event-id",
 					},
 				},
 			},
