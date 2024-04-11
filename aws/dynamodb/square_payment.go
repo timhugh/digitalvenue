@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/square"
 )
 
@@ -34,30 +33,22 @@ func (repo *Repository) GetSquarePayment(squareMerchantID string, squarePaymentI
 		return nil, err
 	}
 
-	tenantID, err := removeIDPrefix(item.TenantID)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid tenant ID")
-	}
-
 	return &square.Payment{
 		SquarePaymentID:  squarePaymentID,
 		SquareMerchantID: squareMerchantID,
 		SquareOrderID:    item.SquareOrderID,
-		TenantID:         tenantID,
 	}, nil
 }
 
 func (repo *Repository) PutSquarePayment(payment *square.Payment) error {
 	pk := "SquareMerchant#" + payment.SquareMerchantID
 	sk := "SquarePayment#" + payment.SquarePaymentID
-	tenantID := "Tenant#" + payment.TenantID
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String(repo.tableName),
 		Item: map[string]types.AttributeValue{
 			"PK":            &types.AttributeValueMemberS{Value: pk},
 			"SK":            &types.AttributeValueMemberS{Value: sk},
 			"Type":          &types.AttributeValueMemberS{Value: "SquarePayment"},
-			"TenantID":      &types.AttributeValueMemberS{Value: tenantID},
 			"SquareOrderID": &types.AttributeValueMemberS{Value: payment.SquareOrderID},
 		},
 	}

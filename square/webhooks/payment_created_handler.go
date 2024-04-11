@@ -39,7 +39,6 @@ func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error
 		Msg("Received event")
 
 	payment := square.Payment{
-		TenantID:         event.TenantID(),
 		SquarePaymentID:  paymentData.PaymentID,
 		SquareOrderID:    paymentData.OrderID,
 		SquareMerchantID: paymentCreatedEvent.MerchantID(),

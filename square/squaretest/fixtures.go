@@ -27,7 +27,6 @@ func NewSquarePayment() *square.Payment {
 		SquareMerchantID: SquareMerchantID,
 		SquareOrderID:    SquareOrderID,
 		SquarePaymentID:  SquarePaymentID,
-		TenantID:         test.TenantID,
 	}
 }
 

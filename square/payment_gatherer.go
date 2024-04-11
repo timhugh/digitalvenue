@@ -42,6 +42,7 @@ func (gatherer paymentGatherer) Gather(squareMerchantID string, squarePaymentID 
 
 	log.Info().Msg("Processing new square payment")
 
+	// TODO: the payment body will come in the event, so we don't need to fetch it here
 	payment, err := gatherer.paymentRepo.GetSquarePayment(squareMerchantID, squarePaymentID)
 	if err != nil {
 		return err

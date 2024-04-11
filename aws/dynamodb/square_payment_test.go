@@ -41,7 +41,6 @@ func squarePaymentPutItemInput() *dynamodb.PutItemInput {
 			"PK":            &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
 			"SK":            &types.AttributeValueMemberS{Value: "SquarePayment#" + squaretest.SquarePaymentID},
 			"Type":          &types.AttributeValueMemberS{Value: "SquarePayment"},
-			"TenantID":      &types.AttributeValueMemberS{Value: "Tenant#" + test.TenantID},
 			"SquareOrderID": &types.AttributeValueMemberS{Value: squaretest.SquareOrderID},
 		},
 	}
@@ -106,21 +105,6 @@ func TestRepository_GetSquarePayment_IncorrectItemTypeError(t *testing.T) {
 
 	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
 		ThenReturn(wrongItem, nil)
-
-	_, err := repo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)
-	if err == nil {
-		t.Fatalf("expected error, got nil")
-	}
-}
-
-func TestRepository_GetSquarePayment_InvalidTenantIDError(t *testing.T) {
-	repo, client := initRepositoryTest(t)
-
-	outputWithInvalidTenantID := squarePaymentGetItemOutput()
-	outputWithInvalidTenantID.Item["TenantID"] = &types.AttributeValueMemberS{Value: "InvalidTenantID"}
-
-	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
-		ThenReturn(outputWithInvalidTenantID, nil)
 
 	_, err := repo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)
 	if err == nil {
