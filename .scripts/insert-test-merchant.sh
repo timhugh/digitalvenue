@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if [ -z "$SQUARE_MERCHANTS_TABLE_NAME" ]; then
-  echo "$SQUARE_MERCHANTS_TABLE_NAME is not set. Please set the $SQUARE_MERCHANTS_TABLE_NAME environment variable."
+if [ -z "$CORE_DATA_TABLE_NAME" ]; then
+  echo "SQUARE_MERCHANTS_TABLE_NAME is not set. Please set the CORE_DATA_TABLE_NAME environment variable."
   exit 1
 fi
 
@@ -20,12 +20,15 @@ if [ -z "$SQUARE_API_ACCESS_TOKEN" ]; then
   exit 1
 fi
 
-aws dynamodb put-item --endpoint-url http://localhost:8000 --table-name "$SQUARE_MERCHANTS_TABLE_NAME" --item "$(cat <<EOF
+aws dynamodb put-item --endpoint-url http://localhost:8000 --table-name "$CORE_DATA_TABLE_NAME" --item "$(cat <<EOF
 {
-  "TenantID": {"S": "test"},
-  "SquareMerchantID": {"S": "$SQUARE_MERCHANT_ID"},
-  "SquareWebhookSignatureKey": {"S": "$SQUARE_WEBHOOK_SIGNATURE_KEY"},
-  "SquareAPIToken": {"S": "$SQUARE_API_ACCESS_TOKEN"}
+  "PK": {"S": "SquareMerchant#$SQUARE_MERCHANT_ID"},
+  "SK": {"S": "SquareMerchant#$SQUARE_MERCHANT_ID"},
+  "Type": {"S": "SquareMerchant"},
+  "TenantID": {"S": "Tenant#test"},
+  "Name": {"S": "Test Merchant"},
+  "SquareAPIToken": {"S": "$SQUARE_API_ACCESS_TOKEN"},
+  "SquareWebhookSignatureKey": {"S": "$SQUARE_WEBHOOK_SIGNATURE_KEY"}
 }
 EOF
 )"
