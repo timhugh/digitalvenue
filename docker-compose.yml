@@ -49,6 +49,7 @@ services:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
       SQUARE_WEBHOOK_NOTIFICATION_URL: https://localhost:9000/events
+      LOG_LEVEL: debug
     depends_on:
       - dynamodb-local
 
@@ -61,6 +62,7 @@ services:
     environment:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
+      LOG_LEVEL: debug
     depends_on:
       - dynamodb-local
 
@@ -73,5 +75,6 @@ services:
     environment:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
+      LOG_LEVEL: debug
     depends_on:
       - dynamodb-local

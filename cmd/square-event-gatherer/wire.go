@@ -7,16 +7,16 @@ import (
 	awsdynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/wire"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/dv_aws"
 	"github.com/timhugh/digitalvenue/dv_aws/dv_dynamodb"
+	"github.com/timhugh/digitalvenue/logger"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/squareapi"
 )
 
 func newLogger() zerolog.Logger {
-	return log.With().Str("service", "square-event-gatherer").Logger()
+	return logger.NewLogger().With().Str("service", "square-event-gatherer").Logger()
 }
 
 func initializeHandler() (SquareEventGathererHandler, error) {

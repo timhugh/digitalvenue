@@ -1,16 +1,19 @@
 package main
 
 import (
+	"context"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/core"
+	"github.com/timhugh/digitalvenue/core/services"
 	"github.com/timhugh/digitalvenue/dv_aws/dv_dynamodb"
+	"github.com/timhugh/digitalvenue/logger"
 )
 
 func main() {
-	logger := zerolog.Logger{}.With().Str("service", "ticket-generator").Logger()
+	logger := logger.NewLogger().With().Str("service", "ticket-generator").Logger()
 	handler, err := initializeHandler(logger)
 	if err != nil {
 		logger.Fatal().Err(err).Str("service", "ticket-generator").Msg("Failed to initialize handler")
@@ -19,18 +22,20 @@ func main() {
 }
 
 type TicketGeneratorHandler struct {
-	logger zerolog.Logger
+	logger    zerolog.Logger
+	generator *services.TicketGenerator
 }
 
-func NewTicketGeneratorHandler(logger zerolog.Logger) *TicketGeneratorHandler {
+func NewTicketGeneratorHandler(logger zerolog.Logger, generator *services.TicketGenerator) *TicketGeneratorHandler {
 	return &TicketGeneratorHandler{
-		logger: logger,
+		logger:    logger,
+		generator: generator,
 	}
 }
 
 func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (events.DynamoDBEventResponse, error) {
-	//ctx := context.Background()
-	//failures := make([]events.DynamoDBBatchItemFailure, 0)
+	ctx := context.Background()
+	failures := make([]events.DynamoDBBatchItemFailure, 0)
 
 	for _, record := range request.Records {
 		logger := handler.logger.With().Str("eventID", record.EventID).Str("eventName", record.EventName).Logger()
@@ -48,8 +53,19 @@ func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (eve
 			Logger()
 
 		logger.Info().Msg("Retrieved order from event")
+		logger.Debug().Interface("order", order).Msg("Order details")
+
+		err = handler.generator.GenerateTickets(ctx, order)
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to generate tickets")
+			failures = append(failures, events.DynamoDBBatchItemFailure{ItemIdentifier: record.EventID})
+			continue // not retryable
+		}
 	}
 
+	if len(failures) > 0 {
+		return events.DynamoDBEventResponse{BatchItemFailures: failures}, nil
+	}
 	return events.DynamoDBEventResponse{}, nil
 }
 
