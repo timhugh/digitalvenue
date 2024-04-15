@@ -2,7 +2,7 @@ APP_NAME = digitalvenue
 ENVIRONMENT = dev
 CODE_BUCKET = $(APP_NAME)-codebucket
 ROOT = $(shell git rev-parse --show-toplevel)
-SERVICES = $(shell ls cmd)
+SERVICES = $(shell ls functions)
 
 .PHONY: validate
 validate:
@@ -40,7 +40,7 @@ deploy: package
 
 .PHONY: build
 build: $(addprefix build/, $(addsuffix .zip, $(SERVICES)))
-build/%.zip: cmd/%
+build/%.zip: functions/%
 	$(MAKE) -C $< OUT=$(ROOT)/$@
 
 .PHONY: test
@@ -53,4 +53,4 @@ clean: $(addprefix clean-, $(SERVICES))
 	rm -f template.yml
 	rm -rf build/
 clean-%:
-	$(MAKE) -C cmd/$* clean
+	$(MAKE) -C functions/$* clean

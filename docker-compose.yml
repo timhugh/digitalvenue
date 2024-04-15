@@ -44,7 +44,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: square-events
-    command: [ "go", "run", "./cmd/square-events" ]
+    command: [ "go", "run", "./functions/square-events" ]
     environment:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
@@ -58,7 +58,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: square-event-gatherer
-    command: [ "go", "run", "./cmd/square-event-gatherer" ]
+    command: [ "go", "run", "./functions/square-event-gatherer" ]
     environment:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
@@ -71,7 +71,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ticket-generator
-    command: [ "go", "run", "./cmd/ticket-generator" ]
+    command: [ "go", "run", "./functions/ticket-generator" ]
     environment:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
