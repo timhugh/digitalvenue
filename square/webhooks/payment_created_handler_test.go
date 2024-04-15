@@ -3,7 +3,7 @@ package webhooks
 import (
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
-	"github.com/rs/zerolog"
+	"github.com/timhugh/digitalvenue/logger"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/squaretest"
 	"testing"
@@ -19,7 +19,7 @@ func TestPaymentCreatedHandler_HandleEvent(t *testing.T) {
 
 	service := PaymentCreatedHandler{
 		paymentsRepository: paymentsRepo,
-		log:                zerolog.Logger{},
+		log:                logger.Default(),
 	}
 
 	err := service.HandleEvent(newPaymentCreatedEvent())

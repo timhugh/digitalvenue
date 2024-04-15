@@ -6,7 +6,6 @@ package main
 import (
 	awsdynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/wire"
-	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/dv_aws"
 	"github.com/timhugh/digitalvenue/dv_aws/dv_dynamodb"
@@ -15,13 +14,8 @@ import (
 	"github.com/timhugh/digitalvenue/square/squareapi"
 )
 
-func newLogger() zerolog.Logger {
-	return logger.NewLogger().With().Str("service", "square-event-gatherer").Logger()
-}
-
-func initializeHandler() (SquareEventGathererHandler, error) {
+func initializeHandler(log *logger.ContextLogger) (SquareEventGathererHandler, error) {
 	wire.Build(
-		newLogger,
 		square.NewPaymentGatherer,
 
 		dv_aws.DefaultConfig,

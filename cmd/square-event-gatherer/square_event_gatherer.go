@@ -3,18 +3,18 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/dv_aws"
 	"github.com/timhugh/digitalvenue/dv_aws/dv_dynamodb"
+	"github.com/timhugh/digitalvenue/logger"
 	"github.com/timhugh/digitalvenue/square"
 )
 
 type SquareEventGathererHandler struct {
-	log      zerolog.Logger
+	log      *logger.ContextLogger
 	gatherer square.PaymentGatherer
 }
 
-func NewSquareEventGathererHandler(log zerolog.Logger, gatherer square.PaymentGatherer) SquareEventGathererHandler {
+func NewSquareEventGathererHandler(log *logger.ContextLogger, gatherer square.PaymentGatherer) SquareEventGathererHandler {
 	return SquareEventGathererHandler{
 		log:      log,
 		gatherer: gatherer,
@@ -25,28 +25,28 @@ func (handler SquareEventGathererHandler) Handle(request events.DynamoDBEvent) (
 	failures := make([]events.DynamoDBBatchItemFailure, 0)
 
 	for _, record := range request.Records {
-		log := handler.log.With().Str("eventID", record.EventID).Logger()
+		log := handler.log.Sub().AddParam("eventID", record.EventID)
 
 		if record.EventName != "INSERT" {
-			log.Warn().Str("eventName", record.EventName).Msg("skipping non-INSERT event")
+			log.Warn("skipping non-INSERT event '%s'", record.EventName)
 			continue // Not retryable
 		}
 
 		payment, err := buildSquarePayment(record)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to build square payment")
+			log.Error("failed to build square payment: %s", err)
 			continue // Not retryable
 		}
 
-		log = handler.log.With().
-			Str("squarePaymentID", payment.SquarePaymentID).
-			Str("squareMerchantID", payment.SquareMerchantID).
-			Str("squareOrderID", payment.SquareOrderID).
-			Logger()
+		log.AddParams(map[string]interface{}{
+			"squarePaymentID":  payment.SquarePaymentID,
+			"squareMerchantID": payment.SquareMerchantID,
+			"squareOrderID":    payment.SquareOrderID,
+		})
 
-		err = handler.gatherer.Gather(payment, log)
+		err = handler.gatherer.Gather(log.NewContext(), payment)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to process payment")
+			log.Error("Failed to process payment: %s", err)
 
 			// TODO: distinguish between retryable and non-retryable errors
 			failures = append(failures, events.DynamoDBBatchItemFailure{
@@ -56,7 +56,7 @@ func (handler SquareEventGathererHandler) Handle(request events.DynamoDBEvent) (
 			continue
 		}
 
-		log.Info().Msg("processed payment successfully")
+		log.Info("Processed payment successfully")
 	}
 
 	response := events.DynamoDBEventResponse{}

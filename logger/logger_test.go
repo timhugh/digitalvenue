@@ -82,7 +82,7 @@ func TestContextLogger_NewContext(t *testing.T) {
 	is, out, msg := initTest(t)
 
 	ctx := logger.NewContext(&out)
-	log := logger.FromContext(ctx)
+	_, log := logger.FromContext(ctx)
 
 	log.Debug("Message")
 	is.NoErr(json.Unmarshal([]byte(out.String()), &msg))
@@ -98,7 +98,7 @@ func TestContextLogger_ExistingContext(t *testing.T) {
 
 	ctx := logger.Attach(context.Background(), logIn)
 
-	logOut := logger.FromContext(ctx)
+	_, logOut := logger.FromContext(ctx)
 	is.Equal(logIn, logOut)
 
 	logOut.Debug("Message")

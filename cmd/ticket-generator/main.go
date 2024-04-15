@@ -1,63 +1,66 @@
 package main
 
 import (
-	"context"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/core"
 	"github.com/timhugh/digitalvenue/core/services"
 	"github.com/timhugh/digitalvenue/dv_aws/dv_dynamodb"
 	"github.com/timhugh/digitalvenue/logger"
+	"os"
 )
 
 func main() {
-	logger := logger.NewLogger().With().Str("service", "ticket-generator").Logger()
-	handler, err := initializeHandler(logger)
+	log := logger.Default().AddParam("service", "ticket-generator")
+
+	handler, err := initializeHandler(log)
 	if err != nil {
-		logger.Fatal().Err(err).Str("service", "ticket-generator").Msg("Failed to initialize handler")
+		log.Fatal("Failed to initialize handler")
+		os.Exit(1)
 	}
 	lambda.Start(handler.Handle)
 }
 
 type TicketGeneratorHandler struct {
-	logger    zerolog.Logger
+	log       *logger.ContextLogger
 	generator *services.TicketGenerator
 }
 
-func NewTicketGeneratorHandler(logger zerolog.Logger, generator *services.TicketGenerator) *TicketGeneratorHandler {
+func NewTicketGeneratorHandler(log *logger.ContextLogger, generator *services.TicketGenerator) *TicketGeneratorHandler {
 	return &TicketGeneratorHandler{
-		logger:    logger,
+		log:       log,
 		generator: generator,
 	}
 }
 
 func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (events.DynamoDBEventResponse, error) {
-	ctx := context.Background()
 	failures := make([]events.DynamoDBBatchItemFailure, 0)
 
 	for _, record := range request.Records {
-		logger := handler.logger.With().Str("eventID", record.EventID).Str("eventName", record.EventName).Logger()
-		logger.Info().Msg("Processing record")
+		log := handler.log.Sub()
+		log.AddParams(map[string]interface{}{
+			"eventID":   record.EventID,
+			"eventName": record.EventName,
+		})
+		log.Info("Processing record")
 
 		order, err := buildOrderFromEvent(record)
 		if err != nil {
-			logger.Error().Err(err).Msg("Failed to build order from event")
+			log.Error("Failed to build order from event: %s", err)
 			continue // not retryable
 		}
 
-		logger = logger.With().
-			Str("orderID", order.ID).
-			Str("tenantID", order.TenantID).
-			Logger()
+		log.AddParams(map[string]interface{}{
+			"orderID":  order.ID,
+			"tenantID": order.TenantID,
+		})
 
-		logger.Info().Msg("Retrieved order from event")
-		logger.Debug().Interface("order", order).Msg("Order details")
+		log.Info("Retrieved order from event")
 
-		err = handler.generator.GenerateTickets(ctx, order)
+		err = handler.generator.GenerateTickets(log.NewContext(), order)
 		if err != nil {
-			logger.Error().Err(err).Msg("Failed to generate tickets")
+			log.Error("Failed to generate tickets: %s", err)
 			failures = append(failures, events.DynamoDBBatchItemFailure{ItemIdentifier: record.EventID})
 			continue // not retryable
 		}

@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
-	"github.com/rs/zerolog"
+	"github.com/timhugh/digitalvenue/logger"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/squaretest"
 	"testing"
@@ -79,7 +79,7 @@ func TestSquareEventGathererHandler(t *testing.T) {
 		},
 	}
 
-	log := zerolog.Logger{}
+	log := logger.Default()
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

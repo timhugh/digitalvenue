@@ -2,13 +2,16 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/rs/zerolog/log"
+	"github.com/timhugh/digitalvenue/logger"
+	"os"
 )
 
 func main() {
-	handler, err := initializeHandler()
+	log := logger.Default().AddParam("service", "square-event-gatherer")
+	handler, err := initializeHandler(log)
 	if err != nil {
-		log.Fatal().Err(err).Str("service", "square-event-gatherer").Msg("Failed to initialize handler")
+		log.Fatal("Failed to initialize handler")
+		os.Exit(1)
 	}
 	lambda.Start(handler.Handle)
 }

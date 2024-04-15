@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
-	"github.com/rs/zerolog"
+	"github.com/timhugh/digitalvenue/logger"
 	"github.com/timhugh/digitalvenue/square"
 	squarewebhooks "github.com/timhugh/digitalvenue/square/webhooks"
 	"os"
@@ -101,7 +101,7 @@ func TestSquareEventsHandler(t *testing.T) {
 			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
 			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[squarewebhooks.WebhookEvent[any]]())).ThenReturn(nil)
 
-			handler, err := NewSquareEventsHandler(mockMerchantRepo, mockHandlerProvider, zerolog.Logger{})
+			handler, err := NewSquareEventsHandler(mockMerchantRepo, mockHandlerProvider, logger.Default())
 			is.NoErr(err)
 
 			response, err := handler.Handle(testCase.request)

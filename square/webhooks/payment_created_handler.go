@@ -2,16 +2,16 @@ package webhooks
 
 import (
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
+	"github.com/timhugh/digitalvenue/logger"
 	"github.com/timhugh/digitalvenue/square"
 )
 
 type PaymentCreatedHandler struct {
 	paymentsRepository square.PaymentRepository
-	log                zerolog.Logger
+	log                *logger.ContextLogger
 }
 
-func NewPaymentCreatedHandler(paymentsRepository square.PaymentRepository, log zerolog.Logger) *PaymentCreatedHandler {
+func NewPaymentCreatedHandler(paymentsRepository square.PaymentRepository, log *logger.ContextLogger) *PaymentCreatedHandler {
 	return &PaymentCreatedHandler{
 		paymentsRepository: paymentsRepository,
 		log:                log,
@@ -28,15 +28,15 @@ func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error
 		return errors.New("data type is not PaymentData")
 	}
 
-	handler.log.Debug().
-		Str("service", "events-service").
-		Str("event", "payment.created").
-		Str("event_id", event.EventID()).
-		Str("payment_id", paymentData.PaymentID).
-		Str("order_id", paymentData.OrderID).
-		Str("merchant_id", paymentCreatedEvent.MerchantID()).
-		Str("tenant_id", event.TenantID()).
-		Msg("Received event")
+	log := handler.log.Sub().AddParams(map[string]interface{}{
+		"event_id":    event.EventID(),
+		"payment_id":  paymentData.PaymentID,
+		"order_id":    paymentData.OrderID,
+		"merchant_id": paymentCreatedEvent.MerchantID(),
+		"tenant_id":   event.TenantID(),
+	})
+
+	log.Debug("Received event")
 
 	payment := square.Payment{
 		SquarePaymentID:  paymentData.PaymentID,
@@ -48,7 +48,7 @@ func (handler *PaymentCreatedHandler) HandleEvent(event WebhookEvent[any]) error
 		return errors.Wrap(err, "failed to save payment")
 	}
 
-	handler.log.Info().Msg("Created payment successfully")
+	log.Info("Created payment successfully")
 
 	return nil
 }

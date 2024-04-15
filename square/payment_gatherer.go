@@ -1,12 +1,13 @@
 package square
 
 import (
-	"github.com/rs/zerolog"
+	"context"
 	"github.com/timhugh/digitalvenue/core"
+	"github.com/timhugh/digitalvenue/logger"
 )
 
 type PaymentGatherer interface {
-	Gather(payment *Payment, log zerolog.Logger) error
+	Gather(ctx context.Context, payment *Payment) error
 }
 
 type paymentGatherer struct {
@@ -30,8 +31,9 @@ func NewPaymentGatherer(
 	}
 }
 
-func (gatherer paymentGatherer) Gather(payment *Payment, log zerolog.Logger) error {
-	log.Info().Msg("Processing new square payment")
+func (gatherer paymentGatherer) Gather(ctx context.Context, payment *Payment) error {
+	_, log := logger.FromContext(ctx)
+	log.Info("Processing new square payment")
 
 	merchant, err := gatherer.merchantRepo.GetSquareMerchant(payment.SquareMerchantID)
 	if err != nil {
@@ -54,6 +56,8 @@ func (gatherer paymentGatherer) Gather(payment *Payment, log zerolog.Logger) err
 		return err
 	}
 
+	log.Info("Put customer: '%s'", customer.ID)
+
 	order, err := MapOrder(squareOrder, payment.SquarePaymentID, merchant.ID, merchant.TenantID, customer.ID)
 	if err != nil {
 		return err
@@ -64,7 +68,7 @@ func (gatherer paymentGatherer) Gather(payment *Payment, log zerolog.Logger) err
 		return err
 	}
 
-	log.Info().Str("order_id", order.ID).Msg("Order created")
+	log.Info("Put order: '%s'", order.ID)
 
 	return nil
 }

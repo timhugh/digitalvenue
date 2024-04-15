@@ -88,14 +88,17 @@ func Attach(ctx context.Context, logger *ContextLogger) context.Context {
 	return context.WithValue(ctx, loggerContextKey, logger)
 }
 
-func FromContext(ctx context.Context) *ContextLogger {
-	logger := ctx.Value(loggerContextKey).(*ContextLogger)
-	if logger == nil {
+func FromContext(ctx context.Context) (context.Context, *ContextLogger) {
+	var logger *ContextLogger
+	ctxValue := ctx.Value(loggerContextKey)
+	if ctxValue == nil {
 		logger = Default()
 		logger.Debug("No logger found in context; attaching a default logger")
-		Attach(ctx, logger)
+		ctx = Attach(ctx, logger)
+	} else {
+		logger = ctxValue.(*ContextLogger)
 	}
-	return logger
+	return ctx, logger
 }
 
 func (l *ContextLogger) NewContext() context.Context {
@@ -112,7 +115,7 @@ func (l *ContextLogger) Sub() *ContextLogger {
 	}
 }
 
-func (l *ContextLogger) AddParam(key string, value string) *ContextLogger {
+func (l *ContextLogger) AddParam(key string, value interface{}) *ContextLogger {
 	if l.params == nil {
 		l.params = make(map[string]interface{})
 	}

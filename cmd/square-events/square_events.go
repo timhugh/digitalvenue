@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/rs/zerolog"
 	"github.com/timhugh/digitalvenue/core"
+	"github.com/timhugh/digitalvenue/logger"
 	"github.com/timhugh/digitalvenue/square"
 	"github.com/timhugh/digitalvenue/square/webhooks"
 )
@@ -15,11 +15,11 @@ const squareWebhookNotificationURL = "SQUARE_WEBHOOK_NOTIFICATION_URL"
 type SquareEventsHandler struct {
 	webhookNotificationURL string
 	merchantRepo           square.MerchantRepository
-	log                    zerolog.Logger
+	log                    *logger.ContextLogger
 	handlerProvider        webhooks.HandlerProvider
 }
 
-func NewSquareEventsHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks.HandlerProvider, log zerolog.Logger) (*SquareEventsHandler, error) {
+func NewSquareEventsHandler(merchantRepo square.MerchantRepository, handlerProvider webhooks.HandlerProvider, log *logger.ContextLogger) (*SquareEventsHandler, error) {
 	squareWebhookNotificationURL, err := core.RequireEnv(squareWebhookNotificationURL)
 	if err != nil {
 		return nil, err
@@ -34,47 +34,50 @@ func NewSquareEventsHandler(merchantRepo square.MerchantRepository, handlerProvi
 }
 
 func (handler *SquareEventsHandler) Handle(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	log := handler.log.Sub()
+
 	webhookEvent, err := webhooks.NewWebhookEvent(request.Body)
 	if err != nil {
-		handler.log.Warn().Err(err).Msg("Failed to create webhook event")
+		log.AddParam("error", err).Warn("Failed to create webhook event")
 		return errorResponse("unable to process event: %s", err.Error())
 	}
-	log := handler.log.With().
-		Str("event_id", webhookEvent.EventID()).
-		Str("event", webhookEvent.EventType()).
-		Str("merchant_id", webhookEvent.MerchantID()).
-		Logger()
-	log.Info().Msg("Begin processing event")
+
+	log.AddParams(map[string]interface{}{
+		"event_id":    webhookEvent.EventID(),
+		"event":       webhookEvent.EventType(),
+		"merchant_id": webhookEvent.MerchantID(),
+	})
+	log.Info("Begin processing event")
 
 	merchant, err := handler.merchantRepo.GetSquareMerchant(webhookEvent.MerchantID())
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to find merchant")
+		log.AddParam("error", err).Warn("Failed to find merchant")
 		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantID())
 	}
 
 	webhookEvent.SetTenantID(merchant.TenantID)
-	log = log.With().Str("tenant_id", merchant.TenantID).Logger()
+	log.AddParam("tenant_id", merchant.TenantID)
 
 	signature := request.Headers[squareSignatureHeader]
 	err = webhooks.Validate(request.Body, handler.webhookNotificationURL, merchant.SquareWebhookSignatureKey, signature)
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to validate event")
+		log.AddParam("error", err).Warn("Failed to validate event")
 		return errorResponse("invalid signature: %s", signature)
 	}
 
 	eventHandler, err := handler.handlerProvider.GetHandler(webhookEvent.EventType())
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to get event handler")
+		log.AddParam("error", err).Warn("Failed to get event handler")
 		return errorResponse("unknown event type: %s", webhookEvent.EventType())
 	}
 
 	err = eventHandler.HandleEvent(webhookEvent)
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to handle event")
+		log.AddParam("error", err).Warn("Failed to handle event")
 		return errorResponse("failed to handle event: %s", err.Error())
 	}
 
-	log.Info().Msg("Event processed successfully")
+	log.Info("Event processed successfully")
 
 	return events.APIGatewayProxyResponse{
 		Body:       `{"status": "success"}`,
