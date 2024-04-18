@@ -16,7 +16,7 @@ func main() {
 
 	handler, err := initializeHandler(log)
 	if err != nil {
-		log.Fatal("Failed to initialize handler")
+		log.Fatal("Failed to initialize handler: %s", err)
 		os.Exit(1)
 	}
 	lambda.Start(handler.Handle)

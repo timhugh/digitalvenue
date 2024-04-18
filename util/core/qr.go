@@ -1,12 +1,15 @@
 package core
 
 type QRCode struct {
-	Image    []byte
-	FileType string
+	TenantID    string
+	OrderID     string
+	OrderItemID string
+	Image       []byte
+	FileType    string
 }
 
 type QRCodeStorer interface {
-	Save(qr *QRCode) error
+	Save(qr *QRCode) (string, error)
 }
 
 type QRCodeGenerator interface {

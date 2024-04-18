@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const coreDataTableName = "CORE_DATA_TABLE_NAME"
+const coreDataTableNameKey = "CORE_DATA_TABLE_NAME"
 const itemTypeKey = "Type"
 
 type Repository struct {
@@ -19,7 +19,7 @@ type Repository struct {
 }
 
 func NewRepository(client Client) (*Repository, error) {
-	tableName, err := core.RequireEnv(coreDataTableName)
+	tableName, err := core.RequireEnv(coreDataTableNameKey)
 	if err != nil {
 		return nil, err
 	}

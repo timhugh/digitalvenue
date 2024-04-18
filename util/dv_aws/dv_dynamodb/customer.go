@@ -56,8 +56,8 @@ func (repo *Repository) GetCustomer(tenantID string, customerID string) (*core.C
 }
 
 func (repo *Repository) PutCustomer(customer *core.Customer) error {
-	tenantKey := "Tenant#" + customer.TenantID
-	customerKey := "Customer#" + customer.ID
+	pk := "Tenant#" + customer.TenantID
+	sk := "Customer#" + customer.ID
 
 	var meta map[string]types.AttributeValue
 	if customer.Meta != nil {
@@ -70,8 +70,8 @@ func (repo *Repository) PutCustomer(customer *core.Customer) error {
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String(repo.tableName),
 		Item: map[string]types.AttributeValue{
-			"PK":         &types.AttributeValueMemberS{Value: tenantKey},
-			"SK":         &types.AttributeValueMemberS{Value: customerKey},
+			"PK":         &types.AttributeValueMemberS{Value: pk},
+			"SK":         &types.AttributeValueMemberS{Value: sk},
 			"Type":       &types.AttributeValueMemberS{Value: "Customer"},
 			"CustomerID": &types.AttributeValueMemberS{Value: customer.ID},
 			"Name":       &types.AttributeValueMemberS{Value: customer.Name},

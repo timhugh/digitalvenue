@@ -42,39 +42,46 @@ services:
   square-events:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: .docker/function.Dockerfile
     container_name: square-events
     command: [ "go", "run", "./functions/square-events" ]
+    volumes:
+      - .:/digitalvenue
+    depends_on:
+      - dynamodb-local
     environment:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
       SQUARE_WEBHOOK_NOTIFICATION_URL: https://localhost:9000/events
       LOG_LEVEL: debug
-    depends_on:
-      - dynamodb-local
 
   square-event-gatherer:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: .docker/function.Dockerfile
     container_name: square-event-gatherer
     command: [ "go", "run", "./functions/square-event-gatherer" ]
+    volumes:
+      - .:/digitalvenue
+    depends_on:
+      - dynamodb-local
     environment:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
       LOG_LEVEL: debug
-    depends_on:
-      - dynamodb-local
 
   ticket-generator:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: .docker/function.Dockerfile
     container_name: ticket-generator
     command: [ "go", "run", "./functions/ticket-generator" ]
+    volumes:
+      - .:/digitalvenue
+    depends_on:
+      - dynamodb-local
     environment:
       LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: core-data-dev
       LOG_LEVEL: debug
-    depends_on:
-      - dynamodb-local
+      S3_QR_CODE_BUCKET_NAME: digitalvenue-qr-codes

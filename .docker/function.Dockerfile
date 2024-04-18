@@ -10,6 +10,6 @@ WORKDIR /digitalvenue
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+VOLUME /digitalvenue
 
 ENTRYPOINT [ "/usr/local/bin/aws-lambda-rie" ]
