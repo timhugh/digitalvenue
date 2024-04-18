@@ -40,17 +40,28 @@ deploy: package
 
 .PHONY: build
 build: $(addprefix build/, $(addsuffix .zip, $(SERVICES)))
-build/%.zip: functions/%
-	$(MAKE) -C $< OUT=$(ROOT)/$@
+build/%.zip: build/%/bootstrap
+	zip -rj $@ $^
+
+build/%/bootstrap: functions/% functions/%/wire_gen.go util
+	GOOS=linux GOARCH=arm64 go build -o $@ ./functions/$*
+
+.PHONY: wire
+wire: $(addprefix functions/, $(addsuffix /wire_gen.go, $(SERVICES)))
+functions/%/wire_gen.go: functions/%/wire.go
+	wire gen ./functions/$*
 
 .PHONY: test
 test: build
 	go test ./...
-	go vet ./...
+
+.PHONY: lint
+lint: test
+	golangci-lint run
 
 .PHONY: clean
 clean: $(addprefix clean-, $(SERVICES))
 	rm -f template.yml
 	rm -rf build/
 clean-%:
-	$(MAKE) -C functions/$* clean
+	rm -f functions/$*/wire_gen.go
