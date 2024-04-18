@@ -7,6 +7,7 @@ import (
 	"io"
 	"maps"
 	"os"
+	"strings"
 )
 
 type Level int
@@ -35,6 +36,7 @@ func getLevelFromEnv() Level {
 }
 
 func stringToLevel(level string) Level {
+	level = strings.ToLower(level)
 	switch level {
 	case "debug":
 		return DebugLevel
@@ -69,10 +71,13 @@ func levelToString(level Level) string {
 }
 
 func New(out io.Writer) *ContextLogger {
-	return &ContextLogger{
-		level: getLevelFromEnv(),
+	level := getLevelFromEnv()
+	logger := ContextLogger{
+		level: level,
 		out:   out,
 	}
+	logger.Info("Logger initialized with level %s", levelToString(level))
+	return &logger
 }
 
 func Default() *ContextLogger {
@@ -167,15 +172,15 @@ func (l *ContextLogger) log(level Level, msg string, params ...interface{}) {
 
 	jsonString, err := json.Marshal(msgJson)
 	if err != nil {
-		_, err := fmt.Fprintf(l.out, "Failed to marshal log message: %v", err)
+		_, err := fmt.Fprintf(l.out, "Failed to marshal log message: %s", err)
 		if err != nil {
-			fmt.Printf("Failed to write log message: %v\n", err)
+			fmt.Printf("Failed to write log message: %s\n", err)
 		}
 		return
 	}
 
 	_, err = fmt.Fprintln(l.out, string(jsonString))
 	if err != nil {
-		fmt.Printf("Failed to write log message: %v\n", err)
+		fmt.Printf("Failed to write log message: %s\n", err)
 	}
 }

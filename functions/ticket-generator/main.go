@@ -37,6 +37,8 @@ func NewTicketGeneratorHandler(log *logger.ContextLogger, generator *services.Ti
 func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (events.DynamoDBEventResponse, error) {
 	failures := make([]events.DynamoDBBatchItemFailure, 0)
 
+	handler.log.Info("Processing batch of records")
+
 	for _, record := range request.Records {
 		log := handler.log.Sub()
 		log.AddParams(map[string]interface{}{
@@ -56,19 +58,22 @@ func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (eve
 			"tenantID": order.TenantID,
 		})
 
-		log.Info("Retrieved order from event")
-
 		err = handler.generator.GenerateTickets(log.NewContext(), order)
 		if err != nil {
 			log.Error("Failed to generate tickets: %s", err)
 			failures = append(failures, events.DynamoDBBatchItemFailure{ItemIdentifier: record.EventID})
 			continue // not retryable
 		}
+
+		log.Info("Successfully processed record")
 	}
 
 	if len(failures) > 0 {
+		handler.log.Error("Failed to process some records")
 		return events.DynamoDBEventResponse{BatchItemFailures: failures}, nil
 	}
+
+	handler.log.Info("Successfully processed all records")
 	return events.DynamoDBEventResponse{}, nil
 }
 

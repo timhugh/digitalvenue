@@ -43,7 +43,7 @@ func (s *S3QRStorage) Save(qrCode *core.QRCode) (string, error) {
 	putObjectInput := s3.PutObjectInput{
 		Bucket:          &s.bucket,
 		Key:             &key,
-		Body:            bytes.NewBuffer(qrCode.Image),
+		Body:            bytes.NewReader(qrCode.Image),
 		ACL:             types.ObjectCannedACLPublicRead,
 		ContentEncoding: &contentEncoding,
 		ContentType:     &contentType,

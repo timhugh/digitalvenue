@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/util/core"
-	"github.com/timhugh/digitalvenue/util/logger"
 	"github.com/timhugh/digitalvenue/util/qr"
 	"strings"
 	"sync"
@@ -27,16 +26,10 @@ func NewTicketGenerator(qrStore core.QRCodeStorer, ticketRepo core.TicketReposit
 }
 
 func (t *TicketGenerator) GenerateTickets(ctx context.Context, order *core.Order) error {
-	ctx, log := logger.FromContext(ctx)
-
-	log.Info("Building tickets from order")
-
-	tickets, err := buildTickets(ctx, order)
+	tickets, err := buildTickets(order)
 	if err != nil {
 		return err
 	}
-
-	log.Debug("Generating QR codes for tickets")
 
 	errs := make(chan error, len(tickets))
 	var wg sync.WaitGroup
@@ -52,8 +45,9 @@ func (t *TicketGenerator) GenerateTickets(ctx context.Context, order *core.Order
 				errs <- err
 				return
 			}
-
-			log.Sub().AddParam("qr_code", qrCode.Image).Debug("Generated qrcode for ticket %s", ticket.ID)
+			qrCode.TenantID = order.TenantID
+			qrCode.OrderID = order.ID
+			qrCode.OrderItemID = ticket.ID
 
 			url, err := t.qrStore.Save(qrCode)
 			if err != nil {
@@ -61,8 +55,6 @@ func (t *TicketGenerator) GenerateTickets(ctx context.Context, order *core.Order
 			}
 
 			ticket.QRCodeURL = url
-
-			log.Debug("QR code for ticket %s saved to %s", ticket.ID, url)
 		}(ticket)
 	}
 	wg.Wait()
@@ -76,8 +68,6 @@ func (t *TicketGenerator) GenerateTickets(ctx context.Context, order *core.Order
 		return errors.Errorf("failed to generate QR codes: %s", strings.Join(errorMessages, ", "))
 	}
 
-	log.Debug("Successfully generated and saved QR codes for tickets")
-
 	err = t.ticketRepo.PutTickets(tickets)
 	if err != nil {
 		return errors.Wrap(err, "failed to persist tickets to repository")
@@ -86,9 +76,7 @@ func (t *TicketGenerator) GenerateTickets(ctx context.Context, order *core.Order
 	return nil
 }
 
-func buildTickets(ctx context.Context, order *core.Order) ([]*core.Ticket, error) {
-	_, log := logger.FromContext(ctx)
-
+func buildTickets(order *core.Order) ([]*core.Ticket, error) {
 	tickets := make([]*core.Ticket, len(order.Items))
 	for i, item := range order.Items {
 		tickets[i] = &core.Ticket{
@@ -98,7 +86,6 @@ func buildTickets(ctx context.Context, order *core.Order) ([]*core.Ticket, error
 			CustomerID: order.CustomerID,
 			Name:       item.Name,
 		}
-		log.Debug("Built ticket %s", tickets[i].ID)
 	}
 	return tickets, nil
 }
