@@ -56,7 +56,7 @@ func (gatherer paymentGatherer) Gather(ctx context.Context, payment *Payment) er
 		return err
 	}
 
-	log.Info("Put customer: '%s'", customer.ID)
+	log.Debug("Put customer: '%s'", customer.ID)
 
 	order, err := MapOrder(squareOrder, payment.SquarePaymentID, merchant.ID, merchant.TenantID, customer.ID)
 	if err != nil {
@@ -68,7 +68,7 @@ func (gatherer paymentGatherer) Gather(ctx context.Context, payment *Payment) er
 		return err
 	}
 
-	log.Info("Put order: '%s'", order.ID)
+	log.Debug("Put order: '%s'", order.ID)
 
 	return nil
 }

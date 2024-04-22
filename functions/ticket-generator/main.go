@@ -13,10 +13,16 @@ import (
 
 func main() {
 	log := logger.Default().AddParam("service", "ticket-generator")
+	env, err := core.RequireEnv("ENVIRONMENT")
+	if err != nil {
+		log.AddParam("error", err).Fatal("Failed to determine application environment")
+		os.Exit(1)
+	}
+	log.AddParam("environment", env)
 
 	handler, err := initializeHandler(log)
 	if err != nil {
-		log.Fatal("Failed to initialize handler: %s", err)
+		log.AddParam("error", err).Fatal("Failed to initialize handler")
 		os.Exit(1)
 	}
 	lambda.Start(handler.Handle)
@@ -40,8 +46,7 @@ func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (eve
 	handler.log.Info("Processing batch of records")
 
 	for _, record := range request.Records {
-		log := handler.log.Sub()
-		log.AddParams(map[string]interface{}{
+		log := handler.log.Sub().AddParams(map[string]interface{}{
 			"eventID":   record.EventID,
 			"eventName": record.EventName,
 		})
@@ -65,7 +70,7 @@ func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (eve
 			continue // not retryable
 		}
 
-		log.Info("Successfully processed record")
+		log.Debug("Successfully processed record")
 	}
 
 	if len(failures) > 0 {
@@ -73,7 +78,7 @@ func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (eve
 		return events.DynamoDBEventResponse{BatchItemFailures: failures}, nil
 	}
 
-	handler.log.Info("Successfully processed all records")
+	handler.log.Debug("Successfully processed all records")
 	return events.DynamoDBEventResponse{}, nil
 }
 

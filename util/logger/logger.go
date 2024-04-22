@@ -72,12 +72,10 @@ func levelToString(level Level) string {
 
 func New(out io.Writer) *ContextLogger {
 	level := getLevelFromEnv()
-	logger := ContextLogger{
+	return &ContextLogger{
 		level: level,
 		out:   out,
 	}
-	logger.Info("Logger initialized with level %s", levelToString(level))
-	return &logger
 }
 
 func Default() *ContextLogger {

@@ -44,7 +44,7 @@ func TestS3QRStorage_Save(t *testing.T) {
 	expectedPutObjectInput := &s3.PutObjectInput{
 		Bucket:          &bucket,
 		Key:             &key,
-		Body:            bytes.NewBuffer(qr.Image),
+		Body:            bytes.NewReader(qr.Image),
 		ACL:             types.ObjectCannedACLPublicRead,
 		ContentEncoding: &contentEncoding,
 		ContentType:     &contentType,

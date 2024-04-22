@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
@@ -99,7 +100,7 @@ func TestSquareEventsHandler(t *testing.T) {
 			mockHandlerProvider := mock.Mock[webhooks.HandlerProvider]()
 			mockHandler := mock.Mock[webhooks.EventHandler]()
 			mock.WhenDouble(mockHandlerProvider.GetHandler(mock.Any[string]())).ThenReturn(mockHandler, nil)
-			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[webhooks.WebhookEvent[any]]())).ThenReturn(nil)
+			mock.WhenSingle(mockHandler.HandleEvent(mock.Any[context.Context](), mock.Any[webhooks.WebhookEvent[any]]())).ThenReturn(nil)
 
 			handler, err := NewSquareEventsHandler(mockMerchantRepo, mockHandlerProvider, logger.Default())
 			is.NoErr(err)

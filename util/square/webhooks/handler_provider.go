@@ -1,9 +1,12 @@
 package webhooks
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 type EventHandler interface {
-	HandleEvent(event WebhookEvent[any]) error
+	HandleEvent(ctx context.Context, event WebhookEvent[any]) error
 }
 
 type HandlerProvider interface {

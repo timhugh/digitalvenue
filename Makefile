@@ -29,6 +29,10 @@ deploy: package
 		echo "ROUTE_53_HOSTED_ZONE_ID is not set"; \
 		exit 1; \
 	fi
+	if [ -z "$(PAPERTRAIL_LOG_PUSH_URL)" ]; then \
+		echo "PAPERTRAIL_LOG_PUSH_URL is not set"; \
+		exit 1; \
+	fi
 	aws cloudformation deploy \
 		--stack-name $(APP_NAME)-$(ENVIRONMENT) \
 		--template-file $(ROOT)/template.yml \
@@ -36,7 +40,8 @@ deploy: package
 		--parameter-overrides \
 			Route53HostedZoneId=${ROUTE_53_HOSTED_ZONE_ID} \
 			Environment=$(ENVIRONMENT) \
-			CodeBucketName=$(CODE_BUCKET)
+			CodeBucketName=$(CODE_BUCKET) \
+			PapertrailLogPushURL=$(PAPERTRAIL_LOG_PUSH_URL)
 
 .PHONY: build
 build: $(addprefix build/, $(addsuffix .zip, $(SERVICES)))
@@ -48,8 +53,8 @@ build/%/bootstrap: functions/% functions/%/wire_gen.go util
 
 .PHONY: wire
 wire: $(addprefix functions/, $(addsuffix /wire_gen.go, $(SERVICES)))
-functions/%/wire_gen.go: functions/%/wire.go
-	wire gen ./functions/$*
+functions/%/wire_gen.go:
+	(test -f ./functions/$*/wire.go && wire gen ./functions/$*) || true
 
 .PHONY: test
 test: build

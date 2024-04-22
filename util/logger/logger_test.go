@@ -27,7 +27,6 @@ func TestContextLogger_BasicLogging(t *testing.T) {
 	is, out, msg := initTest(t)
 
 	log := logger.New(&out)
-	clearOutputs(&out, &msg)
 
 	log.Debug("This is a %s level message", "debug")
 	is.NoErr(json.Unmarshal([]byte(out.String()), &msg))
@@ -67,7 +66,6 @@ func TestContextLogger_Params(t *testing.T) {
 	is, out, msg := initTest(t)
 
 	log := logger.New(&out)
-	clearOutputs(&out, &msg)
 
 	log.AddParam("key", "value")
 	log.AddParams(map[string]interface{}{"key2": 123.0, "key3": true})
@@ -86,7 +84,6 @@ func TestContextLogger_NewContext(t *testing.T) {
 
 	ctx := logger.NewContext(&out)
 	_, log := logger.FromContext(ctx)
-	clearOutputs(&out, &msg)
 
 	log.Debug("Message")
 	is.NoErr(json.Unmarshal([]byte(out.String()), &msg))
@@ -98,7 +95,6 @@ func TestContextLogger_ExistingContext(t *testing.T) {
 	is, out, msg := initTest(t)
 
 	logIn := logger.New(&out)
-	clearOutputs(&out, &msg)
 	logIn.AddParam("key", "value")
 
 	ctx := logger.Attach(context.Background(), logIn)
@@ -115,7 +111,6 @@ func TestContextLogger_SubLogger(t *testing.T) {
 	is, out, msg := initTest(t)
 
 	log := logger.New(&out)
-	clearOutputs(&out, &msg)
 	log.AddParam("key", "value")
 
 	sub := log.Sub()
@@ -138,7 +133,6 @@ func TestContextLogger_Chaining(t *testing.T) {
 	is, out, msg := initTest(t)
 
 	log := logger.New(&out).AddParam("key", "value").AddParams(map[string]interface{}{"key2": 123.0, "key3": true})
-	clearOutputs(&out, &msg)
 
 	log.Debug("Message")
 	is.NoErr(json.Unmarshal([]byte(out.String()), &msg))
