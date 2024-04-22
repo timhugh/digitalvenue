@@ -54,7 +54,7 @@ build/%/bootstrap: functions/% functions/%/wire_gen.go util
 .PHONY: wire
 wire: $(addprefix functions/, $(addsuffix /wire_gen.go, $(SERVICES)))
 functions/%/wire_gen.go:
-	(test -f ./functions/$*/wire.go && wire gen ./functions/$*) || true
+	if [ -f ./functions/$*/wire.go ]; then wire gen ./functions/$*; fi
 
 .PHONY: test
 test: build
