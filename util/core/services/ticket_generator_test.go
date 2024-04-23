@@ -15,8 +15,9 @@ func TestTicketGenerator_GenerateTickets(t *testing.T) {
 
 	qrStorer := mock.Mock[core.QRCodeStorer]()
 	ticketRepo := mock.Mock[core.TicketRepository]()
+	orderProcessedQueue := mock.Mock[core.OrderProcessedQueue]()
 
-	tg := NewTicketGenerator(qrStorer, ticketRepo)
+	tg := NewTicketGenerator(qrStorer, ticketRepo, orderProcessedQueue)
 	order := test.NewOrder()
 
 	err := tg.GenerateTickets(context.TODO(), order)

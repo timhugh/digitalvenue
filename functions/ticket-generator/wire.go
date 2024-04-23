@@ -6,12 +6,14 @@ package main
 import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/google/wire"
 	"github.com/timhugh/digitalvenue/util/core"
 	"github.com/timhugh/digitalvenue/util/core/services"
 	"github.com/timhugh/digitalvenue/util/dv_aws"
 	"github.com/timhugh/digitalvenue/util/dv_aws/dv_dynamodb"
 	"github.com/timhugh/digitalvenue/util/dv_aws/dv_s3"
+	"github.com/timhugh/digitalvenue/util/dv_aws/dv_sqs"
 	"github.com/timhugh/digitalvenue/util/logger"
 )
 
@@ -31,6 +33,11 @@ func initializeHandler(logger *logger.ContextLogger) (*TicketGeneratorHandler, e
 		wire.Bind(new(dv_dynamodb.Client), new(*dynamodb.Client)),
 		dv_dynamodb.NewRepository,
 		wire.Bind(new(core.TicketRepository), new(*dv_dynamodb.Repository)),
+
+		dv_sqs.NewClient,
+		wire.Bind(new(dv_sqs.Client), new(*sqs.Client)),
+		dv_sqs.NewOrderProcessedQueue,
+		wire.Bind(new(core.OrderProcessedQueue), new(*dv_sqs.OrderProcessedQueue)),
 	)
 	return &TicketGeneratorHandler{}, nil
 }

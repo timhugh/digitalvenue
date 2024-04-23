@@ -10,18 +10,20 @@ import (
 )
 
 type TicketGenerator struct {
-	qrGenerator core.QRCodeGenerator
-	qrStore     core.QRCodeStorer
-	ticketRepo  core.TicketRepository
+	qrGenerator         core.QRCodeGenerator
+	qrStore             core.QRCodeStorer
+	ticketRepo          core.TicketRepository
+	orderProcessedQueue core.OrderProcessedQueue
 }
 
 const qrSize = 256
 
-func NewTicketGenerator(qrStore core.QRCodeStorer, ticketRepo core.TicketRepository) *TicketGenerator {
+func NewTicketGenerator(qrStore core.QRCodeStorer, ticketRepo core.TicketRepository, orderProcessedQueue core.OrderProcessedQueue) *TicketGenerator {
 	return &TicketGenerator{
-		qrGenerator: qr.NewGenerator(),
-		qrStore:     qrStore,
-		ticketRepo:  ticketRepo,
+		qrGenerator:         qr.NewGenerator(),
+		qrStore:             qrStore,
+		ticketRepo:          ticketRepo,
+		orderProcessedQueue: orderProcessedQueue,
 	}
 }
 
@@ -71,6 +73,11 @@ func (t *TicketGenerator) GenerateTickets(ctx context.Context, order *core.Order
 	err = t.ticketRepo.PutTickets(tickets)
 	if err != nil {
 		return errors.Wrap(err, "failed to persist tickets to repository")
+	}
+
+	err = t.orderProcessedQueue.PublishOrderProcessedEvent(order.TenantID, order.ID)
+	if err != nil {
+		return errors.Wrap(err, "failed to publish order processed event")
 	}
 
 	return nil

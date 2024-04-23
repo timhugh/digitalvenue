@@ -4,6 +4,8 @@ CODE_BUCKET = $(APP_NAME)-codebucket
 ROOT = $(shell git rev-parse --show-toplevel)
 SERVICES = $(shell ls functions)
 
+default: build
+
 .PHONY: validate
 validate:
 	aws cloudformation validate-template --template-body file://$(ROOT)/.cloudformation/env.yml

@@ -17,3 +17,7 @@ type OrderItem struct {
 type OrderRepository interface {
 	PutOrder(order *Order) error
 }
+
+type OrderProcessedQueue interface {
+	PublishOrderProcessedEvent(tenantID string, orderID string) error
+}
