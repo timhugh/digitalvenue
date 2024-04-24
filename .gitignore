@@ -8,8 +8,9 @@ build*/
 # aws cloudformation packaged template
 template.yml
 
-# aws dynamo local storage
+# aws local storage
 .docker/dynamodb/
+.docker/localstack/
 
 # wire gen files
 wire_gen.go

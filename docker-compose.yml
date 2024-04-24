@@ -1,25 +1,15 @@
-version: "3.8"
-
 services:
-  dynamodb-local:
-    command: -jar DynamoDBLocal.jar -sharedDb -dbPath ./data
-    image: amazon/dynamodb-local:latest
-    container_name: dynamodb-local
+  aws-localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
+    image: localstack/localstack-pro
     ports:
-      - "8000:8000"
-    volumes:
-      - ./.docker/dynamodb:/home/dynamodblocal/data
-    working_dir: /home/dynamodblocal
-
-  dynamodb-admin:
-    image: aaronshaf/dynamodb-admin:latest
-    container_name: dynamodb-admin
-    ports:
-      - "8001:8001"
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
     environment:
-      DYNAMO_ENDPOINT: http://dynamodb-local:8000
-    depends_on:
-      - dynamodb-local
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN}
+    volumes:
+      - "./.docker/localstack/:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
 
   redis:
     image: redis:latest
@@ -46,14 +36,13 @@ services:
     container_name: square-events
     command: [ "go", "run", "./functions/square-events" ]
     volumes:
-      - .:/digitalvenue
-    depends_on:
-      - dynamodb-local
+      - .:/digitalvenue:ro
     environment:
-      LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
-      CORE_DATA_TABLE_NAME: core-data-dev
-      SQUARE_WEBHOOK_NOTIFICATION_URL: https://localhost:9000/events
+      LOCAL_AWS_URL: ${LOCAL_AWS_URL}
+      CORE_DATA_TABLE_NAME: ${CORE_DATA_TABLE_NAME}
+      SQUARE_WEBHOOK_NOTIFICATION_URL: ${SQUARE_WEBHOOK_NOTIFICATION_URL}
       LOG_LEVEL: debug
+      ENVIRONMENT: dev
 
   square-event-gatherer:
     build:
@@ -62,13 +51,12 @@ services:
     container_name: square-event-gatherer
     command: [ "go", "run", "./functions/square-event-gatherer" ]
     volumes:
-      - .:/digitalvenue
-    depends_on:
-      - dynamodb-local
+      - .:/digitalvenue:ro
     environment:
-      LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
-      CORE_DATA_TABLE_NAME: core-data-dev
+      LOCAL_AWS_URL: ${LOCAL_AWS_URL}
+      CORE_DATA_TABLE_NAME: ${CORE_DATA_TABLE_NAME}
       LOG_LEVEL: debug
+      ENVIRONMENT: dev
 
   ticket-generator:
     build:
@@ -77,11 +65,24 @@ services:
     container_name: ticket-generator
     command: [ "go", "run", "./functions/ticket-generator" ]
     volumes:
-      - .:/digitalvenue
-    depends_on:
-      - dynamodb-local
+      - .:/digitalvenue:ro
     environment:
-      LOCAL_DYNAMODB_URL: http://dynamodb-local:8000
-      CORE_DATA_TABLE_NAME: core-data-dev
+      LOCAL_AWS_URL: ${LOCAL_AWS_URL}
+      CORE_DATA_TABLE_NAME: ${CORE_DATA_TABLE_NAME}
+      S3_QR_CODE_BUCKET_NAME: ${S3_QR_CODE_BUCKET_NAME}
       LOG_LEVEL: debug
-      S3_QR_CODE_BUCKET_NAME: digitalvenue-qr-codes
+      ENVIRONMENT: dev
+
+  ticket-mailer:
+    build:
+      context: .
+      dockerfile: .docker/function.Dockerfile
+    container_name: ticket-mailer
+    command: [ "go", "run", "./functions/ticket-mailer" ]
+    volumes:
+      - .:/digitalvenue:ro
+    environment:
+      LOCAL_AWS_URL: ${LOCAL_AWS_URL}
+      CORE_DATA_TABLE_NAME: ${CORE_DATA_TABLE_NAME}
+      LOG_LEVEL: debug
+      ENVIRONMENT: dev

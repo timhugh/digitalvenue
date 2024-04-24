@@ -9,7 +9,7 @@ import (
 )
 
 func DefaultConfig() (aws.Config, error) {
-	localURL, err := core.RequireEnv("LOCAL_DYNAMODB_URL")
+	localURL, err := core.RequireEnv("LOCAL_AWS_URL")
 	if err == nil {
 		return LocalConfig(localURL)
 	}
@@ -26,7 +26,7 @@ func LocalConfig(localURL string) (aws.Config, error) {
 		config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
 			Value: aws.Credentials{
 				AccessKeyID: "dummy", SecretAccessKey: "dummy", SessionToken: "dummy",
-				Source: "Hard-coded credentials; values are irrelevant for local DynamoDB",
+				Source: "Hard-coded credentials; values are irrelevant for localstack",
 			},
 		}),
 	)

@@ -34,7 +34,7 @@ func (handler SquareEventGathererHandler) Handle(request events.DynamoDBEvent) (
 
 		payment, err := buildSquarePayment(record)
 		if err != nil {
-			log.Sub().AddParam("error", err).Error("failed to build square payment")
+			log.Sub().AddParam("error", err.Error()).Error("failed to build square payment")
 			continue // Not retryable
 		}
 
@@ -46,7 +46,7 @@ func (handler SquareEventGathererHandler) Handle(request events.DynamoDBEvent) (
 
 		err = handler.gatherer.Gather(log.NewContext(), payment)
 		if err != nil {
-			log.Sub().AddParam("error", err).Error("failed to process square payment")
+			log.Sub().AddParam("error", err.Error()).Error("failed to process square payment")
 
 			// TODO: distinguish between retryable and non-retryable errors
 			failures = append(failures, events.DynamoDBBatchItemFailure{

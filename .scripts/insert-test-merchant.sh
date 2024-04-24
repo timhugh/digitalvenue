@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ -z "$CORE_DATA_TABLE_NAME" ]; then
-  echo "SQUARE_MERCHANTS_TABLE_NAME is not set. Please set the CORE_DATA_TABLE_NAME environment variable."
+  echo "CORE_DATA_TABLE_NAME is not set. Please set the CORE_DATA_TABLE_NAME environment variable."
   exit 1
 fi
 
@@ -20,7 +20,10 @@ if [ -z "$SQUARE_API_ACCESS_TOKEN" ]; then
   exit 1
 fi
 
-aws dynamodb put-item --endpoint-url http://localhost:8000 --table-name "$CORE_DATA_TABLE_NAME" --item "$(cat <<EOF
+aws dynamodb put-item \
+  --profile localstack \
+  --table-name "$CORE_DATA_TABLE_NAME" \
+  --item "$(cat <<EOF
 {
   "PK": {"S": "SquareMerchant#$SQUARE_MERCHANT_ID"},
   "SK": {"S": "SquareMerchant#$SQUARE_MERCHANT_ID"},

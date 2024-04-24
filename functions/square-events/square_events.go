@@ -42,7 +42,7 @@ func (handler *SquareEventsHandler) Handle(request events.APIGatewayProxyRequest
 
 	webhookEvent, err := webhooks.NewWebhookEvent(request.Body)
 	if err != nil {
-		log.AddParam("error", err).Error("Failed to create webhook event")
+		log.AddParam("error", err.Error()).Error("Failed to create webhook event")
 		return errorResponse("unable to process event: %s", err.Error())
 	}
 
@@ -55,7 +55,7 @@ func (handler *SquareEventsHandler) Handle(request events.APIGatewayProxyRequest
 
 	merchant, err := handler.merchantRepo.GetSquareMerchant(webhookEvent.MerchantID())
 	if err != nil {
-		log.AddParam("error", err).Error("Failed to find merchant")
+		log.AddParam("error", err.Error()).Error("Failed to find merchant")
 		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantID())
 	}
 
@@ -65,20 +65,20 @@ func (handler *SquareEventsHandler) Handle(request events.APIGatewayProxyRequest
 	signature := request.Headers[squareSignatureHeader]
 	err = webhooks.Validate(request.Body, handler.webhookNotificationURL, merchant.SquareWebhookSignatureKey, signature)
 	if err != nil {
-		log.AddParam("error", err).Error("Failed to validate event")
+		log.AddParam("error", err.Error()).Error("Failed to validate event")
 		return errorResponse("invalid signature: %s", signature)
 	}
 
 	eventHandler, err := handler.handlerProvider.GetHandler(webhookEvent.EventType())
 	if err != nil {
-		log.AddParam("error", err).Error("Failed to get event handler")
+		log.AddParam("error", err.Error()).Error("Failed to get event handler")
 		return errorResponse("unknown event type: %s", webhookEvent.EventType())
 	}
 
 	ctx := logger.Attach(context.Background(), log)
 	err = eventHandler.HandleEvent(ctx, webhookEvent)
 	if err != nil {
-		log.AddParam("error", err).Error("Failed to handle event")
+		log.AddParam("error", err.Error()).Error("Failed to handle event")
 		return errorResponse("failed to handle event: %s", err.Error())
 	}
 

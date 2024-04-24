@@ -1,5 +1,6 @@
 APP_NAME = digitalvenue
 ENVIRONMENT = dev
+AWS_PROFILE = default
 CODE_BUCKET = $(APP_NAME)-codebucket
 ROOT = $(shell git rev-parse --show-toplevel)
 SERVICES = $(shell ls functions)
@@ -13,6 +14,7 @@ validate:
 .PHONY: codebucket
 codebucket:
 	aws cloudformation deploy --stack-name $(CODE_BUCKET) \
+		--profile $(AWS_PROFILE) \
 		--template-file $(ROOT)/.cloudformation/bucket.yml \
 		--parameter-overrides \
 			BucketName=$(CODE_BUCKET)
@@ -20,6 +22,7 @@ codebucket:
 .PHONY: package
 package: codebucket build
 	aws cloudformation package \
+		--profile $(AWS_PROFILE) \
 		--template-file $(ROOT)/.cloudformation/env.yml \
 		--output-template-file $(ROOT)/template.yml \
 		--s3-bucket $(CODE_BUCKET) \
@@ -36,6 +39,7 @@ deploy: package
 		exit 1; \
 	fi
 	aws cloudformation deploy \
+		--profile $(AWS_PROFILE) \
 		--stack-name $(APP_NAME)-$(ENVIRONMENT) \
 		--template-file $(ROOT)/template.yml \
 		--capabilities CAPABILITY_IAM \

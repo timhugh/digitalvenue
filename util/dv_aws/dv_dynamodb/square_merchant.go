@@ -31,7 +31,7 @@ func (repo *Repository) GetSquareMerchant(squareMerchantID string) (*square.Merc
 	item := squareMerchant{}
 	err := repo.getItem("SquareMerchant", input, &item)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "repo get item failed")
 	}
 
 	tenantID, err := UnprefixID(item.TenantID)
