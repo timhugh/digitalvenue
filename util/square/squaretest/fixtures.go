@@ -24,6 +24,7 @@ const (
 
 func NewSquarePayment() *square.Payment {
 	return &square.Payment{
+		TenantID:         test.TenantID,
 		SquareMerchantID: SquareMerchantID,
 		SquareOrderID:    SquareOrderID,
 		SquarePaymentID:  SquarePaymentID,

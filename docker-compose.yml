@@ -11,12 +11,6 @@ services:
       - "./.docker/localstack/:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
 
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - "6379:6379"
-
   http-gateway:
     image: nginx:latest
     container_name: http-gateway
@@ -28,6 +22,12 @@ services:
       - square-events
       - square-event-gatherer
       - ticket-generator
+
+  mailcatcher:
+    image: schickling/mailcatcher:latest
+    ports:
+      - "1080:1080"
+      - "1025:1025"
 
   square-events:
     build:

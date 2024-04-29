@@ -3,9 +3,16 @@ package core
 type Tenant struct {
 	TenantID string
 	Name     string
-	Meta     TenantMeta
+
+	EmailsEnabled bool
+	SMTPUser      string
+	SMTPPassword  string
+	SMTPHost      string
+	SMTPPort      int
+
+	Meta map[string]string
 }
 
-type TenantMeta struct {
-	SquareMerchantID string
+type TenantRepository interface {
+	GetTenant(tenantID string) (*Tenant, error)
 }

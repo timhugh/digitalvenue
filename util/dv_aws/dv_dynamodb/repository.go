@@ -2,6 +2,7 @@ package dv_dynamodb
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -30,7 +31,17 @@ func NewRepository(client Client) (*Repository, error) {
 	}, nil
 }
 
-func (repo *Repository) getItem(itemType string, getItemInput *dynamodb.GetItemInput, out interface{}) error {
+func (repo *Repository) get(itemType string, key map[string]string, out interface{}) error {
+	keyAttrs := make(map[string]types.AttributeValue)
+	for k, v := range key {
+		keyAttrs[k] = &types.AttributeValueMemberS{Value: v}
+	}
+
+	getItemInput := &dynamodb.GetItemInput{
+		TableName: aws.String(repo.tableName),
+		Key:       keyAttrs,
+	}
+
 	getItemOutput, err := repo.client.GetItem(context.TODO(), getItemInput)
 	if err != nil {
 		return errors.Wrap(err, "error retrieving item from dynamodb")
@@ -48,6 +59,26 @@ func (repo *Repository) getItem(itemType string, getItemInput *dynamodb.GetItemI
 	err = attributevalue.UnmarshalMap(getItemOutput.Item, &out)
 	if err != nil {
 		return errors.Wrap(err, "error unmarshalling dynamodb get item output")
+	}
+
+	return nil
+}
+
+func (repo *Repository) put(itemType string, itemDTO interface{}) error {
+	attrs, err := attributevalue.MarshalMap(itemDTO)
+	if err != nil {
+		return errors.Wrap(err, "error marshalling dynamodb put item input")
+	}
+	attrs["Type"] = &types.AttributeValueMemberS{Value: itemType}
+
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String(repo.tableName),
+		Item:      attrs,
+	}
+
+	_, err = repo.client.PutItem(context.TODO(), input)
+	if err != nil {
+		return errors.Wrap(err, "error putting dynamodb item")
 	}
 
 	return nil

@@ -41,6 +41,8 @@ require (
 	github.com/ovechkin-dm/go-dyno v0.0.21 // indirect
 	github.com/petermattis/goid v0.0.0-20230904192822-1876fd5063bc // indirect
 	golang.org/x/sys v0.16.0 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 )
 
 module github.com/timhugh/digitalvenue

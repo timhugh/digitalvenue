@@ -11,4 +11,5 @@ type Customer struct {
 
 type CustomerRepository interface {
 	PutCustomer(customer *Customer) error
+	GetCustomer(tenantID string, customerID string) (*Customer, error)
 }

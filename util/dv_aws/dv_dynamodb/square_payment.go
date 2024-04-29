@@ -1,39 +1,31 @@
 package dv_dynamodb
 
 import (
-	"context"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/util/square"
 )
 
-type squarePayment struct {
+type squarePaymentDTO struct {
 	PK            string
 	SK            string
-	Type          string
 	TenantID      string
 	SquareOrderID string
 }
 
 func (repo *Repository) GetSquarePayment(squareMerchantID string, squarePaymentID string) (*square.Payment, error) {
-	pk := PrefixID("SquareMerchant", squareMerchantID)
-	sk := PrefixID("SquarePayment", squarePaymentID)
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(repo.tableName),
-		Key: map[string]types.AttributeValue{
-			"PK": &types.AttributeValueMemberS{Value: pk},
-			"SK": &types.AttributeValueMemberS{Value: sk},
-		},
+	key := map[string]string{
+		"PK": PrefixID("SquareMerchant", squareMerchantID),
+		"SK": PrefixID("SquarePayment", squarePaymentID),
 	}
 
-	item := squarePayment{}
-	err := repo.getItem("SquarePayment", input, &item)
+	item := squarePaymentDTO{}
+	err := repo.get("SquarePayment", key, &item)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get SquarePayment")
 	}
 
 	return &square.Payment{
+		TenantID:         item.TenantID,
 		SquarePaymentID:  squarePaymentID,
 		SquareMerchantID: squareMerchantID,
 		SquareOrderID:    item.SquareOrderID,
@@ -41,21 +33,16 @@ func (repo *Repository) GetSquarePayment(squareMerchantID string, squarePaymentI
 }
 
 func (repo *Repository) PutSquarePayment(payment *square.Payment) error {
-	pk := PrefixID("SquareMerchant", payment.SquareMerchantID)
-	sk := PrefixID("SquarePayment", payment.SquarePaymentID)
-	input := &dynamodb.PutItemInput{
-		TableName: aws.String(repo.tableName),
-		Item: map[string]types.AttributeValue{
-			"PK":            &types.AttributeValueMemberS{Value: pk},
-			"SK":            &types.AttributeValueMemberS{Value: sk},
-			"Type":          &types.AttributeValueMemberS{Value: "SquarePayment"},
-			"SquareOrderID": &types.AttributeValueMemberS{Value: payment.SquareOrderID},
-		},
+	inputPayment := &squarePaymentDTO{
+		PK:            PrefixID("SquareMerchant", payment.SquareMerchantID),
+		SK:            PrefixID("SquarePayment", payment.SquarePaymentID),
+		TenantID:      PrefixID("Tenant", payment.TenantID),
+		SquareOrderID: payment.SquareOrderID,
 	}
 
-	_, err := repo.client.PutItem(context.TODO(), input)
+	err := repo.put("SquarePayment", inputPayment)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to put SquarePayment")
 	}
 
 	return nil

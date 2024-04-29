@@ -1,9 +1,6 @@
 package dv_dynamodb
 
 import (
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/util/square"
 )
@@ -19,24 +16,21 @@ type squareMerchant struct {
 }
 
 func (repo *Repository) GetSquareMerchant(squareMerchantID string) (*square.Merchant, error) {
-	merchantKey := "SquareMerchant#" + squareMerchantID
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(repo.tableName),
-		Key: map[string]types.AttributeValue{
-			"PK": &types.AttributeValueMemberS{Value: merchantKey},
-			"SK": &types.AttributeValueMemberS{Value: merchantKey},
-		},
+	merchantKey := PrefixID("SquareMerchant", squareMerchantID)
+	key := map[string]string{
+		"PK": merchantKey,
+		"SK": merchantKey,
 	}
 
 	item := squareMerchant{}
-	err := repo.getItem("SquareMerchant", input, &item)
+	err := repo.get("SquareMerchant", key, &item)
 	if err != nil {
-		return nil, errors.Wrap(err, "repo get item failed")
+		return nil, errors.Wrap(err, "failed to get SquareMerchant")
 	}
 
 	tenantID, err := UnprefixID(item.TenantID)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid tenant ID")
+		return nil, errors.Wrap(err, "SquareMerchant has invalid TenantID")
 	}
 
 	return &square.Merchant{

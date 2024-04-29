@@ -15,6 +15,7 @@ type OrderItem struct {
 }
 
 type OrderRepository interface {
+	GetOrder(tenantID string, orderID string) (*Order, error)
 	PutOrder(order *Order) error
 }
 

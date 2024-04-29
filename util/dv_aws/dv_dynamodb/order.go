@@ -1,60 +1,76 @@
 package dv_dynamodb
 
 import (
-	"context"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/util/core"
+	"maps"
 )
 
-func (repo *Repository) PutOrder(order *core.Order) error {
-	tenantKey := "Tenant#" + order.TenantID
-	orderKey := "Order#" + order.ID
+type orderDTO struct {
+	PK         string
+	SK         string
+	CustomerID string
+	Meta       map[string]string
+	OrderItems []orderItemDTO
+}
 
-	orderItems := make([]types.AttributeValue, len(order.Items))
-	for i, item := range order.Items {
-		var meta map[string]types.AttributeValue
-		if item.Meta != nil {
-			meta = make(map[string]types.AttributeValue)
-			for k, v := range item.Meta {
-				meta[k] = &types.AttributeValueMemberS{Value: v}
-			}
-		}
+type orderItemDTO struct {
+	ItemID string
+	Name   string
+	Meta   map[string]string
+}
 
-		orderItems[i] = &types.AttributeValueMemberM{
-			Value: map[string]types.AttributeValue{
-				"ItemID": &types.AttributeValueMemberS{Value: item.ID},
-				"Name":   &types.AttributeValueMemberS{Value: item.Name},
-				"Meta":   &types.AttributeValueMemberM{Value: meta},
-			},
-		}
+func (repo *Repository) GetOrder(tenantID string, orderID string) (*core.Order, error) {
+	key := map[string]string{
+		"PK": PrefixID("Tenant", tenantID),
+		"SK": PrefixID("Order", orderID),
 	}
 
-	var meta map[string]types.AttributeValue
-	if order.Meta != nil {
-		meta = make(map[string]types.AttributeValue)
-		for k, v := range order.Meta {
-			meta[k] = &types.AttributeValueMemberS{Value: v}
-		}
-	}
-
-	input := &dynamodb.PutItemInput{
-		TableName: aws.String(repo.tableName),
-		Item: map[string]types.AttributeValue{
-			"PK":         &types.AttributeValueMemberS{Value: tenantKey},
-			"SK":         &types.AttributeValueMemberS{Value: orderKey},
-			"Type":       &types.AttributeValueMemberS{Value: "Order"},
-			"CustomerID": &types.AttributeValueMemberS{Value: order.CustomerID},
-			"Meta":       &types.AttributeValueMemberM{Value: meta},
-			"OrderItems": &types.AttributeValueMemberL{Value: orderItems},
-		},
-	}
-
-	_, err := repo.client.PutItem(context.TODO(), input)
+	item := orderDTO{}
+	err := repo.get("Order", key, &item)
 	if err != nil {
-		return errors.Wrap(err, "failed to put item")
+		return nil, errors.Wrap(err, "failed to get Order")
+	}
+
+	orderItems := make([]core.OrderItem, len(item.OrderItems))
+	for i, item := range item.OrderItems {
+		orderItems[i] = core.OrderItem{
+			ID:   item.ItemID,
+			Name: item.Name,
+			Meta: maps.Clone(item.Meta),
+		}
+	}
+
+	return &core.Order{
+		ID:         orderID,
+		TenantID:   tenantID,
+		CustomerID: item.CustomerID,
+		Items:      orderItems,
+		Meta:       maps.Clone(item.Meta),
+	}, nil
+}
+
+func (repo *Repository) PutOrder(order *core.Order) error {
+	items := make([]orderItemDTO, len(order.Items))
+	for i, item := range order.Items {
+		items[i] = orderItemDTO{
+			ItemID: item.ID,
+			Name:   item.Name,
+			Meta:   maps.Clone(item.Meta),
+		}
+	}
+
+	inputOrder := &orderDTO{
+		PK:         PrefixID("Tenant", order.TenantID),
+		SK:         PrefixID("Order", order.ID),
+		CustomerID: order.CustomerID,
+		Meta:       maps.Clone(order.Meta),
+		OrderItems: items,
+	}
+
+	err := repo.put("Order", inputOrder)
+	if err != nil {
+		return errors.Wrap(err, "failed to put order")
 	}
 
 	return nil

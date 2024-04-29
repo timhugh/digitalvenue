@@ -80,6 +80,7 @@ func buildSquarePayment(record events.DynamoDBEventRecord) (*square.Payment, err
 	}
 
 	return &square.Payment{
+		TenantID:         attrs["TenantID"],
 		SquarePaymentID:  squarePaymentID,
 		SquareMerchantID: squareMerchantID,
 		SquareOrderID:    attrs["SquareOrderID"],

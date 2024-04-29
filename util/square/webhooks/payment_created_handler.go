@@ -35,6 +35,7 @@ func (handler *PaymentCreatedHandler) HandleEvent(ctx context.Context, event Web
 	log.Info("Processing payment.created event")
 
 	payment := square.Payment{
+		TenantID:         event.TenantID(),
 		SquarePaymentID:  paymentData.PaymentID,
 		SquareOrderID:    paymentData.OrderID,
 		SquareMerchantID: paymentCreatedEvent.MerchantID(),

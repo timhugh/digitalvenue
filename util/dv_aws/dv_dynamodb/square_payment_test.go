@@ -18,7 +18,7 @@ func squarePaymentGetItemOutput() *dynamodb.GetItemOutput {
 			"PK":            &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
 			"SK":            &types.AttributeValueMemberS{Value: "SquarePayment#" + squaretest.SquarePaymentID},
 			"Type":          &types.AttributeValueMemberS{Value: "SquarePayment"},
-			"TenantID":      &types.AttributeValueMemberS{Value: "Tenant#" + test.TenantID},
+			"TenantID":      &types.AttributeValueMemberS{Value: test.TenantID},
 			"SquareOrderID": &types.AttributeValueMemberS{Value: squaretest.SquareOrderID},
 		},
 	}
@@ -41,6 +41,7 @@ func squarePaymentPutItemInput() *dynamodb.PutItemInput {
 			"PK":            &types.AttributeValueMemberS{Value: "SquareMerchant#" + squaretest.SquareMerchantID},
 			"SK":            &types.AttributeValueMemberS{Value: "SquarePayment#" + squaretest.SquarePaymentID},
 			"Type":          &types.AttributeValueMemberS{Value: "SquarePayment"},
+			"TenantID":      &types.AttributeValueMemberS{Value: "Tenant#" + test.TenantID},
 			"SquareOrderID": &types.AttributeValueMemberS{Value: squaretest.SquareOrderID},
 		},
 	}
@@ -119,8 +120,7 @@ func TestRepository_PutSquarePayment_BasicSuccess(t *testing.T) {
 	mock.WhenDouble(client.PutItem(mock.Any[context.Context](), putItemInputCaptor.Capture())).
 		ThenReturn(nil, nil)
 
-	payment := squaretest.NewSquarePayment()
-	err := repo.PutSquarePayment(payment)
+	err := repo.PutSquarePayment(squaretest.NewSquarePayment())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

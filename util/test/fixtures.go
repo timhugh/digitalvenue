@@ -5,8 +5,13 @@ import (
 )
 
 const (
-	TenantID   = "tenantID"
-	TenantName = "Test Tenant"
+	TenantID           = "testTenant"
+	TenantName         = "Test Tenant"
+	EmailsEnabled      = false
+	TenantSMTPAccount  = "tenant@email.com"
+	TenantSMTPPassword = "besttenantever"
+	TenantSMTPHost     = "smtp.email.com"
+	TenantSMTPPort     = 465
 
 	CustomerID        = "customerID"
 	CustomerName      = "Tim Heuett"
@@ -27,23 +32,42 @@ const (
 	QRCodeType   = "png"
 )
 
+func NewTenant() *core.Tenant {
+	return &core.Tenant{
+		TenantID: TenantID,
+		Name:     TenantName,
+
+		EmailsEnabled: EmailsEnabled,
+		SMTPUser:      TenantSMTPAccount,
+		SMTPPassword:  TenantSMTPPassword,
+		SMTPHost:      TenantSMTPHost,
+		SMTPPort:      TenantSMTPPort,
+
+		Meta: map[string]string{},
+	}
+}
+
 func NewOrder() *core.Order {
 	return &core.Order{
 		ID:         OrderID,
 		TenantID:   TenantID,
 		CustomerID: CustomerID,
+		Meta:       map[string]string{},
 		Items: []core.OrderItem{
 			{
 				ID:   ItemID1,
 				Name: ItemName1,
+				Meta: map[string]string{},
 			},
 			{
 				ID:   ItemID2,
 				Name: ItemName2,
+				Meta: map[string]string{},
 			},
 			{
 				ID:   ItemID3,
 				Name: ItemName2,
+				Meta: map[string]string{},
 			},
 		},
 	}
@@ -56,6 +80,7 @@ func NewCustomer() *core.Customer {
 		Name:     CustomerName,
 		Email:    CustomerEmail,
 		Phone:    CustomerPhone,
+		Meta:     map[string]string{},
 	}
 }
 

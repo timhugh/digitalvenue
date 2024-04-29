@@ -1,18 +1,14 @@
 package dv_dynamodb
 
 import (
-	"context"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/util/core"
+	"maps"
 )
 
-type customer struct {
+type customerDTO struct {
 	PK         string
 	SK         string
-	Type       string
 	CustomerID string
 	Name       string
 	Email      string
@@ -21,28 +17,15 @@ type customer struct {
 }
 
 func (repo *Repository) GetCustomer(tenantID string, customerID string) (*core.Customer, error) {
-	tenantKey := "Tenant#" + tenantID
-	customerKey := "Customer#" + customerID
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(repo.tableName),
-		Key: map[string]types.AttributeValue{
-			"PK": &types.AttributeValueMemberS{Value: tenantKey},
-			"SK": &types.AttributeValueMemberS{Value: customerKey},
-		},
+	key := map[string]string{
+		"PK": PrefixID("Tenant", tenantID),
+		"SK": PrefixID("Customer", customerID),
 	}
 
-	item := customer{}
-	err := repo.getItem("Customer", input, &item)
+	item := customerDTO{}
+	err := repo.get("Customer", key, &item)
 	if err != nil {
-		return nil, err
-	}
-
-	var meta map[string]string
-	if item.Meta != nil {
-		meta = make(map[string]string)
-		for k, v := range item.Meta {
-			meta[k] = v
-		}
+		return nil, errors.Wrap(err, "failed to get Customer")
 	}
 
 	return &core.Customer{
@@ -51,39 +34,24 @@ func (repo *Repository) GetCustomer(tenantID string, customerID string) (*core.C
 		Name:     item.Name,
 		Email:    item.Email,
 		Phone:    item.Phone,
-		Meta:     meta,
+		Meta:     maps.Clone(item.Meta),
 	}, nil
 }
 
 func (repo *Repository) PutCustomer(customer *core.Customer) error {
-	pk := "Tenant#" + customer.TenantID
-	sk := "Customer#" + customer.ID
-
-	var meta map[string]types.AttributeValue
-	if customer.Meta != nil {
-		meta = make(map[string]types.AttributeValue)
-		for k, v := range customer.Meta {
-			meta[k] = &types.AttributeValueMemberS{Value: v}
-		}
+	inputCustomer := &customerDTO{
+		PK:         PrefixID("Tenant", customer.TenantID),
+		SK:         PrefixID("Customer", customer.ID),
+		CustomerID: customer.ID,
+		Name:       customer.Name,
+		Email:      customer.Email,
+		Phone:      customer.Phone,
+		Meta:       maps.Clone(customer.Meta),
 	}
 
-	input := &dynamodb.PutItemInput{
-		TableName: aws.String(repo.tableName),
-		Item: map[string]types.AttributeValue{
-			"PK":         &types.AttributeValueMemberS{Value: pk},
-			"SK":         &types.AttributeValueMemberS{Value: sk},
-			"Type":       &types.AttributeValueMemberS{Value: "Customer"},
-			"CustomerID": &types.AttributeValueMemberS{Value: customer.ID},
-			"Name":       &types.AttributeValueMemberS{Value: customer.Name},
-			"Email":      &types.AttributeValueMemberS{Value: customer.Email},
-			"Phone":      &types.AttributeValueMemberS{Value: customer.Phone},
-			"Meta":       &types.AttributeValueMemberM{Value: meta},
-		},
-	}
-
-	_, err := repo.client.PutItem(context.TODO(), input)
+	err := repo.put("Customer", inputCustomer)
 	if err != nil {
-		return errors.Wrap(err, "failed to put item")
+		return errors.Wrap(err, "failed to put Customer")
 	}
 
 	return nil
