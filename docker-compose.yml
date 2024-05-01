@@ -22,6 +22,7 @@ services:
       - square-events
       - square-event-gatherer
       - ticket-generator
+      - ticket-mailer
 
   mailcatcher:
     image: schickling/mailcatcher:latest

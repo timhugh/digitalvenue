@@ -30,6 +30,9 @@ const (
 	QRCodeBucket = "qr-code-bucket"
 	QRCodeImage  = "image"
 	QRCodeType   = "png"
+
+	TemplateKey  = "templateKey"
+	TemplateBody = "template body"
 )
 
 func NewTenant() *core.Tenant {
@@ -91,5 +94,13 @@ func NewQRCode() *core.QRCode {
 		OrderItemID: ItemID1,
 		Image:       []byte(QRCodeImage),
 		FileType:    QRCodeType,
+	}
+}
+
+func NewTemplate() *core.Template {
+	return &core.Template{
+		Key:      TemplateKey,
+		TenantID: TenantID,
+		Body:     TemplateBody,
 	}
 }

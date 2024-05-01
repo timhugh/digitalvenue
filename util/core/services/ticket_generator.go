@@ -11,14 +11,14 @@ import (
 
 type TicketGenerator struct {
 	qrGenerator         core.QRCodeGenerator
-	qrStore             core.QRCodeStorer
+	qrStore             core.QRCodeStore
 	ticketRepo          core.TicketRepository
 	orderProcessedQueue core.OrderProcessedQueue
 }
 
 const qrSize = 256
 
-func NewTicketGenerator(qrStore core.QRCodeStorer, ticketRepo core.TicketRepository, orderProcessedQueue core.OrderProcessedQueue) *TicketGenerator {
+func NewTicketGenerator(qrStore core.QRCodeStore, ticketRepo core.TicketRepository, orderProcessedQueue core.OrderProcessedQueue) *TicketGenerator {
 	return &TicketGenerator{
 		qrGenerator:         qr.NewGenerator(),
 		qrStore:             qrStore,

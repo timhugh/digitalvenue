@@ -11,4 +11,5 @@ type Ticket struct {
 
 type TicketRepository interface {
 	PutTickets(tickets []*Ticket) error
+	GetTickets(tenantID string, orderID string) ([]*Ticket, error)
 }

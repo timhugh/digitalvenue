@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/util/core"
 	"github.com/timhugh/digitalvenue/util/logger"
 	"gopkg.in/gomail.v2"
 	"os"
 	"strings"
+	"text/template"
 )
 
 func main() {
@@ -28,18 +30,29 @@ func main() {
 }
 
 type TicketMailerHandler struct {
-	log          *logger.ContextLogger
-	tenantRepo   core.TenantRepository
-	orderRepo    core.OrderRepository
-	customerRepo core.CustomerRepository
+	log           *logger.ContextLogger
+	tenantRepo    core.TenantRepository
+	orderRepo     core.OrderRepository
+	customerRepo  core.CustomerRepository
+	ticketRepo    core.TicketRepository
+	templateStore core.TemplateStore
 }
 
-func NewTicketMailerHandler(log *logger.ContextLogger, tenantRepo core.TenantRepository, orderRepo core.OrderRepository, customerRepo core.CustomerRepository) *TicketMailerHandler {
+func NewTicketMailerHandler(
+	log *logger.ContextLogger,
+	tenantRepo core.TenantRepository,
+	orderRepo core.OrderRepository,
+	customerRepo core.CustomerRepository,
+	templateStore core.TemplateStore,
+	ticketRepo core.TicketRepository,
+) *TicketMailerHandler {
 	return &TicketMailerHandler{
-		log:          log,
-		tenantRepo:   tenantRepo,
-		orderRepo:    orderRepo,
-		customerRepo: customerRepo,
+		log:           log,
+		tenantRepo:    tenantRepo,
+		orderRepo:     orderRepo,
+		customerRepo:  customerRepo,
+		templateStore: templateStore,
+		ticketRepo:    ticketRepo,
 	}
 }
 
@@ -56,6 +69,10 @@ func (h *TicketMailerHandler) Handle(event events.SQSEvent) (events.SQSEventResp
 		}
 		tenantID := messageParams[0]
 		orderID := messageParams[1]
+		log.AddParams(map[string]interface{}{
+			"tenantID": tenantID,
+			"orderID":  orderID,
+		})
 
 		tenant, err := h.tenantRepo.GetTenant(tenantID)
 		if err != nil {
@@ -84,7 +101,25 @@ func (h *TicketMailerHandler) Handle(event events.SQSEvent) (events.SQSEventResp
 			continue
 		}
 
-		email, err := buildEmail(order, customer, tenant)
+		tickets, err := h.ticketRepo.GetTickets(tenant.TenantID, order.ID)
+		if err != nil {
+			log.AddParam("error", err.Error()).Error("Failed to get tickets. Queueing for retry")
+			retryFailures = append(retryFailures, events.SQSBatchItemFailure{
+				ItemIdentifier: record.MessageId,
+			})
+			continue
+		}
+
+		emailTemplate, err := h.templateStore.Get(tenant.TenantID, "ticketEmail.html")
+		if err != nil {
+			log.AddParam("error", err.Error()).Error("Failed to get email template. Queueing for retry")
+			retryFailures = append(retryFailures, events.SQSBatchItemFailure{
+				ItemIdentifier: record.MessageId,
+			})
+			continue
+		}
+
+		email, err := buildEmail(emailTemplate, order, customer, tenant, tickets)
 		if err != nil {
 			log.AddParam("error", err.Error()).Error("Failed to build email. Queueing for retry")
 			retryFailures = append(retryFailures, events.SQSBatchItemFailure{
@@ -110,11 +145,42 @@ func (h *TicketMailerHandler) Handle(event events.SQSEvent) (events.SQSEventResp
 	return response, nil
 }
 
-func buildEmail(order *core.Order, customer *core.Customer, tenant *core.Tenant) (*gomail.Message, error) {
+type emailTemplateParams struct {
+	Tickets []emailTicketTemplateParams
+}
+
+type emailTicketTemplateParams struct {
+	Name           string
+	QrCodeImageURL string
+}
+
+func buildEmail(emailTemplate *core.Template, order *core.Order, customer *core.Customer, tenant *core.Tenant, tickets []*core.Ticket) (*gomail.Message, error) {
+	ticketTemplate, err := template.New("ticketEmail").Parse(emailTemplate.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse email template")
+	}
+
+	var emailBody strings.Builder
+	err = ticketTemplate.Execute(&emailBody, buildEmailTemplateParams(order, customer, tenant, tickets))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute email template")
+	}
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", tenant.SMTPUser)
 	m.SetHeader("To", customer.Email)
 	m.SetHeader("Subject", fmt.Sprintf("Your tickets for %s", tenant.Name))
-	m.SetBody("text/html", "Here's them tickets")
+	m.SetBody("text/html", emailBody.String())
 	return m, nil
+}
+
+func buildEmailTemplateParams(order *core.Order, customer *core.Customer, tenant *core.Tenant, tickets []*core.Ticket) *emailTemplateParams {
+	params := emailTemplateParams{}
+	for _, ticket := range tickets {
+		params.Tickets = append(params.Tickets, emailTicketTemplateParams{
+			Name:           ticket.Name,
+			QrCodeImageURL: ticket.QRCodeURL,
+		})
+	}
+	return &params
 }

@@ -8,7 +8,7 @@ type QRCode struct {
 	FileType    string
 }
 
-type QRCodeStorer interface {
+type QRCodeStore interface {
 	Save(qr *QRCode) (string, error)
 }
 

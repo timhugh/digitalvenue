@@ -7,9 +7,10 @@ import (
 )
 
 type Client interface {
+	GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
 	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
 }
 
-func NewClient(config aws.Config) *s3.Client {
+func NewClient(config aws.Config) Client {
 	return s3.NewFromConfig(config)
 }

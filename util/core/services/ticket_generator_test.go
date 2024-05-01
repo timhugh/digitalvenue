@@ -13,7 +13,7 @@ func TestTicketGenerator_GenerateTickets(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
 
-	qrStorer := mock.Mock[core.QRCodeStorer]()
+	qrStorer := mock.Mock[core.QRCodeStore]()
 	ticketRepo := mock.Mock[core.TicketRepository]()
 	orderProcessedQueue := mock.Mock[core.OrderProcessedQueue]()
 
