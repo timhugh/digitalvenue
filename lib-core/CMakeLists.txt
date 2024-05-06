@@ -13,6 +13,7 @@ FetchContent_MakeAvailable(json)
 
 add_library(${TARGET} main.cpp
         src/configuration/Configuration.cpp
+        src/repository/LocationRepository.cpp
 )
 target_link_libraries(${TARGET} PUBLIC
         nlohmann_json::nlohmann_json

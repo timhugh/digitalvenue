@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: The prefix for the stack
+
+Resources:
+
+  LocationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${StackPrefix}-locations"
+      AttributeDefinitions:
+        - AttributeName: location_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: location_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+Outputs:
+    LocationsTableName:
+        Value: !Ref LocationsTable
+        Export:
+        Name: !Sub "${StackPrefix}-locations-table-name"
