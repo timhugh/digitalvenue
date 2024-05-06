@@ -21,7 +21,12 @@ if [ -z "${SQUARE_API_ACCESS_TOKEN}" ]; then
 fi
 
 AWS_PROFILE=${AWS_PROFILE:-default}
-echo "Using aws profile '${AWS_PROFILE}'"
+echo "Using aws profile '${AWS_PROFILE}' (Use AWS_PROFILE to change)"
+read -p "Continue? (y/N)> " CONT
+if [ "$CONT" != "y" ]; then
+  echo "Exiting"
+  exit 0
+fi
 
 aws dynamodb put-item \
   --profile "${AWS_PROFILE}" \

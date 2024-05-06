@@ -5,8 +5,16 @@ if [ -z "$CORE_DATA_TABLE_NAME" ]; then
   exit 1
 fi
 
+AWS_PROFILE=${AWS_PROFILE:-default}
+echo "Using aws profile '${AWS_PROFILE}' (Use AWS_PROFILE to change)"
+read -p "Continue? (y/N)> " CONT
+if [ "$CONT" != "y" ]; then
+  echo "Exiting"
+  exit 0
+fi
+
 aws dynamodb create-table \
-  --profile localstack \
+  --profile ${AWS_PROFILE} \
   --table-name "${CORE_DATA_TABLE_NAME}" \
   --attribute-definitions \
     AttributeName=PK,AttributeType=S \

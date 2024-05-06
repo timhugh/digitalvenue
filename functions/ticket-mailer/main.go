@@ -9,6 +9,7 @@ import (
 	"github.com/timhugh/digitalvenue/util/logger"
 	"gopkg.in/gomail.v2"
 	"os"
+	"path"
 	"strings"
 	"text/template"
 )
@@ -30,12 +31,14 @@ func main() {
 }
 
 type TicketMailerHandler struct {
-	log           *logger.ContextLogger
-	tenantRepo    core.TenantRepository
-	orderRepo     core.OrderRepository
-	customerRepo  core.CustomerRepository
-	ticketRepo    core.TicketRepository
-	templateStore core.TemplateStore
+	log                     *logger.ContextLogger
+	tenantRepo              core.TenantRepository
+	orderRepo               core.OrderRepository
+	customerRepo            core.CustomerRepository
+	ticketRepo              core.TicketRepository
+	templateStore           core.TemplateStore
+	tenantFilesBucketName   string
+	tenantFilesBucketRegion string
 }
 
 func NewTicketMailerHandler(
@@ -45,15 +48,27 @@ func NewTicketMailerHandler(
 	customerRepo core.CustomerRepository,
 	templateStore core.TemplateStore,
 	ticketRepo core.TicketRepository,
-) *TicketMailerHandler {
-	return &TicketMailerHandler{
-		log:           log,
-		tenantRepo:    tenantRepo,
-		orderRepo:     orderRepo,
-		customerRepo:  customerRepo,
-		templateStore: templateStore,
-		ticketRepo:    ticketRepo,
+) (*TicketMailerHandler, error) {
+	tenantFilesBucketName, err := core.RequireEnv("S3_TENANT_FILES_BUCKET_NAME")
+	if err != nil {
+		return nil, err
 	}
+
+	tenantFilesBucketRegion, err := core.RequireEnv("AWS_REGION")
+	if err != nil {
+		return nil, err
+	}
+
+	return &TicketMailerHandler{
+		log:                     log,
+		tenantRepo:              tenantRepo,
+		orderRepo:               orderRepo,
+		customerRepo:            customerRepo,
+		templateStore:           templateStore,
+		ticketRepo:              ticketRepo,
+		tenantFilesBucketName:   tenantFilesBucketName,
+		tenantFilesBucketRegion: tenantFilesBucketRegion,
+	}, nil
 }
 
 func (h *TicketMailerHandler) Handle(event events.SQSEvent) (events.SQSEventResponse, error) {
@@ -119,7 +134,7 @@ func (h *TicketMailerHandler) Handle(event events.SQSEvent) (events.SQSEventResp
 			continue
 		}
 
-		email, err := buildEmail(emailTemplate, order, customer, tenant, tickets)
+		email, err := buildEmail(emailTemplate, order, customer, tenant, tickets, h.tenantFilesBucketName, h.tenantFilesBucketRegion)
 		if err != nil {
 			log.AddParam("error", err.Error()).Error("Failed to build email. Queueing for retry")
 			retryFailures = append(retryFailures, events.SQSBatchItemFailure{
@@ -146,7 +161,8 @@ func (h *TicketMailerHandler) Handle(event events.SQSEvent) (events.SQSEventResp
 }
 
 type emailTemplateParams struct {
-	Tickets []emailTicketTemplateParams
+	FileBucketURL string
+	Tickets       []emailTicketTemplateParams
 }
 
 type emailTicketTemplateParams struct {
@@ -154,14 +170,15 @@ type emailTicketTemplateParams struct {
 	QrCodeImageURL string
 }
 
-func buildEmail(emailTemplate *core.Template, order *core.Order, customer *core.Customer, tenant *core.Tenant, tickets []*core.Ticket) (*gomail.Message, error) {
+func buildEmail(emailTemplate *core.Template, order *core.Order, customer *core.Customer, tenant *core.Tenant, tickets []*core.Ticket, tenantFileBucketName string, tenantFileBucketRegion string) (*gomail.Message, error) {
 	ticketTemplate, err := template.New("ticketEmail").Parse(emailTemplate.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse email template")
 	}
 
 	var emailBody strings.Builder
-	err = ticketTemplate.Execute(&emailBody, buildEmailTemplateParams(order, customer, tenant, tickets))
+	tenantBucketURL := path.Join(fmt.Sprintf("https://s3-%s.amazonaws.com", tenantFileBucketRegion), tenantFileBucketName, tenant.TenantID)
+	err = ticketTemplate.Execute(&emailBody, buildEmailTemplateParams(order, customer, tenant, tickets, tenantBucketURL))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute email template")
 	}
@@ -174,8 +191,10 @@ func buildEmail(emailTemplate *core.Template, order *core.Order, customer *core.
 	return m, nil
 }
 
-func buildEmailTemplateParams(order *core.Order, customer *core.Customer, tenant *core.Tenant, tickets []*core.Ticket) *emailTemplateParams {
-	params := emailTemplateParams{}
+func buildEmailTemplateParams(order *core.Order, customer *core.Customer, tenant *core.Tenant, tickets []*core.Ticket, tenantFileBucketURL string) *emailTemplateParams {
+	params := emailTemplateParams{
+		FileBucketURL: tenantFileBucketURL,
+	}
 	for _, ticket := range tickets {
 		params.Tickets = append(params.Tickets, emailTicketTemplateParams{
 			Name:           ticket.Name,
