@@ -10,6 +10,18 @@ type Client interface {
 	SendMessage(ctx context.Context, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error)
 }
 
-func NewClient(config aws.Config) *sqs.Client {
+func NewClient(config aws.Config) Client {
 	return sqs.NewFromConfig(config)
+}
+
+type Queue struct {
+	sqsClient Client
+	queueURL  string
+}
+
+func NewQueue(sqsClient Client, queueURL string) *Queue {
+	return &Queue{
+		sqsClient: sqsClient,
+		queueURL:  queueURL,
+	}
 }

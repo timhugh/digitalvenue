@@ -9,8 +9,7 @@ import (
 )
 
 type OrderProcessedQueue struct {
-	sqsClient Client
-	queueURL  string
+	*Queue
 }
 
 func NewOrderProcessedQueue(sqsClient Client) (*OrderProcessedQueue, error) {
@@ -19,7 +18,9 @@ func NewOrderProcessedQueue(sqsClient Client) (*OrderProcessedQueue, error) {
 		return nil, err
 	}
 
-	return &OrderProcessedQueue{sqsClient, queueURL}, nil
+	return &OrderProcessedQueue{
+		NewQueue(sqsClient, queueURL),
+	}, nil
 }
 
 func (q *OrderProcessedQueue) PublishOrderProcessedEvent(tenantID string, orderID string) error {
@@ -30,6 +31,34 @@ func (q *OrderProcessedQueue) PublishOrderProcessedEvent(tenantID string, orderI
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to publish OrderProcessedEvent")
+	}
+
+	return nil
+}
+
+type OrderCreatedQueue struct {
+	*Queue
+}
+
+func NewOrderCreatedQueue(sqsClient Client) (*OrderCreatedQueue, error) {
+	queueURL, err := core.RequireEnv("ORDER_CREATED_QUEUE_URL")
+	if err != nil {
+		return nil, err
+	}
+
+	return &OrderCreatedQueue{
+		NewQueue(sqsClient, queueURL),
+	}, nil
+}
+
+func (q *OrderCreatedQueue) PublishOrderCreatedEvent(tenantID string, orderID string) error {
+	payload := tenantID + ":" + orderID
+	_, err := q.sqsClient.SendMessage(context.Background(), &sqs.SendMessageInput{
+		QueueUrl:    aws.String(q.queueURL),
+		MessageBody: &payload,
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to publish OrderCreatedEvent")
 	}
 
 	return nil

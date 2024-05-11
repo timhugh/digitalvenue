@@ -20,6 +20,11 @@ if [ -z "${SQUARE_API_ACCESS_TOKEN}" ]; then
   exit 1
 fi
 
+SMTP_ACCOUNT="${SMTP_ACCOUNT:-"tim@digital-venue.net"}"
+SMTP_PASSWORD="${SMTP_PASSWORD:-"password"}"
+SMTP_HOST="${SMTP_HOST:-"mailcatcher"}"
+SMTP_PORT="${SMTP_PORT:-"1025"}"
+
 AWS_PROFILE=${AWS_PROFILE:-default}
 echo "Using aws profile '${AWS_PROFILE}' (Use AWS_PROFILE to change)"
 read -p "Continue? (y/N)> " CONT
@@ -39,10 +44,10 @@ aws dynamodb put-item \
   "Name":           { "S": "Tim's Test Tenant" },
 
   "EmailsEnabled":  { "BOOL": true },
-  "SMTPAccount":    { "S": "tim@digital-venue.net" },
-  "SMTPPassword":   { "S": "password" },
-  "SMTPHost":       { "S": "mailcatcher" },
-  "SMTPPort":       { "N": "1025" }
+  "SMTPAccount":    { "S": "${SMTP_ACCOUNT}" },
+  "SMTPPassword":   { "S": "${SMTP_PASSWORD}" },
+  "SMTPHost":       { "S": "${SMTP_HOST}" },
+  "SMTPPort":       { "N": "${SMTP_PORT}" }
 }
 EOF
 )"
@@ -62,3 +67,8 @@ aws dynamodb put-item \
 }
 EOF
 )"
+
+aws s3 cp lcgf/ticketEmail.html s3://${S3_TEMPLATE_BUCKET_NAME}/tim/
+aws s3 cp lcgf/facebook.png s3://${S3_TENANT_FILES_BUCKET_NAME}/tim/
+aws s3 cp lcgf/instagram.png s3://${S3_TENANT_FILES_BUCKET_NAME}/tim/
+aws s3 cp lcgf/ticket-header.jpg s3://${S3_TENANT_FILES_BUCKET_NAME}/tim/

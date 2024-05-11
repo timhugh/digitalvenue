@@ -14,6 +14,6 @@ type Client interface {
 	Query(ctx context.Context, params *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error)
 }
 
-func NewClient(config aws.Config) *dynamodb.Client {
+func NewClient(config aws.Config) Client {
 	return dynamodb.NewFromConfig(config)
 }

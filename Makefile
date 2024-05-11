@@ -63,7 +63,7 @@ functions/%/wire_gen.go:
 	if [ -f ./functions/$*/wire.go ]; then wire gen ./functions/$*; fi
 
 .PHONY: test
-test: build
+test: wire
 	go test ./...
 
 .PHONY: lint

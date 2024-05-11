@@ -19,6 +19,10 @@ type OrderRepository interface {
 	PutOrder(order *Order) error
 }
 
+type OrderCreatedQueue interface {
+	PublishOrderCreatedEvent(tenantID string, orderID string) error
+}
+
 type OrderProcessedQueue interface {
 	PublishOrderProcessedEvent(tenantID string, orderID string) error
 }

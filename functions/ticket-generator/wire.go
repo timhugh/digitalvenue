@@ -4,8 +4,6 @@
 package main
 
 import (
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/google/wire"
 	"github.com/timhugh/digitalvenue/util/core"
 	"github.com/timhugh/digitalvenue/util/core/services"
@@ -28,12 +26,10 @@ func initializeHandler(logger *logger.ContextLogger) (*TicketGeneratorHandler, e
 		wire.Bind(new(core.QRCodeStore), new(*dv_s3.S3QRStorage)),
 
 		dv_dynamodb.NewClient,
-		wire.Bind(new(dv_dynamodb.Client), new(*dynamodb.Client)),
 		dv_dynamodb.NewRepository,
 		wire.Bind(new(core.TicketRepository), new(*dv_dynamodb.Repository)),
 
 		dv_sqs.NewClient,
-		wire.Bind(new(dv_sqs.Client), new(*sqs.Client)),
 		dv_sqs.NewOrderProcessedQueue,
 		wire.Bind(new(core.OrderProcessedQueue), new(*dv_sqs.OrderProcessedQueue)),
 	)

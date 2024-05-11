@@ -2,7 +2,7 @@ package square
 
 import (
 	"context"
-	core2 "github.com/timhugh/digitalvenue/util/core"
+	"github.com/timhugh/digitalvenue/util/core"
 	"github.com/timhugh/digitalvenue/util/logger"
 )
 
@@ -11,23 +11,26 @@ type PaymentGatherer interface {
 }
 
 type paymentGatherer struct {
-	merchantRepo MerchantRepository
-	orderRepo    core2.OrderRepository
-	customerRepo core2.CustomerRepository
-	squareApi    APIClient
+	merchantRepo      MerchantRepository
+	orderRepo         core.OrderRepository
+	customerRepo      core.CustomerRepository
+	squareApi         APIClient
+	orderCreatedQueue core.OrderCreatedQueue
 }
 
 func NewPaymentGatherer(
 	merchantRepo MerchantRepository,
-	orderRepo core2.OrderRepository,
-	customerRepo core2.CustomerRepository,
+	orderRepo core.OrderRepository,
+	customerRepo core.CustomerRepository,
 	squareApi APIClient,
+	orderCreatedQueue core.OrderCreatedQueue,
 ) PaymentGatherer {
 	return paymentGatherer{
-		merchantRepo: merchantRepo,
-		orderRepo:    orderRepo,
-		customerRepo: customerRepo,
-		squareApi:    squareApi,
+		merchantRepo:      merchantRepo,
+		orderRepo:         orderRepo,
+		customerRepo:      customerRepo,
+		squareApi:         squareApi,
+		orderCreatedQueue: orderCreatedQueue,
 	}
 }
 
@@ -69,6 +72,11 @@ func (gatherer paymentGatherer) Gather(ctx context.Context, payment *Payment) er
 	}
 
 	log.Debug("Put order: '%s'", order.ID)
+
+	err = gatherer.orderCreatedQueue.PublishOrderCreatedEvent(order.TenantID, order.ID)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

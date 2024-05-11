@@ -45,6 +45,7 @@ func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (eve
 
 	handler.log.Info("Processing batch of records")
 
+	// TODO: process records concurrently
 	for _, record := range request.Records {
 		log := handler.log.Sub().AddParams(map[string]interface{}{
 			"eventID":   record.EventID,

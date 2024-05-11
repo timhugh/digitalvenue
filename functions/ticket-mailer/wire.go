@@ -4,7 +4,6 @@
 package main
 
 import (
-	awsdynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/wire"
 	"github.com/timhugh/digitalvenue/util/core"
 	"github.com/timhugh/digitalvenue/util/dv_aws"
@@ -19,7 +18,6 @@ func initializeHandler(log *logger.ContextLogger) (*TicketMailerHandler, error) 
 
 		dv_aws.DefaultConfig,
 		dv_dynamodb.NewClient,
-		wire.Bind(new(dv_dynamodb.Client), new(*awsdynamodb.Client)),
 		dv_dynamodb.NewRepository,
 		wire.Bind(new(core.TenantRepository), new(*dv_dynamodb.Repository)),
 		wire.Bind(new(core.OrderRepository), new(*dv_dynamodb.Repository)),
