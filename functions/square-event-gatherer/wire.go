@@ -22,6 +22,7 @@ func initializeHandler(log *logger.ContextLogger) (SquareEventGathererHandler, e
 
 		dv_dynamodb.NewClient,
 		dv_dynamodb.NewRepository,
+		wire.Bind(new(square.PaymentRepository), new(*dv_dynamodb.Repository)),
 		wire.Bind(new(square.MerchantRepository), new(*dv_dynamodb.Repository)),
 		wire.Bind(new(core.OrderRepository), new(*dv_dynamodb.Repository)),
 		wire.Bind(new(core.CustomerRepository), new(*dv_dynamodb.Repository)),

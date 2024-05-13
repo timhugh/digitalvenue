@@ -7,10 +7,11 @@ import (
 )
 
 type PaymentGatherer interface {
-	Gather(ctx context.Context, payment *Payment) error
+	Gather(ctx context.Context, squareMerchantID string, squarePaymentID string) error
 }
 
 type paymentGatherer struct {
+	paymentRepo       PaymentRepository
 	merchantRepo      MerchantRepository
 	orderRepo         core.OrderRepository
 	customerRepo      core.CustomerRepository
@@ -19,6 +20,7 @@ type paymentGatherer struct {
 }
 
 func NewPaymentGatherer(
+	paymentRepo PaymentRepository,
 	merchantRepo MerchantRepository,
 	orderRepo core.OrderRepository,
 	customerRepo core.CustomerRepository,
@@ -26,6 +28,7 @@ func NewPaymentGatherer(
 	orderCreatedQueue core.OrderCreatedQueue,
 ) PaymentGatherer {
 	return paymentGatherer{
+		paymentRepo:       paymentRepo,
 		merchantRepo:      merchantRepo,
 		orderRepo:         orderRepo,
 		customerRepo:      customerRepo,
@@ -34,9 +37,14 @@ func NewPaymentGatherer(
 	}
 }
 
-func (gatherer paymentGatherer) Gather(ctx context.Context, payment *Payment) error {
+func (gatherer paymentGatherer) Gather(ctx context.Context, squareMerchantID string, squarePaymentID string) error {
 	_, log := logger.FromContext(ctx)
 	log.Info("Processing new square payment")
+
+	payment, err := gatherer.paymentRepo.GetSquarePayment(squareMerchantID, squarePaymentID)
+	if err != nil {
+		return err
+	}
 
 	merchant, err := gatherer.merchantRepo.GetSquareMerchant(payment.SquareMerchantID)
 	if err != nil {

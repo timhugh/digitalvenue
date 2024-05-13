@@ -16,6 +16,9 @@ func TestEventGatherer_Gather_Success(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
 
+	paymentRepo := mock.Mock[square.PaymentRepository]()
+	mock.When(paymentRepo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)).ThenReturn(squaretest.NewSquarePayment(), nil)
+
 	merchantRepo := mock.Mock[square.MerchantRepository]()
 	mock.When(merchantRepo.GetSquareMerchant(squaretest.SquareMerchantID)).ThenReturn(squaretest.NewSquareMerchant(), nil)
 
@@ -34,8 +37,8 @@ func TestEventGatherer_Gather_Success(t *testing.T) {
 	orderCreatedQueue := mock.Mock[core.OrderCreatedQueue]()
 	mock.When(orderCreatedQueue.PublishOrderCreatedEvent(test.TenantID, test.OrderID)).ThenReturn(nil)
 
-	gatherer := square.NewPaymentGatherer(merchantRepo, orderRepo, customerRepo, squareApi, orderCreatedQueue)
-	err := gatherer.Gather(context.TODO(), squaretest.NewSquarePayment())
+	gatherer := square.NewPaymentGatherer(paymentRepo, merchantRepo, orderRepo, customerRepo, squareApi, orderCreatedQueue)
+	err := gatherer.Gather(context.TODO(), squaretest.SquareMerchantID, squaretest.SquarePaymentID)
 	is.NoErr(err)
 
 	expectedOrder := squaretest.NewOrder()
@@ -49,15 +52,30 @@ func TestEventGatherer_Gather_Success(t *testing.T) {
 	is.NoErr(err)
 }
 
+func TestEventGatherer_Gather_PaymentRepoError(t *testing.T) {
+	is := is.New(t)
+	mock.SetUp(t)
+
+	paymentRepo := mock.Mock[square.PaymentRepository]()
+	mock.When(paymentRepo.GetSquarePayment(mock.AnyString(), mock.AnyString())).ThenReturn(&square.Payment{}, errors.New("failed to find payment"))
+
+	gatherer := square.NewPaymentGatherer(paymentRepo, mock.Mock[square.MerchantRepository](), mock.Mock[core.OrderRepository](), mock.Mock[core.CustomerRepository](), mock.Mock[square.APIClient](), mock.Mock[core.OrderCreatedQueue]())
+	err := gatherer.Gather(context.TODO(), squaretest.SquareMerchantID, squaretest.SquarePaymentID)
+	is.Equal(err.Error(), "failed to find payment")
+}
+
 func TestEventGatherer_Gather_MerchantRepoError(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
 
+	paymentRepo := mock.Mock[square.PaymentRepository]()
+	mock.When(paymentRepo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)).ThenReturn(squaretest.NewSquarePayment(), nil)
+
 	merchantRepo := mock.Mock[square.MerchantRepository]()
 	mock.When(merchantRepo.GetSquareMerchant(squaretest.SquareMerchantID)).ThenReturn(&square.Merchant{}, errors.New("failed to find merchant"))
 
-	gatherer := square.NewPaymentGatherer(merchantRepo, mock.Mock[core.OrderRepository](), mock.Mock[core.CustomerRepository](), mock.Mock[square.APIClient](), mock.Mock[core.OrderCreatedQueue]())
-	err := gatherer.Gather(context.TODO(), squaretest.NewSquarePayment())
+	gatherer := square.NewPaymentGatherer(paymentRepo, merchantRepo, mock.Mock[core.OrderRepository](), mock.Mock[core.CustomerRepository](), mock.Mock[square.APIClient](), mock.Mock[core.OrderCreatedQueue]())
+	err := gatherer.Gather(context.TODO(), squaretest.SquareMerchantID, squaretest.SquarePaymentID)
 	is.Equal(err.Error(), "failed to find merchant")
 }
 
@@ -65,20 +83,26 @@ func TestEventGatherer_Gather_SquareFetchOrderError(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
 
+	paymentRepo := mock.Mock[square.PaymentRepository]()
+	mock.When(paymentRepo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)).ThenReturn(squaretest.NewSquarePayment(), nil)
+
 	merchantRepo := mock.Mock[square.MerchantRepository]()
 	mock.When(merchantRepo.GetSquareMerchant(squaretest.SquareMerchantID)).ThenReturn(squaretest.NewSquareMerchant(), nil)
 
 	squareApi := mock.Mock[square.APIClient]()
 	mock.When(squareApi.GetOrder(squaretest.SquareOrderID, squaretest.SquareAPIToken)).ThenReturn(&square.Order{}, errors.New("failed to fetch order"))
 
-	gatherer := square.NewPaymentGatherer(merchantRepo, mock.Mock[core.OrderRepository](), mock.Mock[core.CustomerRepository](), squareApi, mock.Mock[core.OrderCreatedQueue]())
-	err := gatherer.Gather(context.TODO(), squaretest.NewSquarePayment())
+	gatherer := square.NewPaymentGatherer(paymentRepo, merchantRepo, mock.Mock[core.OrderRepository](), mock.Mock[core.CustomerRepository](), squareApi, mock.Mock[core.OrderCreatedQueue]())
+	err := gatherer.Gather(context.TODO(), squaretest.SquareMerchantID, squaretest.SquarePaymentID)
 	is.Equal(err.Error(), "failed to fetch order")
 }
 
 func TestEventGatherer_Gather_SquareFetchCustomerError(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
+
+	paymentRepo := mock.Mock[square.PaymentRepository]()
+	mock.When(paymentRepo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)).ThenReturn(squaretest.NewSquarePayment(), nil)
 
 	merchantRepo := mock.Mock[square.MerchantRepository]()
 	mock.When(merchantRepo.GetSquareMerchant(squaretest.SquareMerchantID)).ThenReturn(squaretest.NewSquareMerchant(), nil)
@@ -87,14 +111,17 @@ func TestEventGatherer_Gather_SquareFetchCustomerError(t *testing.T) {
 	mock.When(squareApi.GetOrder(squaretest.SquareOrderID, squaretest.SquareAPIToken)).ThenReturn(squaretest.NewSquareOrder(), nil)
 	mock.When(squareApi.GetCustomer(squaretest.SquareCustomerID, squaretest.SquareAPIToken)).ThenReturn(&square.Customer{}, errors.New("failed to fetch customer"))
 
-	gatherer := square.NewPaymentGatherer(merchantRepo, mock.Mock[core.OrderRepository](), mock.Mock[core.CustomerRepository](), squareApi, mock.Mock[core.OrderCreatedQueue]())
-	err := gatherer.Gather(context.TODO(), squaretest.NewSquarePayment())
+	gatherer := square.NewPaymentGatherer(paymentRepo, merchantRepo, mock.Mock[core.OrderRepository](), mock.Mock[core.CustomerRepository](), squareApi, mock.Mock[core.OrderCreatedQueue]())
+	err := gatherer.Gather(context.TODO(), squaretest.SquareMerchantID, squaretest.SquarePaymentID)
 	is.Equal(err.Error(), "failed to fetch customer")
 }
 
 func TestEventGatherer_Gather_CustomerRepoError(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
+
+	paymentRepo := mock.Mock[square.PaymentRepository]()
+	mock.When(paymentRepo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)).ThenReturn(squaretest.NewSquarePayment(), nil)
 
 	merchantRepo := mock.Mock[square.MerchantRepository]()
 	mock.When(merchantRepo.GetSquareMerchant(squaretest.SquareMerchantID)).ThenReturn(squaretest.NewSquareMerchant(), nil)
@@ -106,14 +133,17 @@ func TestEventGatherer_Gather_CustomerRepoError(t *testing.T) {
 	customerRepo := mock.Mock[core.CustomerRepository]()
 	mock.When(customerRepo.PutCustomer(mock.Any[*core.Customer]())).ThenReturn(errors.New("failed to save customer"))
 
-	gatherer := square.NewPaymentGatherer(merchantRepo, mock.Mock[core.OrderRepository](), customerRepo, squareApi, mock.Mock[core.OrderCreatedQueue]())
-	err := gatherer.Gather(context.TODO(), squaretest.NewSquarePayment())
+	gatherer := square.NewPaymentGatherer(paymentRepo, merchantRepo, mock.Mock[core.OrderRepository](), customerRepo, squareApi, mock.Mock[core.OrderCreatedQueue]())
+	err := gatherer.Gather(context.TODO(), squaretest.SquareMerchantID, squaretest.SquarePaymentID)
 	is.Equal(err.Error(), "failed to save customer")
 }
 
 func TestEventGatherer_Gather_OrderRepoError(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
+
+	paymentRepo := mock.Mock[square.PaymentRepository]()
+	mock.When(paymentRepo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)).ThenReturn(squaretest.NewSquarePayment(), nil)
 
 	merchantRepo := mock.Mock[square.MerchantRepository]()
 	mock.When(merchantRepo.GetSquareMerchant(squaretest.SquareMerchantID)).ThenReturn(squaretest.NewSquareMerchant(), nil)
@@ -128,14 +158,17 @@ func TestEventGatherer_Gather_OrderRepoError(t *testing.T) {
 	orderRepo := mock.Mock[core.OrderRepository]()
 	mock.When(orderRepo.PutOrder(mock.Any[*core.Order]())).ThenReturn(errors.New("failed to save order"))
 
-	gatherer := square.NewPaymentGatherer(merchantRepo, orderRepo, customerRepo, squareApi, mock.Mock[core.OrderCreatedQueue]())
-	err := gatherer.Gather(context.TODO(), squaretest.NewSquarePayment())
+	gatherer := square.NewPaymentGatherer(paymentRepo, merchantRepo, orderRepo, customerRepo, squareApi, mock.Mock[core.OrderCreatedQueue]())
+	err := gatherer.Gather(context.TODO(), squaretest.SquareMerchantID, squaretest.SquarePaymentID)
 	is.Equal(err.Error(), "failed to save order")
 }
 
 func TestEventGatherer_Gather_OrderCreatedEventQueueError(t *testing.T) {
 	is := is.New(t)
 	mock.SetUp(t)
+
+	paymentRepo := mock.Mock[square.PaymentRepository]()
+	mock.When(paymentRepo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)).ThenReturn(squaretest.NewSquarePayment(), nil)
 
 	merchantRepo := mock.Mock[square.MerchantRepository]()
 	mock.When(merchantRepo.GetSquareMerchant(squaretest.SquareMerchantID)).ThenReturn(squaretest.NewSquareMerchant(), nil)
@@ -153,8 +186,8 @@ func TestEventGatherer_Gather_OrderCreatedEventQueueError(t *testing.T) {
 	orderCreatedQueue := mock.Mock[core.OrderCreatedQueue]()
 	mock.When(orderCreatedQueue.PublishOrderCreatedEvent(test.TenantID, squaretest.SquareOrderID)).ThenReturn(errors.New("failed to publish order created event"))
 
-	gatherer := square.NewPaymentGatherer(merchantRepo, orderRepo, customerRepo, squareApi, orderCreatedQueue)
-	err := gatherer.Gather(context.TODO(), squaretest.NewSquarePayment())
+	gatherer := square.NewPaymentGatherer(paymentRepo, merchantRepo, orderRepo, customerRepo, squareApi, orderCreatedQueue)
+	err := gatherer.Gather(context.TODO(), squaretest.SquareMerchantID, squaretest.SquarePaymentID)
 	is.True(err != nil)
 	is.Equal(err.Error(), "failed to publish order created event")
 }

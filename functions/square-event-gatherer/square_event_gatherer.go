@@ -1,10 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/pkg/errors"
-	"github.com/timhugh/digitalvenue/util/dv_aws"
-	"github.com/timhugh/digitalvenue/util/dv_aws/dv_dynamodb"
+	"github.com/timhugh/digitalvenue/util/dv_aws/dv_sqs"
 	"github.com/timhugh/digitalvenue/util/logger"
 	"github.com/timhugh/digitalvenue/util/square"
 )
@@ -21,68 +20,43 @@ func NewSquareEventGathererHandler(log *logger.ContextLogger, gatherer square.Pa
 	}
 }
 
-func (handler SquareEventGathererHandler) Handle(request events.DynamoDBEvent) (events.DynamoDBEventResponse, error) {
-	failures := make([]events.DynamoDBBatchItemFailure, 0)
+func (handler SquareEventGathererHandler) Handle(event events.SQSEvent) (events.SQSEventResponse, error) {
+	failures := make([]events.SQSBatchItemFailure, 0)
 
-	for _, record := range request.Records {
-		log := handler.log.Sub().AddParam("eventID", record.EventID)
+	for _, record := range event.Records {
+		log := handler.log.Sub().AddParam("messageID", record.MessageId)
 
-		if record.EventName != "INSERT" {
-			log.Warn("skipping non-INSERT event '%s'", record.EventName)
-			continue // Not retryable
-		}
-
-		payment, err := buildSquarePayment(record)
+		var paymentEvent dv_sqs.SquarePaymentCreatedEvent
+		err := json.Unmarshal([]byte(record.Body), &paymentEvent)
 		if err != nil {
-			log.Sub().AddParam("error", err.Error()).Error("failed to build square payment")
-			continue // Not retryable
+			log.AddParam("error", err.Error()).Error("failed to unmarshal SquarePaymentCreatedEvent")
+			failures = append(failures, events.SQSBatchItemFailure{
+				ItemIdentifier: record.MessageId,
+			})
+			continue
 		}
 
 		log.AddParams(map[string]interface{}{
-			"squarePaymentID":  payment.SquarePaymentID,
-			"squareMerchantID": payment.SquareMerchantID,
-			"squareOrderID":    payment.SquareOrderID,
+			"squarePaymentID":  paymentEvent.SquarePaymentID,
+			"squareMerchantID": paymentEvent.SquareMerchantID,
 		})
 
-		err = handler.gatherer.Gather(log.NewContext(), payment)
+		err = handler.gatherer.Gather(log.NewContext(), paymentEvent.SquareMerchantID, paymentEvent.SquarePaymentID)
 		if err != nil {
-			log.Sub().AddParam("error", err.Error()).Error("failed to process square payment")
+			log.AddParam("error", err.Error()).Error("failed to process square payment")
 
 			// TODO: distinguish between retryable and non-retryable errors
-			failures = append(failures, events.DynamoDBBatchItemFailure{
-				ItemIdentifier: record.EventID,
+			failures = append(failures, events.SQSBatchItemFailure{
+				ItemIdentifier: record.MessageId,
 			})
 
 			continue
 		}
 	}
 
-	response := events.DynamoDBEventResponse{}
+	response := events.SQSEventResponse{}
 	if len(failures) > 0 {
 		response.BatchItemFailures = failures
 	}
 	return response, nil
-}
-
-func buildSquarePayment(record events.DynamoDBEventRecord) (*square.Payment, error) {
-	attrs, err := dv_aws.GetImageAttributes("SquarePayment", record.Change.NewImage, "PK", "SK", "SquareOrderID")
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get square payment attributes from dynamodb event new image")
-	}
-
-	squarePaymentID, err := dv_dynamodb.UnprefixID(attrs["SK"])
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unprefix square payment ID")
-	}
-	squareMerchantID, err := dv_dynamodb.UnprefixID(attrs["PK"])
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unprefix square merchant ID")
-	}
-
-	return &square.Payment{
-		TenantID:         attrs["TenantID"],
-		SquarePaymentID:  squarePaymentID,
-		SquareMerchantID: squareMerchantID,
-		SquareOrderID:    attrs["SquareOrderID"],
-	}, nil
 }
