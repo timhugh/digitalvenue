@@ -14,13 +14,19 @@ func TestPaymentCreatedHandler_HandleEvent(t *testing.T) {
 	mock.SetUp(t)
 
 	paymentsRepo := mock.Mock[square.PaymentRepository]()
-	paymentCaptor := mock.Captor[*square.Payment]()
-	mock.WhenSingle(paymentsRepo.PutSquarePayment(paymentCaptor.Capture())).ThenReturn(nil)
+	paymentsRepoPaymentCaptor := mock.Captor[*square.Payment]()
+	mock.WhenSingle(paymentsRepo.PutSquarePayment(paymentsRepoPaymentCaptor.Capture())).ThenReturn(nil)
 
-	service := PaymentCreatedHandler{paymentsRepository: paymentsRepo}
+	paymentCreatedQueue := mock.Mock[square.PaymentCreatedQueue]()
+	paymentCreatedQueuePaymentCaptor := mock.Captor[*square.Payment]()
+	mock.When(paymentCreatedQueue.PublishPaymentCreated(paymentCreatedQueuePaymentCaptor.Capture())).ThenReturn(nil)
+
+	service := NewPaymentCreatedHandler(paymentsRepo, paymentCreatedQueue)
 
 	err := service.HandleEvent(context.Background(), newPaymentCreatedEvent())
 	is.NoErr(err)
 
-	is.Equal(squaretest.NewSquarePayment(), paymentCaptor.Last())
+	expectedPayment := squaretest.NewSquarePayment()
+	is.Equal(expectedPayment, paymentsRepoPaymentCaptor.Last())
+	is.Equal(expectedPayment, paymentCreatedQueuePaymentCaptor.Last())
 }

@@ -8,12 +8,17 @@ import (
 )
 
 type PaymentCreatedHandler struct {
-	paymentsRepository square.PaymentRepository
+	paymentsRepository  square.PaymentRepository
+	paymentCreatedQueue square.PaymentCreatedQueue
 }
 
-func NewPaymentCreatedHandler(paymentsRepository square.PaymentRepository) *PaymentCreatedHandler {
+func NewPaymentCreatedHandler(
+	paymentsRepository square.PaymentRepository,
+	paymentCreatedQueue square.PaymentCreatedQueue,
+) *PaymentCreatedHandler {
 	return &PaymentCreatedHandler{
-		paymentsRepository: paymentsRepository,
+		paymentsRepository:  paymentsRepository,
+		paymentCreatedQueue: paymentCreatedQueue,
 	}
 }
 
@@ -43,6 +48,10 @@ func (handler *PaymentCreatedHandler) HandleEvent(ctx context.Context, event Web
 
 	if err := handler.paymentsRepository.PutSquarePayment(&payment); err != nil {
 		return errors.Wrap(err, "failed to save payment")
+	}
+
+	if err := handler.paymentCreatedQueue.PublishPaymentCreated(&payment); err != nil {
+		return errors.Wrap(err, "failed to publish payment created event")
 	}
 
 	return nil

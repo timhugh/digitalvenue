@@ -11,3 +11,7 @@ type PaymentRepository interface {
 	PutSquarePayment(payment *Payment) error
 	GetSquarePayment(squareMerchantID string, squarePaymentID string) (*Payment, error)
 }
+
+type PaymentCreatedQueue interface {
+	PublishPaymentCreated(payment *Payment) error
+}
