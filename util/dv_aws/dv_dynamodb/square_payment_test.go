@@ -82,15 +82,15 @@ func TestRepository_GetSquarePayment_GetItemError(t *testing.T) {
 	}
 }
 
-func TestRepository_GetSquarePayment_NoItemError(t *testing.T) {
+func TestRepository_GetSquarePayment_NoItemReturnsNil(t *testing.T) {
 	repo, client := initRepositoryTest(t)
 
 	mock.WhenDouble(client.GetItem(mock.Any[context.Context](), mock.Any[*dynamodb.GetItemInput]())).
 		ThenReturn(&dynamodb.GetItemOutput{}, nil)
 
 	payment, err := repo.GetSquarePayment(squaretest.SquareMerchantID, squaretest.SquarePaymentID)
-	if err == nil {
-		t.Error("expected error, got nil")
+	if !errors.Is(err, ItemNotFoundException{}) {
+		t.Errorf("expected ItemNotFoundException, got %v", err)
 	}
 
 	if payment != nil {

@@ -25,6 +25,10 @@ func (repo *Repository) GetCustomer(tenantID string, customerID string) (*core.C
 	item := customerDTO{}
 	err := repo.get("Customer", key, &item)
 	if err != nil {
+		if errors.Is(err, ItemNotFoundException{}) {
+			return nil, nil
+		}
+
 		return nil, errors.Wrap(err, "failed to get Customer")
 	}
 

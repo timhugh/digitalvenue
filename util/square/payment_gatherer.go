@@ -39,6 +39,10 @@ func NewPaymentGatherer(
 
 func (gatherer paymentGatherer) Gather(ctx context.Context, squareMerchantID string, squarePaymentID string) error {
 	_, log := logger.FromContext(ctx)
+	log = log.Sub().AddParams(map[string]interface{}{
+		"squareMerchantId": squareMerchantID,
+		"squarePaymentId":  squarePaymentID,
+	})
 	log.Info("Processing new square payment")
 
 	payment, err := gatherer.paymentRepo.GetSquarePayment(squareMerchantID, squarePaymentID)
@@ -56,18 +60,42 @@ func (gatherer paymentGatherer) Gather(ctx context.Context, squareMerchantID str
 		return err
 	}
 
-	squareCustomer, err := gatherer.squareApi.GetCustomer(squareOrder.SquareCustomerID, merchant.SquareAPIToken)
+	log.AddParam("squareCustomerID", squareOrder.SquareCustomerID)
+
+	existingCustomer, err := gatherer.customerRepo.GetCustomer(merchant.TenantID, squareOrder.SquareCustomerID)
 	if err != nil {
 		return err
 	}
 
-	customer := MapCustomer(squareCustomer, merchant.TenantID)
-	err = gatherer.customerRepo.PutCustomer(customer)
+	var customer *core.Customer
+	if existingCustomer == nil {
+		log.Info("Creating new customer for square payment")
+		squareCustomer, err := gatherer.squareApi.GetCustomer(squareOrder.SquareCustomerID, merchant.SquareAPIToken)
+		if err != nil {
+			return err
+		}
+
+		customer = MapCustomer(squareCustomer, merchant.TenantID)
+		err = gatherer.customerRepo.PutCustomer(customer)
+		if err != nil {
+			return err
+		}
+	} else {
+		log.Info("Found existing customer for square payment")
+		customer = existingCustomer
+	}
+
+	existingOrder, err := gatherer.orderRepo.GetOrder(merchant.TenantID, squareOrder.SquareOrderID)
 	if err != nil {
 		return err
 	}
 
-	log.Debug("Put customer: '%s'", customer.ID)
+	if existingOrder != nil {
+		log.Info("Found existing order for square payment; skipping processing")
+		return nil
+	}
+
+	log.Info("Creating new order for square payment")
 
 	order, err := MapOrder(squareOrder, payment.SquarePaymentID, merchant.ID, merchant.TenantID, customer.ID)
 	if err != nil {
@@ -79,7 +107,7 @@ func (gatherer paymentGatherer) Gather(ctx context.Context, squareMerchantID str
 		return err
 	}
 
-	log.Debug("Put order: '%s'", order.ID)
+	log.Info("Publishing order created event for square payment")
 
 	err = gatherer.orderCreatedQueue.PublishOrderCreatedEvent(order.TenantID, order.ID)
 	if err != nil {

@@ -4,11 +4,12 @@ type Tenant struct {
 	TenantID string
 	Name     string
 
-	EmailsEnabled bool
-	SMTPUser      string
-	SMTPPassword  string
-	SMTPHost      string
-	SMTPPort      int
+	EmailsEnabled   bool
+	SMTPUser        string
+	SMTPPassword    string
+	SMTPHost        string
+	SMTPPort        int
+	SMTPFromAddress string
 
 	Meta map[string]string
 }

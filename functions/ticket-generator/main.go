@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/util/core"
 	"github.com/timhugh/digitalvenue/util/core/services"
-	"github.com/timhugh/digitalvenue/util/dv_aws/dv_dynamodb"
+	"github.com/timhugh/digitalvenue/util/dv_aws/dv_sqs"
 	"github.com/timhugh/digitalvenue/util/logger"
 	"os"
 )
@@ -31,32 +31,46 @@ func main() {
 type TicketGeneratorHandler struct {
 	log       *logger.ContextLogger
 	generator *services.TicketGenerator
+	orderRepo core.OrderRepository
 }
 
-func NewTicketGeneratorHandler(log *logger.ContextLogger, generator *services.TicketGenerator) *TicketGeneratorHandler {
+func NewTicketGeneratorHandler(
+	log *logger.ContextLogger,
+	generator *services.TicketGenerator,
+	orderRepo core.OrderRepository,
+) *TicketGeneratorHandler {
 	return &TicketGeneratorHandler{
 		log:       log,
 		generator: generator,
+		orderRepo: orderRepo,
 	}
 }
 
-func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (events.DynamoDBEventResponse, error) {
-	failures := make([]events.DynamoDBBatchItemFailure, 0)
+func (handler *TicketGeneratorHandler) Handle(event events.SQSEvent) (events.SQSEventResponse, error) {
+	failures := make([]events.SQSBatchItemFailure, 0)
 
-	handler.log.Info("Processing batch of records")
+	handler.log.Info("Processing event batch")
 
 	// TODO: process records concurrently
-	for _, record := range request.Records {
+	for _, record := range event.Records {
 		log := handler.log.Sub().AddParams(map[string]interface{}{
-			"eventID":   record.EventID,
-			"eventName": record.EventName,
+			"messageID": record.MessageId,
 		})
 		log.Info("Processing record")
 
-		order, err := buildOrderFromEvent(record)
+		var orderEvent dv_sqs.OrderCreatedEvent
+		err := json.Unmarshal([]byte(record.Body), &orderEvent)
 		if err != nil {
-			log.Error("Failed to build order from event: %s", err)
-			continue // not retryable
+			log.AddParam("error", err.Error()).Fatal("Failed to unmarshal OrderCreatedEvent")
+			failures = append(failures, events.SQSBatchItemFailure{ItemIdentifier: record.MessageId})
+			continue
+		}
+
+		order, err := handler.orderRepo.GetOrder(orderEvent.TenantID, orderEvent.OrderID)
+		if err != nil {
+			log.AddParam("error", err.Error()).Fatal("Failed to get order")
+			failures = append(failures, events.SQSBatchItemFailure{ItemIdentifier: record.MessageId})
+			continue
 		}
 
 		log.AddParams(map[string]interface{}{
@@ -67,8 +81,8 @@ func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (eve
 		err = handler.generator.GenerateTickets(log.NewContext(), order)
 		if err != nil {
 			log.Error("Failed to generate tickets: %s", err)
-			failures = append(failures, events.DynamoDBBatchItemFailure{ItemIdentifier: record.EventID})
-			continue // not retryable
+			failures = append(failures, events.SQSBatchItemFailure{ItemIdentifier: record.MessageId})
+			continue
 		}
 
 		log.Debug("Successfully processed record")
@@ -76,102 +90,9 @@ func (handler *TicketGeneratorHandler) Handle(request events.DynamoDBEvent) (eve
 
 	if len(failures) > 0 {
 		handler.log.Error("Failed to process some records")
-		return events.DynamoDBEventResponse{BatchItemFailures: failures}, nil
+		return events.SQSEventResponse{BatchItemFailures: failures}, nil
 	}
 
 	handler.log.Debug("Successfully processed all records")
-	return events.DynamoDBEventResponse{}, nil
-}
-
-func buildOrderFromEvent(record events.DynamoDBEventRecord) (*core.Order, error) {
-	newImage := record.Change.NewImage
-	if newImage == nil {
-		return nil, errors.New("record does not contain NewImage")
-	}
-
-	imageType, ok := newImage["Type"]
-	if !ok {
-		return nil, errors.New("record does not contain Type")
-	}
-	if imageType.String() != "Order" {
-		return nil, errors.New("record is not of type Order")
-	}
-
-	var order core.Order
-
-	pk, ok := newImage["PK"]
-	if !ok {
-		return nil, errors.New("record does not contain PK")
-	}
-	tenantID, err := dv_dynamodb.UnprefixID(pk.String())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unprefix TenantID")
-	}
-	order.TenantID = tenantID
-
-	sk, ok := newImage["SK"]
-	if !ok {
-		return nil, errors.New("record does not contain SK")
-	}
-	orderID, err := dv_dynamodb.UnprefixID(sk.String())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unprefix OrderID")
-	}
-	order.ID = orderID
-
-	customerID, ok := newImage["CustomerID"]
-	if !ok {
-		return nil, errors.New("record does not contain CustomerID")
-	}
-	order.CustomerID = customerID.String()
-
-	metaRaw, ok := newImage["Meta"]
-	if ok {
-		metaMap := metaRaw.Map()
-		order.Meta = make(map[string]string, len(metaMap))
-		for k, v := range metaMap {
-			order.Meta[k] = v.String()
-		}
-	} else {
-		order.Meta = make(map[string]string)
-	}
-
-	orderItemsRaw, ok := newImage["OrderItems"]
-	if !ok {
-		return nil, errors.New("record does not contain OrderItems")
-	}
-	orderItemsRawList := orderItemsRaw.List()
-	order.Items = make([]core.OrderItem, len(orderItemsRawList))
-	for i, itemRaw := range orderItemsRawList {
-		var item core.OrderItem
-
-		itemMap := itemRaw.Map()
-
-		itemID, ok := itemMap["ItemID"]
-		if !ok {
-			return nil, errors.New("OrderItem does not contain ItemID")
-		}
-		item.ID = itemID.String()
-
-		name, ok := itemMap["Name"]
-		if !ok {
-			return nil, errors.New("OrderItem does not contain Name")
-		}
-		item.Name = name.String()
-
-		metaRaw, ok := itemMap["Meta"]
-		if ok {
-			metaMap := metaRaw.Map()
-			item.Meta = make(map[string]string, len(metaMap))
-			for k, v := range metaMap {
-				item.Meta[k] = v.String()
-			}
-		} else {
-			item.Meta = make(map[string]string)
-		}
-
-		order.Items[i] = item
-	}
-
-	return &order, nil
+	return events.SQSEventResponse{}, nil
 }

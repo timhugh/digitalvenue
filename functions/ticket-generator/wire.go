@@ -28,6 +28,7 @@ func initializeHandler(logger *logger.ContextLogger) (*TicketGeneratorHandler, e
 		dv_dynamodb.NewClient,
 		dv_dynamodb.NewRepository,
 		wire.Bind(new(core.TicketRepository), new(*dv_dynamodb.Repository)),
+		wire.Bind(new(core.OrderRepository), new(*dv_dynamodb.Repository)),
 
 		dv_sqs.NewClient,
 		dv_sqs.NewOrderProcessedQueue,

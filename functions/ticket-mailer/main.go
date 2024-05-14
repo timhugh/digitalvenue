@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/util/core"
+	"github.com/timhugh/digitalvenue/util/dv_aws/dv_sqs"
 	"github.com/timhugh/digitalvenue/util/logger"
 	"gopkg.in/gomail.v2"
 	"os"
@@ -77,19 +79,22 @@ func (h *TicketMailerHandler) Handle(event events.SQSEvent) (events.SQSEventResp
 	for _, record := range event.Records {
 		log := h.log.Sub().AddParam("messageID", record.MessageId)
 
-		messageParams := strings.Split(record.Body, ":")
-		if len(messageParams) != 2 {
-			log.Error("Received invalid event: '%s'", record.Body)
-			continue // not retryable
+		var orderEvent dv_sqs.OrderProcessedEvent
+		err := json.Unmarshal([]byte(record.Body), &orderEvent)
+		if err != nil {
+			log.AddParam("error", err.Error()).Fatal("Failed to unmarshal order event")
+			retryFailures = append(retryFailures, events.SQSBatchItemFailure{
+				ItemIdentifier: record.MessageId,
+			})
+			continue
 		}
-		tenantID := messageParams[0]
-		orderID := messageParams[1]
-		log.AddParams(map[string]interface{}{
-			"tenantID": tenantID,
-			"orderID":  orderID,
-		})
 
-		tenant, err := h.tenantRepo.GetTenant(tenantID)
+		log.AddParams(map[string]interface{}{
+			"tenantID": orderEvent.TenantID,
+			"orderID":  orderEvent.OrderID,
+		}).Info("Generating ticket email for order")
+
+		tenant, err := h.tenantRepo.GetTenant(orderEvent.TenantID)
 		if err != nil {
 			log.AddParam("error", err.Error()).Error("Failed to get tenant. Queueing for retry")
 			retryFailures = append(retryFailures, events.SQSBatchItemFailure{
@@ -98,7 +103,7 @@ func (h *TicketMailerHandler) Handle(event events.SQSEvent) (events.SQSEventResp
 			continue
 		}
 
-		order, err := h.orderRepo.GetOrder(tenantID, orderID)
+		order, err := h.orderRepo.GetOrder(orderEvent.TenantID, orderEvent.OrderID)
 		if err != nil {
 			log.AddParam("error", err.Error()).Error("Failed to get order. Queueing for retry")
 			retryFailures = append(retryFailures, events.SQSBatchItemFailure{
@@ -151,10 +156,13 @@ func (h *TicketMailerHandler) Handle(event events.SQSEvent) (events.SQSEventResp
 			})
 			continue
 		}
+
+		log.Info("Email successfully sent")
 	}
 
 	response := events.SQSEventResponse{}
 	if len(retryFailures) > 0 {
+		h.log.Info("Reporting %d failures", len(retryFailures))
 		response.BatchItemFailures = retryFailures
 	}
 	return response, nil
@@ -178,13 +186,14 @@ func buildEmail(emailTemplate *core.Template, order *core.Order, customer *core.
 
 	var emailBody strings.Builder
 	tenantBucketURL := path.Join(fmt.Sprintf("https://s3-%s.amazonaws.com", tenantFileBucketRegion), tenantFileBucketName, tenant.TenantID)
+	fmt.Printf("File bucket URL: %s\n", tenantBucketURL)
 	err = ticketTemplate.Execute(&emailBody, buildEmailTemplateParams(order, customer, tenant, tickets, tenantBucketURL))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute email template")
 	}
 
 	m := gomail.NewMessage()
-	m.SetHeader("From", tenant.SMTPUser)
+	m.SetHeader("From", tenant.SMTPFromAddress)
 	m.SetHeader("To", customer.Email)
 	m.SetHeader("Subject", fmt.Sprintf("Your tickets for %s", tenant.Name))
 	m.SetBody("text/html", emailBody.String())

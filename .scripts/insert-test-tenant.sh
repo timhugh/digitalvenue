@@ -47,7 +47,8 @@ aws dynamodb put-item \
   "SMTPAccount":    { "S": "${SMTP_ACCOUNT}" },
   "SMTPPassword":   { "S": "${SMTP_PASSWORD}" },
   "SMTPHost":       { "S": "${SMTP_HOST}" },
-  "SMTPPort":       { "N": "${SMTP_PORT}" }
+  "SMTPPort":       { "N": "${SMTP_PORT}" },
+  "SMTPFromAddress":{ "S": "${SMTP_FROM_ADDRESS}" }
 }
 EOF
 )"
@@ -69,6 +70,6 @@ EOF
 )"
 
 aws s3 cp lcgf/ticketEmail.html s3://${S3_TEMPLATE_BUCKET_NAME}/tim/
-aws s3 cp lcgf/facebook.png s3://${S3_TENANT_FILES_BUCKET_NAME}/tim/
-aws s3 cp lcgf/instagram.png s3://${S3_TENANT_FILES_BUCKET_NAME}/tim/
-aws s3 cp lcgf/ticket-header.jpg s3://${S3_TENANT_FILES_BUCKET_NAME}/tim/
+aws s3 cp lcgf/facebook.png s3://${S3_TENANT_FILES_BUCKET_NAME}/tim/ --acl public-read
+aws s3 cp lcgf/instagram.png s3://${S3_TENANT_FILES_BUCKET_NAME}/tim/ --acl public-read
+aws s3 cp lcgf/ticket-header.jpg s3://${S3_TENANT_FILES_BUCKET_NAME}/tim/ --acl public-read

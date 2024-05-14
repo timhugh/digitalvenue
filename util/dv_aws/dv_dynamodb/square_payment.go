@@ -21,6 +21,10 @@ func (repo *Repository) GetSquarePayment(squareMerchantID string, squarePaymentI
 	item := squarePaymentDTO{}
 	err := repo.get("SquarePayment", key, &item)
 	if err != nil {
+		if errors.Is(err, ItemNotFoundException{}) {
+			return nil, nil
+		}
+
 		return nil, errors.Wrap(err, "failed to get SquarePayment")
 	}
 

@@ -60,7 +60,7 @@ type OrderCreatedQueue struct {
 }
 
 func NewOrderCreatedQueue(sqsClient Client) (*OrderCreatedQueue, error) {
-	queueURL, err := core.RequireEnv("ORDER_CREATED_QUEUE_URL")
+	queueURL, err := core.RequireEnv("ORDER_CREATED_EVENT_QUEUE_URL")
 	if err != nil {
 		return nil, err
 	}

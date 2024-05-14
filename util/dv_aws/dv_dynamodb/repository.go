@@ -14,6 +14,10 @@ import (
 const coreDataTableNameKey = "CORE_DATA_TABLE_NAME"
 const itemTypeKey = "Type"
 
+type ItemNotFoundException struct {
+	error
+}
+
 type Repository struct {
 	client    Client
 	tableName string
@@ -48,7 +52,7 @@ func (repo *Repository) get(itemType string, key map[string]string, out interfac
 	}
 
 	if getItemOutput.Item == nil {
-		return errors.New("item not found")
+		return ItemNotFoundException{}
 	}
 
 	retrievedItemType := getItemOutput.Item[itemTypeKey].(*types.AttributeValueMemberS).Value
