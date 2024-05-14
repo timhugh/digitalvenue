@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	log := logger.Default().AddParam("service", "ticket-generator")
+	log := logger.Default().AddParam("service", "ticket-mailer")
 	env, err := core.RequireEnv("ENVIRONMENT")
 	if err != nil {
 		log.AddParam("error", err.Error()).Fatal("Failed to determine application environment")
@@ -186,7 +186,6 @@ func buildEmail(emailTemplate *core.Template, order *core.Order, customer *core.
 
 	var emailBody strings.Builder
 	tenantBucketURL := path.Join(fmt.Sprintf("https://s3-%s.amazonaws.com", tenantFileBucketRegion), tenantFileBucketName, tenant.TenantID)
-	fmt.Printf("File bucket URL: %s\n", tenantBucketURL)
 	err = ticketTemplate.Execute(&emailBody, buildEmailTemplateParams(order, customer, tenant, tickets, tenantBucketURL))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute email template")
