@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"errors"
 	"github.com/matryer/is"
 	"github.com/ovechkin-dm/mockio/mock"
+	"github.com/timhugh/digitalvenue/util/core"
 	"github.com/timhugh/digitalvenue/util/logger"
 	"github.com/timhugh/digitalvenue/util/square"
 	"github.com/timhugh/digitalvenue/util/square/webhooks"
@@ -59,7 +59,7 @@ func TestSquareEventsHandler(t *testing.T) {
 					squareSignatureHeader: goodSignature,
 				},
 			},
-			merchantFetchError: errors.New("who dat"),
+			merchantFetchError: core.ItemNotFoundException,
 			expectedStatus:     400,
 			expectedBody:       `{"error": "failed to find merchant with ID 'merchant_id'"}`,
 		},

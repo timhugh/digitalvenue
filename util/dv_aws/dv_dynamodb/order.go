@@ -29,10 +29,6 @@ func (repo *Repository) GetOrder(tenantID string, orderID string) (*core.Order, 
 	item := orderDTO{}
 	err := repo.get("Order", key, &item)
 	if err != nil {
-		if errors.Is(err, ItemNotFoundException{}) {
-			return nil, nil
-		}
-
 		return nil, errors.Wrap(err, "failed to get Order")
 	}
 

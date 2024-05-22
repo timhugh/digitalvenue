@@ -17,6 +17,7 @@ type paymentGatherer struct {
 	customerRepo      core.CustomerRepository
 	squareApi         APIClient
 	orderCreatedQueue core.OrderCreatedQueue
+	orderBuilder      *OrderBuilder
 }
 
 func NewPaymentGatherer(
@@ -26,6 +27,7 @@ func NewPaymentGatherer(
 	customerRepo core.CustomerRepository,
 	squareApi APIClient,
 	orderCreatedQueue core.OrderCreatedQueue,
+	orderBuilder *OrderBuilder,
 ) PaymentGatherer {
 	return paymentGatherer{
 		paymentRepo:       paymentRepo,
@@ -34,6 +36,7 @@ func NewPaymentGatherer(
 		customerRepo:      customerRepo,
 		squareApi:         squareApi,
 		orderCreatedQueue: orderCreatedQueue,
+		orderBuilder:      orderBuilder,
 	}
 }
 
@@ -62,12 +65,17 @@ func (gatherer paymentGatherer) Gather(ctx context.Context, squareMerchantID str
 
 	log.AddParam("squareCustomerID", squareOrder.SquareCustomerID)
 
+	var customer *core.Customer
 	existingCustomer, err := gatherer.customerRepo.GetCustomer(merchant.TenantID, squareOrder.SquareCustomerID)
 	if err != nil {
-		return err
+		_, ok := err.(core.ItemNotFoundException)
+		if !ok {
+			return err
+		}
+		// TODO: this is a little gross, just a quick fix
+		existingCustomer = nil
 	}
 
-	var customer *core.Customer
 	if existingCustomer == nil {
 		log.Info("Creating new customer for square payment")
 		squareCustomer, err := gatherer.squareApi.GetCustomer(squareOrder.SquareCustomerID, merchant.SquareAPIToken)
@@ -87,7 +95,12 @@ func (gatherer paymentGatherer) Gather(ctx context.Context, squareMerchantID str
 
 	existingOrder, err := gatherer.orderRepo.GetOrder(merchant.TenantID, squareOrder.SquareOrderID)
 	if err != nil {
-		return err
+		_, ok := err.(core.ItemNotFoundException)
+		if !ok {
+			return err
+		}
+		// TODO: this is a little gross, just a quick fix
+		existingOrder = nil
 	}
 
 	if existingOrder != nil {
@@ -97,7 +110,7 @@ func (gatherer paymentGatherer) Gather(ctx context.Context, squareMerchantID str
 
 	log.Info("Creating new order for square payment")
 
-	order, err := MapOrder(squareOrder, payment.SquarePaymentID, merchant.ID, merchant.TenantID, customer.ID)
+	order, err := gatherer.orderBuilder.BuildOrder(squareOrder, merchant, payment.SquarePaymentID, customer.ID)
 	if err != nil {
 		return err
 	}

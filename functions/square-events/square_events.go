@@ -35,10 +35,7 @@ func NewSquareEventsHandler(merchantRepo square.MerchantRepository, handlerProvi
 }
 
 func (handler *SquareEventsHandler) Handle(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log := handler.log.Sub().AddParams(map[string]interface{}{
-		"requestID": request.RequestContext.RequestID,
-		"apiStage":  request.RequestContext.Stage,
-	})
+	log := handler.log.Sub()
 
 	webhookEvent, err := webhooks.NewWebhookEvent(request.Body)
 	if err != nil {
@@ -55,6 +52,11 @@ func (handler *SquareEventsHandler) Handle(request events.APIGatewayProxyRequest
 
 	merchant, err := handler.merchantRepo.GetSquareMerchant(webhookEvent.MerchantID())
 	if err != nil {
+		if _, ok := err.(core.ItemNotFoundException); ok {
+			log.Error("Merchant does not exist")
+			return errorResponse("Merchant does not exist")
+		}
+
 		log.AddParam("error", err.Error()).Error("Failed to find merchant")
 		return errorResponse("failed to find merchant with ID '%s'", webhookEvent.MerchantID())
 	}

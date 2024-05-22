@@ -16,6 +16,7 @@ import (
 
 func initializeHandler(log *logger.ContextLogger) (SquareEventGathererHandler, error) {
 	wire.Build(
+		square.NewOrderBuilder,
 		square.NewPaymentGatherer,
 
 		dv_aws.DefaultConfig,
@@ -31,7 +32,7 @@ func initializeHandler(log *logger.ContextLogger) (SquareEventGathererHandler, e
 		wire.Bind(new(core.OrderCreatedQueue), new(*dv_sqs.OrderCreatedQueue)),
 
 		squareapi.NewClient,
-		wire.Bind(new(square.APIClient), new(*squareapi.Client)),
+		//wire.Bind(new(square.APIClient), new(*squareapi.Client)),
 
 		NewSquareEventGathererHandler,
 	)

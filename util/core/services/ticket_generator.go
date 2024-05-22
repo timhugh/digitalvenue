@@ -18,7 +18,11 @@ type TicketGenerator struct {
 
 const qrSize = 256
 
-func NewTicketGenerator(qrStore core.QRCodeStore, ticketRepo core.TicketRepository, orderProcessedQueue core.OrderProcessedQueue) *TicketGenerator {
+func NewTicketGenerator(
+	qrStore core.QRCodeStore,
+	ticketRepo core.TicketRepository,
+	orderProcessedQueue core.OrderProcessedQueue,
+) *TicketGenerator {
 	return &TicketGenerator{
 		qrGenerator:         qr.NewGenerator(),
 		qrStore:             qrStore,
@@ -28,7 +32,7 @@ func NewTicketGenerator(qrStore core.QRCodeStore, ticketRepo core.TicketReposito
 }
 
 func (t *TicketGenerator) GenerateTickets(ctx context.Context, order *core.Order) error {
-	tickets, err := buildTickets(order)
+	tickets, err := t.buildTickets(order)
 	if err != nil {
 		return err
 	}
@@ -83,7 +87,7 @@ func (t *TicketGenerator) GenerateTickets(ctx context.Context, order *core.Order
 	return nil
 }
 
-func buildTickets(order *core.Order) ([]*core.Ticket, error) {
+func (t *TicketGenerator) buildTickets(order *core.Order) ([]*core.Ticket, error) {
 	tickets := make([]*core.Ticket, len(order.Items))
 	for i, item := range order.Items {
 		tickets[i] = &core.Ticket{

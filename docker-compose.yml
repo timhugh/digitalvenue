@@ -11,6 +11,26 @@ services:
       - "./.docker/localstack/:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
 
+  dynamodb-local:
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath ./data
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.docker/dynamodb:/home/dynamodblocal/data
+    working_dir: /home/dynamodblocal
+
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin:latest
+    container_name: dynamodb-admin
+    ports:
+      - "8001:8001"
+    environment:
+      DYNAMO_ENDPOINT: http://dynamodb-local:8000
+    depends_on:
+      - dynamodb-local
+
   http-gateway:
     image: nginx:latest
     container_name: http-gateway
@@ -23,6 +43,7 @@ services:
       - square-event-gatherer
       - ticket-generator
       - ticket-mailer
+      - square-payment-backfill
 
   mailcatcher:
     image: schickling/mailcatcher:latest
@@ -39,11 +60,12 @@ services:
     volumes:
       - .:/digitalvenue:ro
     environment:
-      LOCAL_AWS_URL: ${LOCAL_AWS_URL}
+      LOCAL_AWS_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: ${CORE_DATA_TABLE_NAME}
       SQUARE_WEBHOOK_NOTIFICATION_URL: ${SQUARE_WEBHOOK_NOTIFICATION_URL}
       LOG_LEVEL: debug
       ENVIRONMENT: dev
+      SQUARE_PAYMENT_CREATED_EVENT_QUEUE_URL: noop
 
   square-event-gatherer:
     build:
@@ -54,7 +76,7 @@ services:
     volumes:
       - .:/digitalvenue:ro
     environment:
-      LOCAL_AWS_URL: ${LOCAL_AWS_URL}
+      LOCAL_AWS_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: ${CORE_DATA_TABLE_NAME}
       LOG_LEVEL: debug
       ENVIRONMENT: dev
@@ -68,7 +90,7 @@ services:
     volumes:
       - .:/digitalvenue:ro
     environment:
-      LOCAL_AWS_URL: ${LOCAL_AWS_URL}
+      LOCAL_AWS_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: ${CORE_DATA_TABLE_NAME}
       S3_QR_CODE_BUCKET_NAME: ${S3_QR_CODE_BUCKET_NAME}
       LOG_LEVEL: debug
@@ -83,7 +105,21 @@ services:
     volumes:
       - .:/digitalvenue:ro
     environment:
-      LOCAL_AWS_URL: ${LOCAL_AWS_URL}
+      LOCAL_AWS_URL: http://dynamodb-local:8000
+      CORE_DATA_TABLE_NAME: ${CORE_DATA_TABLE_NAME}
+      LOG_LEVEL: debug
+      ENVIRONMENT: dev
+
+  square-payment-backfill:
+    build:
+      context: .
+      dockerfile: .docker/function.Dockerfile
+    container_name: square-payment-backfill
+    command: [ "go", "run", "./functions/square-payment-backfill" ]
+    volumes:
+      - .:/digitalvenue:ro
+    environment:
+      LOCAL_AWS_URL: http://dynamodb-local:8000
       CORE_DATA_TABLE_NAME: ${CORE_DATA_TABLE_NAME}
       LOG_LEVEL: debug
       ENVIRONMENT: dev

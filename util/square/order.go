@@ -2,7 +2,9 @@ package square
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/timhugh/digitalvenue/util/core"
+	"github.com/timhugh/digitalvenue/util/logger"
 	"strconv"
 )
 
@@ -21,40 +23,103 @@ type Order struct {
 }
 
 type OrderItem struct {
-	ItemID   string `json:"uid"`
-	Name     string `json:"name"`
-	Quantity string `json:"quantity"`
+	ItemID          string `json:"uid"`
+	Name            string `json:"name"`
+	Quantity        string `json:"quantity"`
+	CatalogObjectID string `json:"catalog_object_id"`
 }
 
-func MapOrder(squareOrder *Order, squarePaymentID string, squareMerchantID string, tenantID string, customerID string) (*core.Order, error) {
+type OrderBuilder struct {
+	log       *logger.ContextLogger
+	squareAPI APIClient
+}
+
+func NewOrderBuilder(
+	log *logger.ContextLogger,
+	squareAPI APIClient,
+) *OrderBuilder {
+	return &OrderBuilder{
+		squareAPI: squareAPI,
+		log:       log,
+	}
+}
+
+func (b *OrderBuilder) BuildOrder(squareOrder *Order, merchant *Merchant, squarePaymentID string, customerID string) (*core.Order, error) {
 	order := core.Order{
 		ID:         squareOrder.SquareOrderID, // We use the SquareOrderID as the ID for orders that come from Square to make duplicate detection easier
-		TenantID:   tenantID,
+		TenantID:   merchant.TenantID,
 		CustomerID: customerID,
 		Meta: map[string]string{
-			MerchantIDKey: squareMerchantID,
+			MerchantIDKey: merchant.ID,
 			PaymentIDKey:  squarePaymentID,
 			OrderIDKey:    squareOrder.SquareOrderID,
 			CustomerIDKey: squareOrder.SquareCustomerID,
 		},
 	}
 
+	var items []core.OrderItem
 	for _, item := range squareOrder.OrderItems {
-		quantity, err := strconv.Atoi(item.Quantity)
+		newItems, err := b.buildItems(&item, merchant)
 		if err != nil {
-			return nil, err
-		}
+			if errors.Is(err, NonTicketableItemError{}) {
+				continue
+			}
 
-		for i := 0; i < quantity; i++ {
-			order.Items = append(order.Items, core.OrderItem{
-				Name: item.Name,
-				ID:   fmt.Sprintf("%s-%d", item.ItemID, i+1),
-				Meta: map[string]string{
-					ItemIDKey: item.ItemID,
-				},
-			})
+			return nil, errors.Wrap(err, "failure while building order item")
 		}
+		items = append(items, newItems...)
 	}
 
+	order.Items = items
+
 	return &order, nil
+}
+
+type NonTicketableItemError struct {
+	error
+}
+
+func (b *OrderBuilder) buildItems(squareOrderItem *OrderItem, merchant *Merchant) ([]core.OrderItem, error) {
+	var items []core.OrderItem
+
+	var catalogItemVariation CatalogItemVariation
+	err := b.squareAPI.GetCatalogObject(squareOrderItem.CatalogObjectID, merchant.SquareAPIToken, &catalogItemVariation)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get catalog item variation")
+	}
+
+	var catalogItem CatalogItem
+	err = b.squareAPI.GetCatalogObject(catalogItemVariation.ItemVariationData.ItemID, merchant.SquareAPIToken, &catalogItem)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get catalog item")
+	}
+
+	isTicketable := false
+	for _, itemCategory := range catalogItem.ItemData.Categories {
+		for _, ticketableCategory := range merchant.TicketableCategories {
+			if itemCategory.ID == ticketableCategory {
+				isTicketable = true
+			}
+		}
+	}
+	if !isTicketable {
+		return nil, NonTicketableItemError{}
+	}
+
+	quantity, err := strconv.Atoi(squareOrderItem.Quantity)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid item quantity")
+	}
+
+	for i := 0; i < quantity; i++ {
+		items = append(items, core.OrderItem{
+			Name: squareOrderItem.Name,
+			ID:   fmt.Sprintf("%s-%d", squareOrderItem.ItemID, i+1),
+			Meta: map[string]string{
+				ItemIDKey: squareOrderItem.ItemID,
+			},
+		})
+	}
+
+	return items, nil
 }

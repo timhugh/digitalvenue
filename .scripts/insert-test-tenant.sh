@@ -64,7 +64,8 @@ aws dynamodb put-item \
   "TenantID":                   { "S": "Tenant#tim" },
   "Name":                       { "S": "Test Merchant" },
   "SquareAPIToken":             { "S": "${SQUARE_API_ACCESS_TOKEN}" },
-  "SquareWebhookSignatureKey":  { "S": "${SQUARE_WEBHOOK_SIGNATURE_KEY}" }
+  "SquareWebhookSignatureKey":  { "S": "${SQUARE_WEBHOOK_SIGNATURE_KEY}" },
+  "TicketableCategories":       { "L": [] }
 }
 EOF
 )"

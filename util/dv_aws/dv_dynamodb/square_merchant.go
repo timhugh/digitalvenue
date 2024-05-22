@@ -13,6 +13,7 @@ type squareMerchant struct {
 	Name                      string
 	SquareAPIToken            string
 	SquareWebhookSignatureKey string
+	TicketableCategories      []string
 }
 
 func (repo *Repository) GetSquareMerchant(squareMerchantID string) (*square.Merchant, error) {
@@ -25,10 +26,6 @@ func (repo *Repository) GetSquareMerchant(squareMerchantID string) (*square.Merc
 	item := squareMerchant{}
 	err := repo.get("SquareMerchant", key, &item)
 	if err != nil {
-		if errors.Is(err, ItemNotFoundException{}) {
-			return nil, nil
-		}
-
 		return nil, errors.Wrap(err, "failed to get SquareMerchant")
 	}
 
@@ -43,5 +40,6 @@ func (repo *Repository) GetSquareMerchant(squareMerchantID string) (*square.Merc
 		ID:                        squareMerchantID,
 		SquareWebhookSignatureKey: item.SquareWebhookSignatureKey,
 		SquareAPIToken:            item.SquareAPIToken,
+		TicketableCategories:      item.TicketableCategories,
 	}, nil
 }

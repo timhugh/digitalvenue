@@ -18,6 +18,10 @@ type ItemNotFoundException struct {
 	error
 }
 
+func (e ItemNotFoundException) IsItemNotFound() bool {
+	return true
+}
+
 type Repository struct {
 	client    Client
 	tableName string
