@@ -21,9 +21,7 @@ func (m *Manager) Start(ctx context.Context) error {
 			continue
 		}
 
-		// TODO: populate data from result
-
-		req.ResultChan <- Result{}
+		req.ResultChan <- result
 	}
 
 	return nil
