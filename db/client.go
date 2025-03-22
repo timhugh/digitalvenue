@@ -54,4 +54,5 @@ func (r Result) Unwrap(out any) error {
 
 type Client interface {
 	ExecuteQuery(ctx context.Context, query string, args ...any) Result
+	Close() error
 }

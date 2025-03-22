@@ -45,3 +45,7 @@ func (c *Client) ExecuteQuery(ctx context.Context, query string, args ...any) db
 
 	return db.Result{Data: data}
 }
+
+func (c *Client) Close() error {
+	return c.db.Close()
+}
