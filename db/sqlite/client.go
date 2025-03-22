@@ -13,7 +13,7 @@ type Client struct {
 	db *sqlx.DB
 }
 
-func New(databaseFile string) (*Client, error) {
+func NewClient(databaseFile string) (*Client, error) {
 	dbHandle, err := sqlx.Open("sqlite3", databaseFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w %w", db.ErrInitFailed, err)
