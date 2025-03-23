@@ -1,0 +1,17 @@
+plugins {
+  id 'application'
+}
+
+application {
+  mainClass = 'com.digitalvenue.server.Application'
+}
+
+dependencies {
+  implementation project(':common')
+  implementation 'io.javalin:javalin:6.5.0'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.1'
+}
+
+jar {
+  archiveBaseName = 'digitalvenue-server'
+}
