@@ -1,0 +1,15 @@
+# gradle
+.gradle
+build/
+bin/
+
+# ides
+.idea
+.vscode
+.zed
+
+# eclipse
+.classpath
+.project
+.settings/
+.factorypath
