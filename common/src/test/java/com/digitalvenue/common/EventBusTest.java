@@ -1,18 +1,18 @@
-package com.digitalvenue.common.events;
+package com.digitalvenue.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
-public class BusTest {
+public class EventBusTest {
 
   @Test
   void testSingleSubscriber() {
     AtomicReference<String> receivedMessage = new AtomicReference<>();
-    Bus bus = new Bus();
-    bus.subscribe(String.class, event -> receivedMessage.set(event));
-    bus.publish("Hello");
+    EventBus events = new EventBus();
+    events.subscribe(String.class, event -> receivedMessage.set(event));
+    events.publish("Hello");
     assertEquals("Hello", receivedMessage.get());
   }
 
@@ -20,10 +20,10 @@ public class BusTest {
   void testMultipleSubscribers() {
     AtomicReference<String> receivedMessage1 = new AtomicReference<>();
     AtomicReference<String> receivedMessage2 = new AtomicReference<>();
-    Bus bus = new Bus();
-    bus.subscribe(String.class, event -> receivedMessage1.set(event));
-    bus.subscribe(String.class, event -> receivedMessage2.set(event));
-    bus.publish("Hello");
+    EventBus events = new EventBus();
+    events.subscribe(String.class, event -> receivedMessage1.set(event));
+    events.subscribe(String.class, event -> receivedMessage2.set(event));
+    events.publish("Hello");
     assertEquals("Hello", receivedMessage1.get());
     assertEquals("Hello", receivedMessage2.get());
   }
@@ -33,11 +33,11 @@ public class BusTest {
     class Payload {}
 
     AtomicReference<Payload> receivedPayload = new AtomicReference<>();
-    Bus bus = new Bus();
-    bus.subscribe(Payload.class, event -> receivedPayload.set(event));
+    EventBus events = new EventBus();
+    events.subscribe(Payload.class, event -> receivedPayload.set(event));
 
     final Payload payload = new Payload();
-    bus.publish(payload);
+    events.publish(payload);
     assertEquals(payload, receivedPayload.get());
   }
 }

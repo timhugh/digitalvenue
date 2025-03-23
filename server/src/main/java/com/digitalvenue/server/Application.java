@@ -1,17 +1,17 @@
 package com.digitalvenue.server;
 
-import com.digitalvenue.common.events.Bus;
-import com.digitalvenue.common.workers.Worker;
-import com.digitalvenue.common.workers.Worker.FatalException;
+import com.digitalvenue.common.EventBus;
+import com.digitalvenue.common.Worker;
+import com.digitalvenue.common.Worker.FatalException;
+import com.digitalvenue.http.HttpWorker;
 import java.util.List;
 
 public class Application {
 
-  private final Bus events;
   private final List<Worker> workers;
 
   public Application() {
-    this.events = new Bus();
+    EventBus events = new EventBus();
     this.workers = List.of(
       new HttpWorker(events, HttpWorker.Config.builder().port(8080).build())
     );

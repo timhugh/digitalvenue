@@ -1,4 +1,4 @@
-package com.digitalvenue.common.workers;
+package com.digitalvenue.common;
 
 public interface Worker {
   public class FatalException extends RuntimeException {

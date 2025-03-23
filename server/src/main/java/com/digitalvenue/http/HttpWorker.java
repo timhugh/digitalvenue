@@ -1,7 +1,8 @@
-package com.digitalvenue.server;
+package com.digitalvenue.http;
 
-import com.digitalvenue.common.events.Bus;
-import com.digitalvenue.common.workers.Worker;
+import com.digitalvenue.common.EventBus;
+import com.digitalvenue.common.Worker;
+import com.digitalvenue.http.health.Health;
 import io.javalin.Javalin;
 import lombok.Builder;
 import lombok.Data;
@@ -17,10 +18,10 @@ public class HttpWorker implements Worker {
   }
 
   private final Config config;
-  private final Bus events;
+  private final EventBus events;
   private final Javalin javalin;
 
-  public HttpWorker(Bus events, Config config) {
+  public HttpWorker(final EventBus events, final Config config) {
     this.config = config;
     this.events = events;
     this.javalin = Javalin.create();
@@ -28,6 +29,6 @@ public class HttpWorker implements Worker {
 
   public void start() throws FatalException {
     javalin.start(config.getPort());
-    javalin.get("/health", ctx -> ctx.status(200).result("OK"));
+    javalin.get("/health", new Health.Get());
   }
 }

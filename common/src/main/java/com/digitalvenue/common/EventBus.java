@@ -1,4 +1,4 @@
-package com.digitalvenue.common.events;
+package com.digitalvenue.common;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-public class Bus {
+public class EventBus {
 
   private final Map<Class<?>, List<Consumer<?>>> subscribers;
 
-  public Bus() {
+  public EventBus() {
     this.subscribers = new ConcurrentHashMap<>();
   }
 
