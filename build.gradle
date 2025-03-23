@@ -2,6 +2,7 @@ plugins {
   id 'java'
   id 'application'
   id 'io.freefair.lombok' version '8.13'
+  id 'jvm-test-suite'
 }
 
 allprojects {
@@ -25,12 +26,16 @@ subprojects {
     compileOnly 'org.projectlombok:lombok:1.18.36'
     annotationProcessor 'org.projectlombok:lombok:1.18.36'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.13.0-M1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.13.0-M1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.12.1'
   }
 
-  test {
-    useJUnitPlatform()
+  testing {
+    suites {
+      test {
+        useJUnitJupiter('5.12.1')
+      }
+    }
   }
 
   plugins.withType(ApplicationPlugin) {
