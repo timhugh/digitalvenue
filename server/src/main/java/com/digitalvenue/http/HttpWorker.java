@@ -3,6 +3,7 @@ package com.digitalvenue.http;
 import com.digitalvenue.common.EventBus;
 import com.digitalvenue.common.Worker;
 import com.digitalvenue.http.health.Health;
+import com.digitalvenue.http.webhook.WebhookEvents;
 import io.javalin.Javalin;
 import lombok.Builder;
 import lombok.Data;
@@ -30,5 +31,13 @@ public class HttpWorker implements Worker {
   public void start() throws FatalException {
     javalin.start(config.getPort());
     javalin.get("/health", new Health.Get());
+    javalin.post(
+      "/webhook_events",
+      new WebhookEvents.Post(System.getenv("WEBHOOK_URL"))
+    );
+  }
+
+  public void stop() {
+    javalin.stop();
   }
 }

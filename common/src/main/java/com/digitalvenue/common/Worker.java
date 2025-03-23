@@ -9,4 +9,5 @@ public interface Worker {
   }
 
   void start() throws FatalException;
+  void stop();
 }

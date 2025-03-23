@@ -8,7 +8,7 @@ public class Health {
   public static class Get implements Handler {
 
     @Override
-    public void handle(Context ctx) {
+    public void handle(Context ctx) throws Exception {
       ctx.status(200).result("OK");
     }
   }
