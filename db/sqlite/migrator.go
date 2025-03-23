@@ -18,9 +18,26 @@ func NewMigrator(client db.Client) (*db.Migrator, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	result := client.ExecuteQuery(context.Background(), "PRAGMA foreign_keys = ON")
+	if result.Error != nil {
+		return nil, fmt.Errorf("Failed to enable foreign keys: %w", result.Error)
+	}
+
+	result = client.ExecuteQuery(context.Background(), "PRAGMA journal_mode = WAL")
+	if result.Error != nil {
+		return nil, fmt.Errorf("Failed to set journal mode to WAL: %w", result.Error)
+	}
+
+	versionsMigration := migrations[0]
+	err = versionsMigration.Up(context.Background(), client)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create versions table: %w", err)
+	}
+
 	return &db.Migrator{
 		Client:     client,
-		Migrations: migrations,
+		Migrations: migrations[1:],
 	}, nil
 }
 
