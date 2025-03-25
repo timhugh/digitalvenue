@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 if [ -z "$1" ]; then
   echo "Error: Must specify version to deploy"
   echo "Usage: $0 <version>"

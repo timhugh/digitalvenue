@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+set -e
+
+# Wait for cloud-init to finish
+cloud-init status --wait || true
+
 # Install java
 apt-get update && apt-get install -y openjdk-21-jre-headless
 
