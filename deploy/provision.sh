@@ -13,4 +13,4 @@ cp /opt/digital-venue.service /etc/systemd/system/digital-venue.service
 systemctl enable digital-venue.service
 
 # Create directory for deployments
-mkdir -p /opt/digital-venue/versions
+mkdir -p /opt/dvserver/versions
