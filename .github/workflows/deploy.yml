@@ -143,8 +143,8 @@ jobs:
       - name: Copy server package to droplet
         run: |
           scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
-            server/build/distributions/*.zip \
-            root@${{ env.DROPLET_IP }}:/opt/dvserver/versions/${{ env.APP_VERSION }}.zip
+            server/build/distributions/*.tar \
+            root@${{ env.DROPLET_IP }}:/opt/dvserver/versions/${{ env.APP_VERSION }}.tar
 
       - name: Trigger droplet deployment script
         run: |
