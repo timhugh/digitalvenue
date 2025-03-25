@@ -8,13 +8,8 @@ fi
 
 VERSION=$1
 
-systemctl stop digital-venue || true
+mkdir -p /opt/app/versions/${VERSION}
+unzip -o /opt/app/versions/${VERSION}.zip -d /opt/app/versions/${VERSION}/
+ln -sf /opt/app/versions/${VERSION} /opt/app/current
 
-ln -sf /opt/app/server-${VERSION}.jar /opt/app/server.jar
-chmod 755 /opt/app/server.jar
-
-systemctl daemon-reload
-systemctl start digital-venue
-systemctl enable digital-venue
-
-systemctl status digital-venue
+systemctl restart digital-venue

@@ -3,8 +3,8 @@ Description=Digital Venue Server
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/app
-ExecStart=/usr/bin/java -jar /opt/app/current/digitalvenue.jar
+WorkingDirectory=/opt/app/current
+ExecStart=bin/server
 SuccessExitStatus=143
 TimeoutStopSec=10
 Restart=on-failure
