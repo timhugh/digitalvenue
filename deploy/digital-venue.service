@@ -3,8 +3,8 @@ Description=Digital Venue Server
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/app/current
-ExecStart=bin/server
+WorkingDirectory=/opt/dvserver/current
+ExecStart=/opt/dvserver/current/server-1.0.0/bin/server
 SuccessExitStatus=143
 TimeoutStopSec=10
 Restart=on-failure

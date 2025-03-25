@@ -47,8 +47,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: hashicorp/setup-terraform@v3
-
       - uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_TOKEN }}
@@ -65,34 +63,60 @@ jobs:
             echo "EXISTING_DROPLET=false" >> $GITHUB_ENV
           fi
 
-      - name: Write SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
       - name: Create new droplet
         if: ${{ env.EXISTING_DROPLET == 'false' }}
         run: |
-          cd terraform
-          terraform init
-          terraform apply -auto-approve \
-            -var="app_environment=${{ env.ENVIRONMENT }}" \
-            -var="digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}" \
-            -var="ssh_key_path=~/.ssh/id_rsa" \
-            -var="ssh_key_name=${{ secrets.DIGITALOCEAN_SSH_KEY_NAME }}"
+          doctl compute droplet create \
+            --image ubuntu-24-04-x64 \
+            --size s-1vcpu-512mb-10gb \
+            --region sfo3 \
+            --tag-name digital-venue,${{ env.DROPLET_TAG }} \
+            --ssh-keys ${{ secrets.DIGITALOCEAN_SSH_KEY_FINGERPRINT }} \
+            --wait
 
-          NEW_DROPLET_IP=$(terraform output -raw droplet_ip)
-          echo "NEW_DROPLET_IP=${NEW_DROPLET_IP}" >> $GITHUB_ENV
+          DROPLET_IP=$(doctl compute droplet list --tag-name ${{ env.DROPLET_TAG }} --format PublicIPv4 --no-header)
+          if [ -n "$DROPLET_IP" ]; then
+            echo "NEW_DROPLET_IP=${DROPLET_IP}" >> $GITHUB_ENV
+          else
+            echo "Failed to find new droplet with tag ${{ env.DROPLET_TAG }} after creation"
+            exit 1
+          fi
 
       - name: Get final droplet IP
         id: get_droplet_ip
         run: |
           if [ "${{ env.EXISTING_DROPLET }}" == "true" ]; then
+            echo "DROPLET_IP=${{ env.EXISTING_DROPLET_IP }}" >> $GITHUB_ENV
             echo "droplet_ip=${{ env.EXISTING_DROPLET_IP }}" >> $GITHUB_OUTPUT
           else
+            echo "DROPLET_IP=${{ env.NEW_DROPLET_IP }}" >> $GITHUB_ENV
             echo "droplet_ip=${{ env.NEW_DROPLET_IP }}" >> $GITHUB_OUTPUT
           fi
+
+      - name: Setup SSH key for droplet
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DIGITALOCEAN_PRIVATE_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Wait for droplet to be ready
+        run: |
+          while ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa root@${{ env.DROPLET_IP }} 'echo "ready"'; do
+            sleep 5
+          done
+
+      - name: Copy scripts to droplet
+        if: ${{ env.EXISTING_DROPLET == 'false' }}
+        run: |
+          scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            deploy/* \
+            root@${{ env.DROPLET_IP }}:/opt/
+
+      - name: Execute provisioning script on droplet
+        if: ${{ env.EXISTING_DROPLET == 'false' }}
+        run: |
+          ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            root@${{ env.DROPLET_IP }} 'bash /opt/provision.sh'
 
   deploy:
     runs-on: ubuntu-latest
@@ -113,12 +137,16 @@ jobs:
       - name: Setup SSH key for droplet
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.DIGITALOCEAN_PRIVATE_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ env.DROPLET_IP }} >> ~/.ssh/known_hosts
 
       - name: Copy server package to droplet
-        run: scp server/build/distributions/*.zip root@${{ env.DROPLET_IP }}:/opt/app/versions/${{ env.APP_VERSION }}.zip
+        run: |
+          scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            server/build/distributions/*.zip \
+            root@${{ env.DROPLET_IP }}:/opt/dvserver/versions/${{ env.APP_VERSION }}.zip
 
       - name: Trigger droplet deployment script
-        run: ssh root@${{ env.DROPLET_IP }} "/opt/app/deploy.sh ${{ env.APP_VERSION }}"
+        run: |
+          ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            root@${{ env.DROPLET_IP }} "/opt/deploy.sh ${{ env.APP_VERSION }}"
