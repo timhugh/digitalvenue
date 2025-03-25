@@ -117,9 +117,9 @@ jobs:
         run: |
           ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
             root@${{ env.DROPLET_IP }} \
-            "IP_ADDRESS='${{ env.DROPLET_IP }}'; \
-            ENVIRONMENT='${{ env.ENVIRONMENT }}'; \
-            DOMAIN_NAME='${{ env.ENVIRONMENT }}.digital-venue.net'; \
+            "IP_ADDRESS='${{ env.DROPLET_IP }}' \
+            ENVIRONMENT='${{ env.ENVIRONMENT }}' \
+            DOMAIN_NAME='${{ env.ENVIRONMENT }}.digital-venue.net' \
             bash /opt/provision.sh"
 
   deploy:
