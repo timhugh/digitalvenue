@@ -106,20 +106,19 @@ jobs:
           done
 
       - name: Copy scripts to droplet
-        if: ${{ env.EXISTING_DROPLET == 'false' }}
         run: |
           scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
             deploy/* \
             root@${{ env.DROPLET_IP }}:/opt/
 
       - name: Execute provisioning script on droplet
-        if: ${{ env.EXISTING_DROPLET == 'false' }}
         run: |
           ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
             root@${{ env.DROPLET_IP }} \
             "IP_ADDRESS='${{ env.DROPLET_IP }}' \
             ENVIRONMENT='${{ env.ENVIRONMENT }}' \
             DOMAIN_NAME='${{ env.ENVIRONMENT }}.digital-venue.net' \
+            APP_VERSION='${{ env.APP_VERSION }}' \
             bash /opt/provision.sh"
 
   deploy:
@@ -149,13 +148,6 @@ jobs:
           scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
             server/build/distributions/*.tar \
             root@${{ env.DROPLET_IP }}:/opt/dvserver/versions/${{ env.APP_VERSION }}.tar
-
-      - name: Copy scripts to droplet
-        if: ${{ env.EXISTING_DROPLET == 'false' }}
-        run: |
-          scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
-            deploy/* \
-            root@${{ env.DROPLET_IP }}:/opt/
 
       - name: Trigger droplet deployment script
         run: |
