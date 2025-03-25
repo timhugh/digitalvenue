@@ -23,8 +23,8 @@ resource "digitalocean_droplet" "dv" {
   user_data = <<-EOF
 #!/usr/bin/env bash
 
-mkdir -p /opt/app,
-mkdir -p /opt/app/versions,
+mkdir -p /opt/app
+mkdir -p /opt/app/versions
 apt-get update && \
   apt-get install -y openjdk-21-jre-headless
 EOF
