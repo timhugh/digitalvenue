@@ -13,6 +13,12 @@ for variable in $required_environment_variables; do
   fi
 done
 
+# Create directory for deployments
+mkdir -p /opt/dvserver/versions
+
+# Set up environment variables
+envsubst < /opt/env.template > /opt/dvserver/.env
+
 # Wait for cloud-init to finish
 cloud-init status --wait || true
 
@@ -21,9 +27,6 @@ apt-get update
 apt-get install -y \
   openjdk-21-jre-headless \
   nginx
-
-# Set up environment variables
-envsubst < /opt/env.template > /opt/dvserver/.env
 
 # Install nginx configuration
 envsubst < /opt/nginx.conf.template > /etc/nginx/sites-available/digital-venue
@@ -38,6 +41,3 @@ systemctl enable digital-venue.service
 
 # Reload systemd daemon to pick up changes
 systemctl daemon-reload
-
-# Create directory for deployments
-mkdir -p /opt/dvserver/versions
