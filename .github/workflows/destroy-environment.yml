@@ -1,0 +1,61 @@
+name: Destroy environment
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to destroy"
+        required: true
+        type: string
+
+jobs:
+  setup_environment:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set_variables.outputs.environment }}
+      app_version: ${{ steps.set_variables.outputs.app_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set environment name from branch
+        id: set_variables
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BRANCH_NAME=${{ github.head_ref }}
+          else
+            BRANCH_NAME=${{ github.ref_name }}
+          fi
+
+          if [ "$BRANCH_NAME" == "main" ]; then
+            echo "Blocked attempt to destroy production environment; investigate why that happened"
+            exit 1
+          else
+            ENVIRONMENT=${BRANCH_NAME}
+          fi
+          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+
+  destroy_droplet:
+    runs-on: ubuntu-latest
+    needs: setup_environment
+    env:
+      ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
+      APP_VERSION: ${{ needs.setup_environment.outputs.app_version }}
+      DROPLET_TAG: "env:${{ needs.setup_environment.outputs.environment }}"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Destroy droplet
+        run: |
+          DROPLET_ID=$(doctl compute droplet list --tag-name ${{ env.DROPLET_TAG }} --format ID --no-header)
+          if [ -n "$DROPLET_ID" ]; then
+            doctl compute droplet delete $DROPLET_ID --force
+          else
+            echo "No existing droplet found with tag ${{ env.DROPLET_TAG }}"
+            exit 1
+          fi
