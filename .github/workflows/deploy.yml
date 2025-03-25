@@ -72,7 +72,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
       - name: Create new droplet
-        if: env.EXISTING_DROPLET == "false"
+        if: ${{ env.EXISTING_DROPLET == 'false' }}
         run: |
           cd terraform
           terraform init
