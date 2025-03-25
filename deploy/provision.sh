@@ -29,7 +29,7 @@ apt-get install -y \
   nginx
 
 # Install nginx configuration
-envsubst < /opt/nginx.conf.template > /etc/nginx/sites-available/digital-venue
+envsubst '${DOMAIN_NAME} ${IP_ADDRESS}' < /opt/nginx.conf.template > /etc/nginx/sites-available/digital-venue
 ln -sf /etc/nginx/sites-available/digital-venue /etc/nginx/sites-enabled/digital-venue
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
