@@ -66,11 +66,11 @@ jobs:
       - name: Create new droplet
         if: ${{ env.EXISTING_DROPLET == 'false' }}
         run: |
-          doctl compute droplet create \
+          doctl compute droplet create "digital-venue-${{ env.ENVIRONMENT }}" \
             --image ubuntu-24-04-x64 \
             --size s-1vcpu-512mb-10gb \
             --region sfo3 \
-            --tag-name digital-venue,${{ env.DROPLET_TAG }} \
+            --tag-names digital-venue,${{ env.DROPLET_TAG }} \
             --ssh-keys ${{ secrets.DIGITALOCEAN_SSH_KEY_FINGERPRINT }} \
             --wait
 
