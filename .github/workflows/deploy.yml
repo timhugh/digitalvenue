@@ -149,4 +149,4 @@ jobs:
       - name: Trigger droplet deployment script
         run: |
           ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
-            root@${{ env.DROPLET_IP }} "/opt/deploy.sh ${{ env.APP_VERSION }}"
+            root@${{ env.DROPLET_IP }} "bash /opt/deploy.sh ${{ env.APP_VERSION }}"
