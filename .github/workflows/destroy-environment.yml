@@ -4,11 +4,6 @@ on:
   pull_request:
     types: [closed]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Environment to destroy"
-        required: true
-        type: string
 
 jobs:
   setup_environment:
