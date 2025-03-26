@@ -1,4 +1,0 @@
-rootProject.name = 'digitalvenue'
-
-include 'common'
-include 'server'
