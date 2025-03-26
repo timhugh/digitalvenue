@@ -1,5 +1,17 @@
 name: Deploy Digital Venue Server
 
+env:
+  DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+  DIGITALOCEAN_SSH_KEY_FINGERPRINT: ${{ secrets.DIGITALOCEAN_SSH_KEY_FINGERPRINT }}
+  DIGITALOCEAN_PRIVATE_SSH_KEY: ${{ secrets.DIGITALOCEAN_PRIVATE_SSH_KEY }}
+  DIGITALOCEAN_REGION: sfo3
+  DIGITALOCEAN_IMAGE: ubuntu-22-04-x64
+  DIGITALOCEAN_DROPLET_SIZE: s-1vcpu-512mb-10gb
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: us-west-2
+  ROUTE_53_HOSTED_ZONE_ID: ${{ secrets.ROUTE_53_HOSTED_ZONE_ID }}
+
 on:
   pull_request:
     types: [opened, reopened, synchronize]
@@ -49,7 +61,7 @@ jobs:
 
       - uses: digitalocean/action-doctl@v2
         with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          token: ${{ env.DIGITALOCEAN_TOKEN }}
 
       - name: Check for existing droplet
         run: |
@@ -67,11 +79,11 @@ jobs:
         if: ${{ env.EXISTING_DROPLET == 'false' }}
         run: |
           doctl compute droplet create "digital-venue-${{ env.ENVIRONMENT }}" \
-            --image ubuntu-24-04-x64 \
-            --size s-1vcpu-512mb-10gb \
-            --region sfo3 \
+            --image ${{ env.DIGITALOCEAN_IMAGE }} \
+            --size ${{ env.DIGITALOCEAN_DROPLET_SIZE }} \
+            --region ${{ env.DIGITALOCEAN_REGION }} \
             --tag-names digital-venue,${{ env.DROPLET_TAG }} \
-            --ssh-keys ${{ secrets.DIGITALOCEAN_SSH_KEY_FINGERPRINT }} \
+            --ssh-keys ${{ env.DIGITALOCEAN_SSH_KEY_FINGERPRINT }} \
             --wait
 
           DROPLET_IP=$(doctl compute droplet list --tag-name ${{ env.DROPLET_TAG }} --format PublicIPv4 --no-header)
@@ -96,7 +108,7 @@ jobs:
       - name: Setup SSH key for droplet
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DIGITALOCEAN_PRIVATE_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ env.DIGITALOCEAN_PRIVATE_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
       - name: Wait for droplet to be ready
@@ -121,6 +133,46 @@ jobs:
             APP_VERSION='${{ env.APP_VERSION }}' \
             bash /opt/provision.sh"
 
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create route53 subdomain for environment
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" == "prod" ]; then
+            DOMAIN="digital-venue.net"
+            TTL=3600
+          else
+            DOMAIN="${{ env.ENVIRONMENT }}.digital-venue.net"
+            TTL=30
+          fi
+
+          cat > /tmp/route53-changes.json << EOF
+          {
+            "Changes": [
+              {
+                "Action": "UPSERT",
+                "ResourceRecordSet": {
+                  "Name": "${DOMAIN}",
+                  "Type": "A",
+                  "TTL": ${TTL},
+                  "ResourceRecords": [
+                    {
+                      "Value": "${{ env.DROPLET_IP }}"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+          EOF
+
+          aws route53 change-resource-record-sets \
+            --hosted-zone-id ${{ env.ROUTE_53_HOSTED_ZONE_ID }} \
+            --change-batch file:///tmp/route53-changes.json
+
   deploy:
     runs-on: ubuntu-latest
     needs: [setup_environment, setup_droplet]
@@ -140,7 +192,7 @@ jobs:
       - name: Setup SSH key for droplet
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DIGITALOCEAN_PRIVATE_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ env.DIGITALOCEAN_PRIVATE_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
       - name: Copy server package to droplet
