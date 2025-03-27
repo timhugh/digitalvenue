@@ -11,12 +11,27 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/build"
       }
+    },
+    {
+      "name": "release",
+      "displayName": "Release Build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "debug",
       "configurePreset": "debug",
+      "jobs": 20
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
       "jobs": 20
     }
   ],
@@ -30,6 +45,27 @@
       },
       "output": {
         "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "generators": ["TGZ"],
+      "variables": {
+        "CPACK_PACKAGE_FILE_NAME": "release"
       }
     }
   ]

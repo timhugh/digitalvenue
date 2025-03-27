@@ -182,12 +182,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "21"
+      - name: Build application
+        run: |
+          cmake --preset release
+          cmake --build --preset release
 
-      - run: ./gradlew build
+      - name: Run tests
+        run: ctest --preset release
+
+      - name: Package for deployment
+        run: cpack --preset release
 
       - name: Setup SSH key for droplet
         run: |
@@ -198,8 +202,8 @@ jobs:
       - name: Copy server package to droplet
         run: |
           scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
-            server/build/distributions/*.tar \
-            root@${{ env.DROPLET_IP }}:/opt/dvserver/versions/${{ env.APP_VERSION }}.tar
+            build/release.tar.gz \
+            root@${{ env.DROPLET_IP }}:/opt/dvserver/versions/${{ env.APP_VERSION }}.tar.gz
 
       - name: Trigger droplet deployment script
         run: |

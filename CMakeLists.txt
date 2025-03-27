@@ -17,6 +17,10 @@ enable_testing()
 add_subdirectory(common)
 add_subdirectory(server)
 
+include(CPack)
+set(CPACK_GENERATOR "TGZ")
+set(CPACK_PACKAGE_FILE_NAME "digitalvenue")
+
 if(CMAKE_EXPORT_COMPILE_COMMANDS AND NOT WIN32)
   add_custom_target(create_compile_commands_symlink ALL
             COMMAND ${CMAKE_COMMAND} -E create_symlink

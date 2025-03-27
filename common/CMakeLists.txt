@@ -24,6 +24,25 @@ target_link_libraries(digitalvenue_common_lib PUBLIC)
 
 add_library(digitalvenue::common ALIAS digitalvenue_common_lib)
 
+install(TARGETS digitalvenue_common_lib
+  EXPORT digitalvenue-common-targets
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
+
+install(DIRECTORY include/
+  DESTINATION include
+  FILES_MATCHING PATTERN "*.hpp"
+)
+
+install(EXPORT digitalvenue-common-targets
+  FILE digitalvenue-common-targets.cmake
+  NAMESPACE digitalvenue::
+  DESTINATION lib/cmake/digitalvenue-common
+)
+
 if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()

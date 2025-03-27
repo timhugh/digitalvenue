@@ -22,11 +22,9 @@ envsubst < /opt/env.template > /opt/dvserver/.env
 # Wait for cloud-init to finish
 cloud-init status --wait || true
 
-# Install java
+# Install nginx
 apt-get update
-apt-get install -y \
-  openjdk-21-jre-headless \
-  nginx
+apt-get install -y nginx
 
 # Install nginx configuration
 envsubst '${DOMAIN_NAME} ${IP_ADDRESS}' < /opt/nginx.conf.template > /etc/nginx/sites-available/digital-venue

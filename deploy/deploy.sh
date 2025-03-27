@@ -11,7 +11,7 @@ fi
 VERSION=$1
 
 mkdir -p /opt/dvserver/versions/${VERSION}
-tar -xvf /opt/dvserver/versions/${VERSION}.tar -C /opt/dvserver/versions/${VERSION}/
+tar -xzvf /opt/dvserver/versions/${VERSION}.tar.gz -C /opt/dvserver/versions/${VERSION}/ --strip-components=1
 ln -sf /opt/dvserver/versions/${VERSION} /opt/dvserver/current
 
 systemctl restart digital-venue

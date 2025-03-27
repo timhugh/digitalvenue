@@ -23,7 +23,6 @@ target_compile_features(digitalvenue_server_lib PRIVATE cxx_std_23)
 target_include_directories(digitalvenue_server_lib
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(digitalvenue_server_lib PUBLIC
   digitalvenue::common
@@ -32,11 +31,15 @@ target_link_libraries(digitalvenue_server_lib PUBLIC
 add_library(digitalvenue::server ALIAS digitalvenue_server_lib)
 
 add_executable(digitalvenue_server
-  main.cpp
+  app/main.cpp
 )
 target_compile_features(digitalvenue_server PRIVATE cxx_std_23)
 target_link_libraries(digitalvenue_server PRIVATE
   digitalvenue::server
+)
+
+install(TARGETS digitalvenue_server
+  RUNTIME DESTINATION bin
 )
 
 include(CTest)
