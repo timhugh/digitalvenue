@@ -14,7 +14,7 @@ project(digitalvenue)
 include(crow)
 
 add_library(digitalvenue_server_lib
-  src/keep.cpp
+  src/http_worker.cpp
 )
 target_compile_features(digitalvenue_server_lib PRIVATE cxx_std_23)
 target_include_directories(digitalvenue_server_lib

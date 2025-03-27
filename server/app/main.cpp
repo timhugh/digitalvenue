@@ -1,8 +1,9 @@
-#include <crow.h>
+#include "digitalvenue/eventbus.hpp"
+#include "http_worker.hpp"
 
 int main() {
-  crow::SimpleApp app;
-  CROW_ROUTE(app, "/").methods("GET"_method)(
-      [] { return crow::response("Hello World!"); });
-  app.port(8080).multithreaded().run();
+  dv::common::eventbus events;
+  dv::server::http_worker http_worker(events);
+
+  http_worker.start();
 }
