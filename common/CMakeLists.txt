@@ -20,7 +20,7 @@ target_include_directories(digitalvenue_common_lib
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(digitalvenue_common_lib PRIVATE)
+target_link_libraries(digitalvenue_common_lib PUBLIC)
 
 add_library(digitalvenue::common ALIAS digitalvenue_common_lib)
 

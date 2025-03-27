@@ -1,0 +1,5 @@
+set(CROW_INSTALL OFF)
+set(CROW_BUILD_EXAMPLES OFF)
+set(CROW_BUILD_TESTS OFF)
+set(CROW_ENABLE_SSL ON)
+CPMAddPackage("gh:CrowCpp/Crow#v1.2.1.2")

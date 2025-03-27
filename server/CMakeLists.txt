@@ -11,6 +11,11 @@ endif()
 cmake_minimum_required(VERSION 3.20.0)
 project(digitalvenue)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+include(cpm)
+include(asio)
+include(crow)
+
 add_library(digitalvenue_server_lib
   src/keep.cpp
 )
@@ -20,8 +25,9 @@ target_include_directories(digitalvenue_server_lib
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(digitalvenue_server_lib PRIVATE
+target_link_libraries(digitalvenue_server_lib PUBLIC
   digitalvenue::common
+  Crow::Crow
 )
 add_library(digitalvenue::server ALIAS digitalvenue_server_lib)
 
