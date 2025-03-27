@@ -1,0 +1,36 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug Build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "jobs": 20
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

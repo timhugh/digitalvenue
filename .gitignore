@@ -1,4 +1,13 @@
 # ides
-.idea
-.vscode
-.zed
+.idea/
+.vscode/
+.zed/
+.vs/
+
+# build
+build/
+.cache/
+compile_commands.json
+
+# secrets
+.env
