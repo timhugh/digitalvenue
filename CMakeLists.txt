@@ -14,6 +14,8 @@ endif()
 include(CTest)
 enable_testing()
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
 add_subdirectory(common)
 add_subdirectory(server)
 

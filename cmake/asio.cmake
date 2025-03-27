@@ -1,9 +1,20 @@
-CPMAddPackage("gh:chriskohlhoff/asio#asio-1-30-2")
-find_package(Threads REQUIRED)
-if(asio_ADDED)
+include(FetchContent)
+FetchContent_Declare(
+  asio
+  GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
+  GIT_TAG asio-1-30-2
+)
+FetchContent_GetProperties(asio)
+if(NOT asio_POPULATED)
+  FetchContent_Populate(asio)
   add_library(asio INTERFACE)
-  target_include_directories(asio SYSTEM INTERFACE ${asio_SOURCE_DIR}/asio/include)
-  target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
+  set(ASIO_INCLUDE_DIR "${asio_SOURCE_DIR}/asio/include")
+  target_include_directories(asio INTERFACE ${ASIO_INCLUDE_DIR})
+  target_compile_definitions(asio INTERFACE
+    ASIO_STANDALONE
+    ASIO_NO_DEPRECATED
+  )
+  find_package(Threads REQUIRED)
   target_link_libraries(asio INTERFACE Threads::Threads)
   add_library(asio::asio ALIAS asio)
 endif()
