@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <functional>
+#include <mutex>
+#include <shared_mutex>
 #include <typeindex>
 #include <unordered_map>
 
@@ -21,6 +23,7 @@ private:
     Subscriber subscriber;
   };
 
+  mutable std::shared_mutex mutex_;
   std::unordered_map<SubscriptionId, Subscription> subscriptions;
   std::unordered_map<std::type_index, std::vector<SubscriptionId>>
       subscriptions_by_event;
@@ -32,6 +35,8 @@ public:
   template <typename EventType>
   SubscriptionId
   Subscribe(const std::function<void(const EventType &event)> &subscriber) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);
+
     auto id = NextId();
     Subscription subscription{
         typeid(EventType), id, [subscriber](const void *event_ptr) {
@@ -43,6 +48,8 @@ public:
   }
 
   void Unsubscribe(const SubscriptionId &subscription_id) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);
+
     auto it = subscriptions.find(subscription_id);
     if (it == subscriptions.end()) {
       return;
@@ -60,7 +67,10 @@ public:
 
   template <typename EventType, typename... Args>
   void Emit(Args &&...args) const {
+    std::shared_lock<std::shared_mutex> lock(mutex_);
+
     EventType event{std::forward<Args>(args)...};
+
     auto it = subscriptions_by_event.find(typeid(EventType));
     if (it == subscriptions_by_event.end()) {
       return;
