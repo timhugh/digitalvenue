@@ -1,14 +1,17 @@
-#pragma once
+#ifndef DV_COMMON_ULID_H
+#define DV_COMMON_ULID_H
 
 #include <string>
 
 namespace dv {
 namespace common {
 
-class ulid {
+class ULID {
 public:
-  static std::string generate();
+  static std::string Generate();
 };
 
 } // namespace common
 } // namespace dv
+
+#endif // DV_COMMON_ULID_H

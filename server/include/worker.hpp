@@ -3,10 +3,10 @@
 namespace dv {
 namespace server {
 
-class worker {
+class Worker {
 public:
-  virtual void start() = 0;
-  virtual void stop() = 0;
+  virtual void Start() = 0;
+  virtual void Stop() = 0;
 };
 
 } // namespace server

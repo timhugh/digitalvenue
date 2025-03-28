@@ -5,11 +5,11 @@
 namespace dv {
 namespace common {
 
-static constexpr char ENCODING[] =
+static constexpr char kEncodingChars[] =
     "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-static constexpr int ENCODING_CHARS = sizeof(ENCODING) - 1;
+static constexpr int kEncodingCharsLength = sizeof(kEncodingChars) - 1;
 
-std::string ulid::generate() {
+std::string ULID::Generate() {
   auto now = std::chrono::system_clock::now();
   auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now.time_since_epoch())
@@ -22,20 +22,20 @@ std::string ulid::generate() {
   std::string result(26, '0');
 
   for (int i = 9; i >= 0; i--) {
-    result[i] = ENCODING[ms % ENCODING_CHARS];
-    ms /= ENCODING_CHARS;
+    result[i] = kEncodingChars[ms % kEncodingCharsLength];
+    ms /= kEncodingCharsLength;
   }
 
   uint64_t rand1 = dis(gen);
   uint64_t rand2 = dis(gen);
 
   for (int i = 10; i < 18; i++) {
-    result[i] = ENCODING[rand1 % ENCODING_CHARS];
-    rand1 /= ENCODING_CHARS;
+    result[i] = kEncodingChars[rand1 % kEncodingCharsLength];
+    rand1 /= kEncodingCharsLength;
   }
   for (int i = 18; i < 26; i++) {
-    result[i] = ENCODING[rand2 % ENCODING_CHARS];
-    rand2 /= ENCODING_CHARS;
+    result[i] = kEncodingChars[rand2 % kEncodingCharsLength];
+    rand2 /= kEncodingCharsLength;
   }
 
   return result;

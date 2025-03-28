@@ -2,8 +2,8 @@
 #include "http_worker.hpp"
 
 int main() {
-  dv::common::eventbus events;
-  dv::server::http_worker http_worker(events);
+  dv::common::EventBus events;
+  dv::server::HttpWorker http_worker(events);
 
-  http_worker.start();
+  http_worker.Start();
 }

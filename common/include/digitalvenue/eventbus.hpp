@@ -1,48 +1,79 @@
-#pragma once
+#ifndef DV_COMMON_EVENTBUS_H
+#define DV_COMMON_EVENTBUS_H
 
+#include <cstdint>
 #include <functional>
-// #include <stduuid/uuid.h>
 #include <typeindex>
 #include <unordered_map>
 
 namespace dv {
 namespace common {
 
-class eventbus {
+class EventBus {
 public:
-  // typedef uuid_t subscription_id;
+  using SubscriptionId = uint64_t;
 
+private:
+  using Subscriber = std::function<void(const void *)>;
+  struct Subscription {
+    std::type_index event_type;
+    SubscriptionId subscription_id;
+    Subscriber subscriber;
+  };
+
+  std::unordered_map<SubscriptionId, Subscription> subscriptions;
+  std::unordered_map<std::type_index, std::vector<SubscriptionId>>
+      subscriptions_by_event;
+
+  SubscriptionId next_id = 0;
+  SubscriptionId NextId() { return ++next_id; }
+
+public:
   template <typename EventType>
-  void
-  subscribe(const std::function<void(const EventType &event)> &subscriber) {
-    subscriptions[typeid(EventType)].emplace_back(
-        [subscriber](const void *event_ptr) {
+  SubscriptionId
+  Subscribe(const std::function<void(const EventType &event)> &subscriber) {
+    auto id = NextId();
+    Subscription subscription{
+        typeid(EventType), id, [subscriber](const void *event_ptr) {
           subscriber(*static_cast<const EventType *>(event_ptr));
-        });
+        }};
+    subscriptions.emplace(id, std::move(subscription));
+    subscriptions_by_event[subscription.event_type].push_back(id);
+    return id;
   }
 
-  template <typename EventType>
-  void
-  unsubscribe(const std::function<void(const EventType &event)> &subscriber) {}
-
-  template <typename EventType, typename... Args>
-  void emit(Args &&...args) const {
-    EventType event{std::forward<Args>(args)...};
-    auto it = subscriptions.find(typeid(EventType));
+  void Unsubscribe(const SubscriptionId &subscription_id) {
+    auto it = subscriptions.find(subscription_id);
     if (it == subscriptions.end()) {
       return;
     }
 
-    for (auto &callback : it->second) {
-      callback(&event);
-    }
+    const Subscription &subscription = it->second;
+
+    auto &event_subscriptions = subscriptions_by_event[subscription.event_type];
+    event_subscriptions.erase(std::remove(event_subscriptions.begin(),
+                                          event_subscriptions.end(),
+                                          subscription_id),
+                              event_subscriptions.end());
+    subscriptions.erase(it);
   }
 
-private:
-  std::unordered_map<std::type_index,
-                     std::vector<std::function<void(const void *)>>>
-      subscriptions;
+  template <typename EventType, typename... Args>
+  void Emit(Args &&...args) const {
+    EventType event{std::forward<Args>(args)...};
+    auto it = subscriptions_by_event.find(typeid(EventType));
+    if (it == subscriptions_by_event.end()) {
+      return;
+    }
+
+    for (auto subscription_id : it->second) {
+      const auto &subscription = subscriptions.at(subscription_id);
+      subscription.subscriber(&event);
+    }
+  }
 };
 
 } // namespace common
 } // namespace dv
+
+#endif // DV_COMMON_EVENTBUS_H

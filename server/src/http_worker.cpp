@@ -5,15 +5,15 @@
 namespace dv {
 namespace server {
 
-http_worker::http_worker(common::eventbus &events) : events(events) {}
+HttpWorker::HttpWorker(common::EventBus &events) : events_(events) {}
 
-void http_worker::start() {
-  CROW_ROUTE(app, "/").methods("GET"_method)(
+void HttpWorker::Start() {
+  CROW_ROUTE(app_, "/").methods("GET"_method)(
       [] { return crow::response("Hello World!"); });
-  app.port(8080).multithreaded().run();
+  app_.port(8080).multithreaded().run();
 }
 
-void http_worker::stop() { app.stop(); }
+void HttpWorker::Stop() { app_.stop(); }
 
 } // namespace server
 } // namespace dv

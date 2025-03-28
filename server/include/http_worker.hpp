@@ -7,16 +7,16 @@
 namespace dv {
 namespace server {
 
-class http_worker : public worker {
+class HttpWorker : public Worker {
 public:
-  http_worker(common::eventbus &);
+  HttpWorker(common::EventBus &);
 
-  void start() override;
-  void stop() override;
+  void Start() override;
+  void Stop() override;
 
 private:
-  common::eventbus &events;
-  crow::SimpleApp app;
+  common::EventBus &events_;
+  crow::SimpleApp app_;
 };
 
 } // namespace server

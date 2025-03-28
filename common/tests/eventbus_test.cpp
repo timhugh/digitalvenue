@@ -5,22 +5,21 @@ namespace dv {
 namespace test {
 
 TEST_CASE("dv::common::eventbus") {
-  dv::common::eventbus bus;
+  dv::common::EventBus bus;
 
   SECTION("emits arbitrary events to subscribers") {
-    struct event_struct {};
+    struct EventStruct {};
     bool event_received = false;
 
-    bus.subscribe<event_struct>([&event_received](const event_struct &event) {
-      event_received = true;
-    });
+    bus.Subscribe<EventStruct>(
+        [&event_received](const EventStruct &event) { event_received = true; });
 
-    bus.emit<event_struct>();
+    bus.Emit<EventStruct>();
     REQUIRE(event_received);
   }
 
   SECTION("emits arbitrary event parameters") {
-    struct event_struct {
+    struct EventStruct {
       int number;
       std::string message;
     };
@@ -29,35 +28,33 @@ TEST_CASE("dv::common::eventbus") {
     int number_received = -1;
     std::string message_received;
 
-    bus.subscribe<event_struct>([&event_received, &number_received,
-                                 &message_received](const event_struct &event) {
+    bus.Subscribe<EventStruct>([&event_received, &number_received,
+                                &message_received](const EventStruct &event) {
       event_received = true;
       number_received = event.number;
       message_received = event.message;
     });
 
-    bus.emit<event_struct>(42, "Hello, world!");
+    bus.Emit<EventStruct>(42, "Hello, world!");
     REQUIRE(event_received);
     REQUIRE(number_received == 42);
     REQUIRE(message_received == "Hello, world!");
   }
 
   SECTION("unsubscribes subscribers") {
-    struct event_struct {};
+    struct EventStruct {};
 
     int num_events = 0;
 
-    auto subscriber = [&num_events](const event_struct &event) {
-      num_events++;
-    };
+    auto subscriber = [&num_events](const EventStruct &event) { num_events++; };
 
-    bus.subscribe<event_struct>(subscriber);
-    bus.emit<event_struct>();
+    auto subscription = bus.Subscribe<EventStruct>(subscriber);
+    bus.Emit<EventStruct>();
     REQUIRE(num_events == 1);
-    bus.emit<event_struct>();
+    bus.Emit<EventStruct>();
     REQUIRE(num_events == 2);
-    bus.unsubscribe<event_struct>(subscriber);
-    bus.emit<event_struct>();
+    bus.Unsubscribe(subscription);
+    bus.Emit<EventStruct>();
     REQUIRE(num_events == 2);
   }
 }
