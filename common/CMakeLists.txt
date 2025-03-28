@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.20.0)
 project(digitalvenue)
 
 add_library(digitalvenue_common_lib
-  src/keep.cpp
+  src/ulid.cpp
 )
 target_compile_features(digitalvenue_common_lib PRIVATE cxx_std_23)
 target_include_directories(digitalvenue_common_lib

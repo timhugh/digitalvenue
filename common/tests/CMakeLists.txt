@@ -16,6 +16,7 @@ FetchContent_MakeAvailable(Catch2)
 add_executable(digitalvenue_common_tests
   test_main.cpp
   eventbus_test.cpp
+  ulid_test.cpp
 )
 target_link_libraries(digitalvenue_common_tests
   PRIVATE

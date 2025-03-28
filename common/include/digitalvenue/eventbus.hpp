@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+// #include <stduuid/uuid.h>
 #include <typeindex>
 #include <unordered_map>
 
@@ -9,6 +10,8 @@ namespace common {
 
 class eventbus {
 public:
+  // typedef uuid_t subscription_id;
+
   template <typename EventType>
   void
   subscribe(const std::function<void(const EventType &event)> &subscriber) {
