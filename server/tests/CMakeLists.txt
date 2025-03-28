@@ -16,6 +16,7 @@ FetchContent_MakeAvailable(Catch2)
 add_executable(digitalvenue_server_tests
   test_main.cpp
 )
+target_compile_features(digitalvenue_server_tests PRIVATE cxx_std_23)
 target_link_libraries(digitalvenue_server_tests
   PRIVATE
   digitalvenue::server
