@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DV_SERVER_WORKER_HPP
+#define DV_SERVER_WORKER_HPP
 
 namespace dv {
 namespace server {
@@ -11,3 +12,5 @@ public:
 
 } // namespace server
 } // namespace dv
+
+#endif // DV_SERVER_WORKER_HPP

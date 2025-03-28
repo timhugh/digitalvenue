@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DV_SERVER_HTTP_WORKER_HPP
+#define DV_SERVER_HTTP_WORKER_HPP
 
 #include "digitalvenue/eventbus.hpp"
 #include "worker.hpp"
@@ -21,3 +22,5 @@ private:
 
 } // namespace server
 } // namespace dv
+
+#endif // DV_SERVER_HTTP_WORKER_HPP
