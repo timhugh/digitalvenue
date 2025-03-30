@@ -7,6 +7,7 @@
 #include <shared_mutex>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 
 namespace dv {
 namespace common {
@@ -69,7 +70,7 @@ public:
   void Emit(Args &&...args) const {
     std::shared_lock<std::shared_mutex> lock(mutex_);
 
-    EventType event{std::forward<Args>(args)...};
+    const auto event = EventType(std::forward<Args>(args)...);
 
     auto it = subscriptions_by_event.find(typeid(EventType));
     if (it == subscriptions_by_event.end()) {

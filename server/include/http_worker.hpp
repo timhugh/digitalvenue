@@ -1,18 +1,19 @@
 #ifndef DV_SERVER_HTTP_WORKER_HPP
 #define DV_SERVER_HTTP_WORKER_HPP
 
-#include "digitalvenue/eventbus.hpp"
-#include "worker.hpp"
+#include "digitalvenue/event_bus.hpp"
+#include "digitalvenue/workers.hpp"
 #include <crow/app.h>
+#include <future>
 
 namespace dv {
 namespace server {
 
-class HttpWorker : public Worker {
+class HttpWorker : public common::Worker {
 public:
   HttpWorker(common::EventBus &);
 
-  void Start() override;
+  std::future<void> Start() override;
   void Stop() override;
 
 private:

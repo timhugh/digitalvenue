@@ -1,4 +1,4 @@
-#include "digitalvenue/eventbus.hpp"
+#include "digitalvenue/event_bus.hpp"
 #include <catch2/catch_test_macros.hpp>
 
 namespace dv {
@@ -7,7 +7,7 @@ namespace test {
 TEST_CASE("dv::common::eventbus") {
   dv::common::EventBus bus;
 
-  SECTION("emits arbitrary events to subscribers") {
+  SECTION("publishes emitted events to subscribers") {
     struct EventStruct {};
     bool event_received = false;
 
@@ -18,7 +18,7 @@ TEST_CASE("dv::common::eventbus") {
     REQUIRE(event_received);
   }
 
-  SECTION("emits arbitrary event parameters") {
+  SECTION("publishes arbitrary event parameters") {
     struct EventStruct {
       int number;
       std::string message;
