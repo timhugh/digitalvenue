@@ -1,5 +1,7 @@
 #include "digitalvenue/event_bus.hpp"
 #include "digitalvenue/workers.hpp"
+#include "http_worker.hpp"
+#include "test_worker.hpp"
 #include <atomic>
 #include <csignal>
 #include <iostream>
@@ -19,9 +21,12 @@ int main() {
   dv::common::EventBus event_bus;
 
   std::vector<std::unique_ptr<dv::common::Worker>> workers;
-  // workers.emplace_back(std::make_unique<dv::server::HttpWorker>(event_bus));
-  // workers.emplace_back(
-  //     std::make_unique<dv::server::TestWorker>(event_bus, io_context));
+  workers.emplace_back(std::make_unique<dv::server::HttpWorker>(event_bus));
+  workers.emplace_back(std::make_unique<dv::server::TestWorker>(event_bus));
+
+  for (auto &worker : workers) {
+    worker->Start();
+  }
 
   std::cout << "Workers started, waiting for shutdown signal..." << std::endl;
   while (!shutdown_requested) {

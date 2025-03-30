@@ -4,6 +4,7 @@
 #include "digitalvenue/event_bus.hpp"
 #include "digitalvenue/workers.hpp"
 #include <crow/app.h>
+#include <optional>
 
 namespace dv {
 namespace server {
@@ -16,6 +17,7 @@ public:
   void Stop() override;
 
 private:
+  std::optional<std::thread> thread_;
   common::EventBus &events_;
   crow::SimpleApp app_;
 };
