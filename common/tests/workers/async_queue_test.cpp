@@ -13,7 +13,6 @@ TEST_CASE("dv::common::AsyncQueue") {
 
     auto listener = std::thread([&queue, &received_event]() {
       auto future = queue.Pop();
-      future.wait();
       received_event = future.get();
     });
 
@@ -32,7 +31,6 @@ TEST_CASE("dv::common::AsyncQueue") {
     auto listener = std::thread([&queue, &num_events]() {
       while (true) {
         auto future = queue.Pop();
-        future.wait();
         if (auto result = future.get()) {
           num_events++;
         } else {
@@ -66,7 +64,6 @@ TEST_CASE("dv::common::AsyncQueue") {
     auto listener = std::thread([&queue, &num_events]() {
       while (true) {
         auto future = queue.Pop();
-        future.wait();
         if (auto result = future.get()) {
           num_events++;
         } else {

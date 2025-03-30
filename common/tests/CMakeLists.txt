@@ -18,6 +18,7 @@ add_executable(digitalvenue_common_tests
   event_bus_test.cpp
   ulid_test.cpp
   workers/async_queue_test.cpp
+  workers/async_worker_test.cpp
 )
 target_compile_features(digitalvenue_common_tests PRIVATE cxx_std_23)
 target_link_libraries(digitalvenue_common_tests

@@ -22,7 +22,6 @@ target_include_directories(digitalvenue_common_lib
 )
 include(spdlog)
 target_link_libraries(digitalvenue_common_lib PUBLIC
-  asio::asio
   spdlog::spdlog
 )
 
