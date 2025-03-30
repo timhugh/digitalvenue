@@ -4,7 +4,6 @@
 #include "digitalvenue/event_bus.hpp"
 #include "digitalvenue/workers.hpp"
 #include <crow/app.h>
-#include <future>
 
 namespace dv {
 namespace server {
@@ -13,7 +12,7 @@ class HttpWorker : public common::Worker {
 public:
   HttpWorker(common::EventBus &);
 
-  std::future<void> Start() override;
+  void Start() override;
   void Stop() override;
 
 private:

@@ -2,7 +2,6 @@
 #include "digitalvenue/event_bus.hpp"
 #include "test_worker.hpp"
 #include <crow/app.h>
-#include <future>
 
 namespace dv {
 namespace server {
@@ -21,9 +20,7 @@ HttpWorker::HttpWorker(common::EventBus &events) : events_(events) {
   app_.port(8080).multithreaded();
 }
 
-std::future<void> HttpWorker::Start() {
-  return std::async(std::launch::async, [this]() { app_.run(); });
-}
+void HttpWorker::Start() { app_.run(); }
 
 void HttpWorker::Stop() { app_.stop(); }
 
