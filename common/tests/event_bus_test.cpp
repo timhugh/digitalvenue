@@ -12,7 +12,7 @@ TEST_CASE("dv::common::eventbus") {
     bool event_received = false;
 
     bus.Subscribe<EventStruct>(
-        [&event_received](const EventStruct &event) { event_received = true; });
+        [&event_received](const EventStruct &) { event_received = true; });
 
     bus.Emit<EventStruct>();
     REQUIRE(event_received);
@@ -46,7 +46,7 @@ TEST_CASE("dv::common::eventbus") {
 
     int num_events = 0;
 
-    auto subscriber = [&num_events](const EventStruct &event) { num_events++; };
+    auto subscriber = [&num_events](const EventStruct &) { num_events++; };
 
     auto subscription = bus.Subscribe<EventStruct>(subscriber);
     bus.Emit<EventStruct>();

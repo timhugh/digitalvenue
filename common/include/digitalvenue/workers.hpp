@@ -7,6 +7,7 @@
 #include <future>
 #include <mutex>
 #include <optional>
+#include <queue>
 #include <thread>
 
 namespace dv {

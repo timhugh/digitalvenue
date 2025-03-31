@@ -1,7 +1,6 @@
 #include "digitalvenue/event_bus.hpp"
 #include "digitalvenue/workers.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <iostream>
 
 namespace dv::common::test {
 

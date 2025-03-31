@@ -10,9 +10,8 @@
 #include <vector>
 
 std::atomic<bool> shutdown_requested(false);
-static constexpr int kNumThreads = 4;
 
-void signal_handler(int signal) { shutdown_requested.store(true); }
+void signal_handler(int) { shutdown_requested.store(true); }
 
 int main() {
   std::signal(SIGINT, signal_handler);

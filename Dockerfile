@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y \
   ninja-build \
   cmake
 
+RUN  echo "GCC version: $(gcc --version | head -n 1)" && \
+  echo "CMake version: $(cmake --version | head -n 1)" && \
+  echo "Ninja version: $(ninja --version)"
+
 WORKDIR /app
 COPY CMakeLists.txt CMakePresets.json ./
 COPY cmake ./cmake
