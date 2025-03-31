@@ -188,9 +188,9 @@ jobs:
 
       - run: go test ./...
 
-      - run: go build ./cmd/server
-      - run: go build ./cmd/db-migrate
-      - run: tar czvf release.tar.gz cmd/server cmd/db-migrate
+      - run: go build -o build/ ./cmd/server
+      - run: go build -o build/ ./cmd/db-migrate
+      - run: tar czvf release.tar.gz build/*
 
       - name: Setup SSH key for droplet
         run: |
