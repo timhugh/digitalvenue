@@ -45,16 +45,16 @@ func (r *VersionRepository) All(ctx context.Context) ([]db.MigrationRecord, erro
 }
 
 func (r *VersionRepository) Upsert(ctx context.Context, record db.MigrationRecord) error {
-	existingRecord, err := r.GetByVersion(ctx, record.Version)
+	// existingRecord, err := r.GetByVersion(ctx, record.Version)
 
-	if err != nil {
-		return fmt.Errorf("Failed to build SQL query: %w", err)
-	}
+	// if err != nil {
+	// 	return fmt.Errorf("Failed to build SQL query: %w", err)
+	// }
 
-	result := r.db.ExecuteQuery(ctx, query, args...)
-	if result.Error != nil {
-		return fmt.Errorf("Failed to execute query: %w", result.Error)
-	}
+	// result := r.db.ExecuteQuery(ctx, query, args...)
+	// if result.Error != nil {
+	// 	return fmt.Errorf("Failed to execute query: %w", result.Error)
+	// }
 
 	return nil
 }

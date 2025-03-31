@@ -65,7 +65,7 @@ func TestLoadMigrations(t *testing.T) {
 			t.Fatalf("Unexpected error: %v", err)
 		}
 
-		expectedQuery := `CREATE TABLE versions (
+		expectedQuery := `CREATE TABLE IF NOT EXISTS versions (
       version INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
       applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
