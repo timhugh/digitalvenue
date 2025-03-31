@@ -182,16 +182,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build application
-        run: |
-          cmake --preset release
-          cmake --build --preset release
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.1
 
-      - name: Run tests
-        run: ctest --preset release
+      - run: go test ./...
 
-      - name: Package for deployment
-        run: cpack --preset release
+      - run: go build ./cmd/server
+      - run: go build ./cmd/db-migrate
+      - run: tar czvf release.tar.gz cmd/server cmd/db-migrate
 
       - name: Setup SSH key for droplet
         run: |
@@ -202,7 +201,7 @@ jobs:
       - name: Copy server package to droplet
         run: |
           scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
-            build/release.tar.gz \
+            release.tar.gz \
             root@${{ env.DROPLET_IP }}:/opt/dvserver/versions/${{ env.APP_VERSION }}.tar.gz
 
       - name: Trigger droplet deployment script
