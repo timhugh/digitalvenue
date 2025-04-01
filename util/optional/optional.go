@@ -1,15 +1,15 @@
-package util
+package optional
 
 import "fmt"
 
-func NewOptional[Value any](value Value) Optional[Value] {
+func New[Value any](value Value) Optional[Value] {
 	return Optional[Value]{
 		value:    value,
 		hasValue: true,
 	}
 }
 
-func EmptyOptional[Value any]() Optional[Value] {
+func Empty[Value any]() Optional[Value] {
 	return Optional[Value]{
 		hasValue: false,
 	}

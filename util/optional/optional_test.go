@@ -1,15 +1,15 @@
-package util_test
+package optional_test
 
 import (
 	"testing"
 
-	"github.com/timhugh/digitalvenue/util"
+	"github.com/timhugh/digitalvenue/util/optional"
 )
 
 func TestOptional(t *testing.T) {
 	t.Run("holds values", func(t *testing.T) {
 		message := "Hello!"
-		opt := util.NewOptional(message)
+		opt := optional.New(message)
 		value, err := opt.Get()
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
@@ -21,7 +21,7 @@ func TestOptional(t *testing.T) {
 
 	t.Run("can be set", func(t *testing.T) {
 		message := "Hello!"
-		opt := util.EmptyOptional[string]()
+		opt := optional.Empty[string]()
 		opt.Set(message)
 		value, err := opt.Get()
 		if err != nil {
@@ -33,7 +33,7 @@ func TestOptional(t *testing.T) {
 	})
 
 	t.Run("can be empty", func(t *testing.T) {
-		opt := util.EmptyOptional[string]()
+		opt := optional.Empty[string]()
 		if !opt.Empty() {
 			t.Errorf("Expected empty optional, got %v", opt)
 		}
@@ -47,7 +47,7 @@ func TestOptional(t *testing.T) {
 	})
 
 	t.Run("can be reset", func(t *testing.T) {
-		opt := util.NewOptional("Hello!")
+		opt := optional.New("Hello!")
 		opt.Reset()
 		if !opt.Empty() {
 			t.Errorf("Expected empty optional, got %v", opt)
@@ -62,8 +62,8 @@ func TestOptional(t *testing.T) {
 	})
 
 	t.Run("chaining defaults", func(t *testing.T) {
-		optWithValue := util.NewOptional("foo")
-		emptyOpt := util.EmptyOptional[string]()
+		optWithValue := optional.New("foo")
+		emptyOpt := optional.Empty[string]()
 
 		if optWithValue.OrElse("bar") != "foo" {
 			t.Error("Expected present value 'foo', got else value 'bar'")
