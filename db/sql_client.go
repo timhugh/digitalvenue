@@ -52,7 +52,7 @@ func (r Result) Unwrap(out any) error {
 	}
 }
 
-type Client interface {
+type SqlClient interface {
 	ExecuteQuery(ctx context.Context, query string, args ...any) Result
 	Close() error
 }

@@ -5,11 +5,11 @@ import (
 )
 
 type Manager struct {
-	client  Client
+	client  SqlClient
 	channel chan Request
 }
 
-func NewManager(client Client) *Manager {
+func NewManager(client SqlClient) *Manager {
 	return &Manager{client: client, channel: make(chan Request)}
 }
 

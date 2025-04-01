@@ -19,8 +19,8 @@ type Migration struct {
 	Version int
 	Name    string
 	Status  Status
-	Up      func(context.Context, Client) error
-	Down    func(context.Context, Client) error
+	Up      func(context.Context, SqlClient) error
+	Down    func(context.Context, SqlClient) error
 }
 
 type MigrationRecord struct {
@@ -35,7 +35,7 @@ type VersionRepository interface {
 }
 
 type Migrator struct {
-	Client     Client
+	Client     SqlClient
 	Versions   VersionRepository
 	Migrations []Migration
 }

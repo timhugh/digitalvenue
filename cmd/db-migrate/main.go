@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	var db db.Client
+	var db db.SqlClient
 	db, err := sqlite.NewClient("test.db")
 	if err != nil {
 		panic(err)

@@ -13,7 +13,7 @@ import (
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
 
-func NewMigrator(client db.Client) (*db.Migrator, error) {
+func NewMigrator(client db.SqlClient) (*db.Migrator, error) {
 	migrations, err := loadMigrations()
 	if err != nil {
 		return nil, err
@@ -78,11 +78,11 @@ func loadMigration(filename string) (db.Migration, error) {
 	upSQL = strings.TrimSpace(upSQL)
 	downSQL := strings.TrimSpace(sections[1])
 
-	up := func(ctx context.Context, client db.Client) error {
+	up := func(ctx context.Context, client db.SqlClient) error {
 		result := client.ExecuteQuery(ctx, upSQL)
 		return result.Error
 	}
-	down := func(ctx context.Context, client db.Client) error {
+	down := func(ctx context.Context, client db.SqlClient) error {
 		result := client.ExecuteQuery(ctx, downSQL)
 		return result.Error
 	}
