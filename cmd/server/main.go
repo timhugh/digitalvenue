@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/timhugh/digitalvenue/cmd/server/test"
+	"github.com/timhugh/digitalvenue/util/events"
 	"os"
 	"os/signal"
 	"sync"
@@ -20,8 +22,11 @@ func run(ctx context.Context) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
+	eventsBus := events.NewBus()
+
 	workers := make([]worker, 0)
-	workers = append(workers, api.NewWorker())
+	workers = append(workers, api.NewWorker(eventsBus))
+	workers = append(workers, test.NewWorker(eventsBus))
 
 	var wg sync.WaitGroup
 	for _, worker := range workers {
@@ -49,7 +54,7 @@ func run(ctx context.Context) error {
 	}
 
 	wg.Wait()
-	fmt.Println("Workers stopped. Goodbye!")
+	fmt.Println("workers stopped. Goodbye!")
 
 	return nil
 }
