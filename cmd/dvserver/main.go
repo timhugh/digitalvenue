@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/timhugh/digitalvenue/cmd/server/test"
-	"github.com/timhugh/digitalvenue/util/events"
 	"os"
 	"os/signal"
 	"sync"
 	"time"
 
-	"github.com/timhugh/digitalvenue/cmd/server/api"
+	"github.com/timhugh/digitalvenue/cmd/dvserver/api"
+	"github.com/timhugh/digitalvenue/cmd/dvserver/test"
+	"github.com/timhugh/digitalvenue/util/events"
 )
 
 type worker interface {

@@ -4,5 +4,10 @@
 .zed/
 .vs/
 
-.env
+# builds and generated code
+build/
+db/
+
+# misc
+.env*
 *.db
