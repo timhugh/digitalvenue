@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -38,6 +39,7 @@ func NewMigrator(client db.SqlClient) (*db.Migrator, error) {
 	return &db.Migrator{
 		Client:     client,
 		Migrations: migrations[1:],
+		Versions:   NewVersionRepository(client),
 	}, nil
 }
 
@@ -76,15 +78,35 @@ func loadMigration(filename string) (db.Migration, error) {
 	upSQL := strings.TrimSpace(sections[0])
 	upSQL = strings.TrimPrefix(upSQL, "-- Up")
 	upSQL = strings.TrimSpace(upSQL)
+	upSQLs := strings.Split(upSQL, ";")
 	downSQL := strings.TrimSpace(sections[1])
+	downSQLs := strings.Split(downSQL, ";")
 
 	up := func(ctx context.Context, client db.SqlClient) error {
-		result := client.ExecuteQuery(ctx, upSQL)
-		return result.Error
+		for _, stmt := range upSQLs {
+			if strings.TrimSpace(stmt) == "" {
+				continue
+			}
+			log.Printf("Executing SQL: %s\n", stmt)
+			result := client.ExecuteQuery(ctx, stmt)
+			if result.Error != nil {
+				return result.Error
+			}
+		}
+		return nil
 	}
 	down := func(ctx context.Context, client db.SqlClient) error {
-		result := client.ExecuteQuery(ctx, downSQL)
-		return result.Error
+		for _, stmt := range downSQLs {
+			if strings.TrimSpace(stmt) == "" {
+				continue
+			}
+			log.Printf("Executing SQL: %s\n", stmt)
+			result := client.ExecuteQuery(ctx, stmt)
+			if result.Error != nil {
+				return result.Error
+			}
+		}
+		return nil
 	}
 
 	return db.Migration{

@@ -70,7 +70,7 @@ func TestLoadMigrations(t *testing.T) {
       name TEXT NOT NULL,
       applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       status TEXT NOT NULL DEFAULT 'pending'
-    );`
+    )`
 
 		if expected, actual := trimQuery(expectedQuery), trimQuery(mockClient.ReceivedQuery); expected != actual {
 			t.Errorf("Query does not match expected: \n%v", diff.LineDiff(expected, actual))
@@ -87,12 +87,26 @@ func TestLoadMigrations(t *testing.T) {
 			t.Fatalf("Unexpected error: %v", err)
 		}
 
-		expectedQuery := "DROP TABLE versions;"
+		expectedQuery := "DROP TABLE versions"
 		if mockClient.ReceivedQuery != expectedQuery {
 			t.Errorf("Expected query:\n %s\ngot:\n%s", expectedQuery, mockClient.ReceivedQuery)
 		}
 		if mockClient.ReceivedArgs != nil {
 			t.Errorf("Unexpected args: %v", mockClient.ReceivedArgs)
 		}
+	})
+}
+
+func TestMigrations(t *testing.T) {
+	t.Run("runs and records up migrations", func(t *testing.T) {
+
+	})
+
+	t.Run("runs and records down migrations", func(t *testing.T) {
+
+	})
+
+	t.Run("runs migrations in a transaction", func(t *testing.T) {
+
 	})
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/timhugh/digitalvenue/util/optional"
 )
 
 type Status string
@@ -40,33 +42,28 @@ type Migrator struct {
 	Migrations []Migration
 }
 
-func isMigrationApplied(migration Migration, migrationRecords []MigrationRecord) bool {
-	for _, migrationRecord := range migrationRecords {
-		if migration.Version == migrationRecord.Version && migrationRecord.Status == MigrationApplied {
-			return true
-		}
-	}
-	return false
-}
-
 func (m *Migrator) MigrateAll(ctx context.Context) error {
 	migrationRecords, err := m.Versions.All(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch migration versions: %w", err)
 	}
+
 	for _, migration := range m.Migrations {
-		if isMigrationApplied(migration, migrationRecords) {
-			continue
+		var migrationRecord = optional.Empty[MigrationRecord]()
+		for _, record := range migrationRecords {
+			if migration.Version == record.Version {
+				migrationRecord.Set(record)
+			}
 		}
 
-		if err := m.MigrateOne(ctx, migration); err != nil {
+		if err := m.MigrateOne(ctx, migration, migrationRecord); err != nil {
 			return fmt.Errorf("migration failed %s: %w", migration.Name, err)
 		}
 	}
 	return nil
 }
 
-func (m *Migrator) MigrateOne(ctx context.Context, migration Migration) error {
+func (m *Migrator) MigrateOne(ctx context.Context, migration Migration, record optional.Optional[MigrationRecord]) error {
 	err := migration.Up(ctx, m.Client)
 	if err != nil {
 		return fmt.Errorf("migration failed %s: %w", migration.Name, err)

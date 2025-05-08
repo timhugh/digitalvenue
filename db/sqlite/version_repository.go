@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Masterminds/squirrel"
@@ -38,6 +39,9 @@ func (r *VersionRepository) All(ctx context.Context) ([]db.MigrationRecord, erro
 	var records []db.MigrationRecord
 	err = result.Unwrap(&records)
 	if err != nil {
+		if errors.Is(err, db.ErrNoResults) {
+			return []db.MigrationRecord{}, nil
+		}
 		return nil, fmt.Errorf("failed to unwrap results: %w", err)
 	}
 
@@ -45,16 +49,16 @@ func (r *VersionRepository) All(ctx context.Context) ([]db.MigrationRecord, erro
 }
 
 func (r *VersionRepository) Upsert(ctx context.Context, record db.MigrationRecord) error {
-	// existingRecord, err := r.GetByVersion(ctx, record.Version)
+	query, args, err := r.builder.Insert(versionsTable).
+		Columns(versionsColumns...).Values(record.Version, record.Name, record.AppliedAt, record.Status).ToSql()
+	if err != nil {
+		return fmt.Errorf("Failed to build SQL query: %w", err)
+	}
 
-	// if err != nil {
-	// 	return fmt.Errorf("Failed to build SQL query: %w", err)
-	// }
-
-	// result := r.db.ExecuteQuery(ctx, query, args...)
-	// if result.Error != nil {
-	// 	return fmt.Errorf("Failed to execute query: %w", result.Error)
-	// }
+	result := r.db.ExecuteQuery(ctx, query, args)
+	if result.Error != nil {
+		return fmt.Errorf("Failed to execute query: %w", result.Error)
+	}
 
 	return nil
 }
