@@ -21,7 +21,7 @@ func HandleWebhookEvents() http.HandlerFunc {
 			_, err := r.Body.Read(bodyBytes)
 			if err != nil {
 				w.WriteHeader(http.StatusUnprocessableEntity)
-				fmt.Fprint(w, "unable to read request body")
+				fmt.Fprint(w, "unable to read request body") //nolint:errcheck
 			}
 
 			requestBody := string(bodyBytes)

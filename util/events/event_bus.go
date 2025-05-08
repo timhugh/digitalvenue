@@ -37,10 +37,9 @@ func Subscribe[E any](bus *Bus, bufferSize int) Subscription[E] {
 
 	eventType := getTypeName[E]()
 
-	subscriptions, exists := bus.subscriptions[eventType]
+	_, exists := bus.subscriptions[eventType]
 	if !exists {
-		subscriptions = make(map[SubscriptionId]any)
-		bus.subscriptions[eventType] = subscriptions
+		bus.subscriptions[eventType] = make(map[SubscriptionId]any)
 	}
 
 	id := bus.idCounter

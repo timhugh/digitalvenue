@@ -26,10 +26,10 @@ func TestWebhookSignatureValidator(t *testing.T) {
 
 		err := square.ValidateWebhookEvent(webhookUrl, requestBody, invalidSignature, signatureKey)
 		if err == nil {
-			t.Fatalf("Expected %s, got nil", square.InvalidWebhookSignature)
+			t.Fatalf("Expected %s, got nil", square.ErrInvalidWebhookSignature)
 		}
-		if !errors.Is(err, square.InvalidWebhookSignature) {
-			t.Errorf("Expected %s, got %s", square.InvalidWebhookSignature, err)
+		if !errors.Is(err, square.ErrInvalidWebhookSignature) {
+			t.Errorf("Expected %s, got %s", square.ErrInvalidWebhookSignature, err)
 		}
 	})
 }

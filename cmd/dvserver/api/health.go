@@ -8,7 +8,7 @@ import (
 func handleHealthGet() http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			io.WriteString(w, "OK")
+			io.WriteString(w, "OK") //nolint:errcheck
 		},
 	)
 }

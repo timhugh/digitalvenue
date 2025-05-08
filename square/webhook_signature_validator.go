@@ -10,7 +10,7 @@ import (
 	"fmt"
 )
 
-var InvalidWebhookSignature = errors.New("invalid webhook signature")
+var ErrInvalidWebhookSignature = errors.New("invalid webhook signature")
 
 func ValidateWebhookEvent(webhookUrl, requestBody, signature, signatureKey string) error {
 	payload := new(bytes.Buffer)
@@ -25,7 +25,7 @@ func ValidateWebhookEvent(webhookUrl, requestBody, signature, signatureKey strin
 	goodSignature := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 
 	if goodSignature != signature {
-		return InvalidWebhookSignature
+		return ErrInvalidWebhookSignature
 	}
 
 	return nil

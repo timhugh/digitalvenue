@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/timhugh/digitalvenue/util/events"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/timhugh/digitalvenue/util/events"
 )
 
 func NewWorker(bus *events.Bus) *Worker {
@@ -32,7 +33,7 @@ func (w *Worker) Run(ctx context.Context) error {
 	}
 
 	if err := w.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return fmt.Errorf("http server encountered error: %s\n", err)
+		return fmt.Errorf("http server encountered error: %s", err)
 	}
 
 	return nil
