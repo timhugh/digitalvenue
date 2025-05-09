@@ -13,6 +13,9 @@ fi
 remote_dest=${DV_REMOTE_ROOT}/versions/${DV_VERSION}
 
 echo "building application"
+export GOOS=linux
+export GOARCH=amd64
+export CGO_ENABLED=0
 make build
 
 echo "installing application files"
