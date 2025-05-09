@@ -22,16 +22,20 @@ type Worker struct {
 	bus        *events.Bus
 }
 
+const serverAddress = "0.0.0.0"
+const serverPort = "8080"
+
 func (w *Worker) Run(ctx context.Context) error {
 	mux := http.NewServeMux()
 	addRoutes(mux, w.bus)
 
 	w.httpServer = http.Server{
-		Addr:        net.JoinHostPort("0.0.0.0", "8080"),
+		Addr:        net.JoinHostPort(serverAddress, serverPort),
 		Handler:     mux,
 		ReadTimeout: time.Duration(5 * time.Second),
 	}
 
+	fmt.Printf("starting web server at %s:%s", serverAddress, serverPort)
 	if err := w.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("http server encountered error: %s", err)
 	}

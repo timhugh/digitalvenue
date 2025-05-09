@@ -6,7 +6,7 @@ import (
 
 	"github.com/timhugh/digitalvenue/util/events"
 
-	"github.com/timhugh/digitalvenue/square"
+	"github.com/timhugh/digitalvenue/cmd/dvserver/api/square"
 )
 
 func testRoute(bus *events.Bus) http.HandlerFunc {

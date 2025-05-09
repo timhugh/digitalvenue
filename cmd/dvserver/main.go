@@ -18,6 +18,8 @@ type worker interface {
 	Stop(context.Context) error
 }
 
+const workerShutdownTimeoutSeconds = 10
+
 func run(ctx context.Context) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
@@ -28,24 +30,27 @@ func run(ctx context.Context) error {
 	workers = append(workers, api.NewWorker(eventsBus))
 	workers = append(workers, test.NewWorker(eventsBus))
 
+	fmt.Printf("booting %d workers...\n", len(workers))
 	var wg sync.WaitGroup
-	for _, worker := range workers {
+	for i, worker := range workers {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
 
+			fmt.Printf("starting worker #%d...\n", i)
 			if err := worker.Run(ctx); err != nil {
-				fmt.Fprintf(os.Stderr, "failed to start worker: %s\n", err)
+				fmt.Fprintf(os.Stderr, "failed to start worker #%d: %s\n", i, err)
 				cancel()
 			}
 		}()
 	}
 
+	fmt.Println("start request sent to all workers; waiting for shutdown")
 	<-ctx.Done()
-	fmt.Println("shutdown request received, stopping workers...")
+	fmt.Printf("shutdown request received, stopping workers within %d seconds\n", workerShutdownTimeoutSeconds)
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), workerShutdownTimeoutSeconds*time.Second)
 	defer cancel()
 	for _, worker := range workers {
 		if err := worker.Stop(shutdownCtx); err != nil {
