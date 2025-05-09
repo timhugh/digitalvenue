@@ -5,7 +5,7 @@ After=network.target
 [Service]
 WorkingDirectory=/opt/digitalvenue/current
 ExecStart=/opt/digitalvenue/current/dvserver
-EnvironmentFile=/opt/digitalvenue/current/.env
+EnvironmentFile=/opt/digitalvenue/current/env
 SuccessExitStatus=143
 TimeoutStopSec=10
 Restart=on-failure

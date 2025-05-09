@@ -13,10 +13,9 @@ for variable in $required_environment_variables; do
   fi
 done
 
-# Wait for cloud-init to finish
+echo "waiting for cloud-init to complete"
 cloud-init status --wait || true
 
-# create swapfile
 if swapon --show | grep -q '/swapfile'; then
   echo "swap file already exists; skipping"
 else
@@ -28,24 +27,34 @@ else
   echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
 
+echo "configuring firewall"
 ufw allow http
 ufw allow https
 ufw allow ssh
 ufw --force enable
 ufw status
 
-# Install nginx
+echo "installing apt packages"
 apt-get update
-apt-get install -y nginx
+apt-get install -y \
+  nginx \
+  python3-certbot-nginx
 
-# Install nginx configuration
+echo "installing nginx configuration"
 envsubst '${DOMAIN_NAME} ${IP_ADDRESS}' < /opt/digitalvenue/nginx.conf.template > /etc/nginx/sites-available/digital-venue
 ln -sf /etc/nginx/sites-available/digital-venue /etc/nginx/sites-enabled/digital-venue
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
+
+echo "generating and installing SSL cert"
+certbot \
+  --nginx \
+  -d "${DOMAIN_NAME}" \
+  --non-interactive \
+  --agree-tos \
+  --email "info@digital-venue.net"
+echo "verifying nginx config"
+nginx -t
+
+echo "restarting nginx"
 systemctl restart nginx
-
-# TODO: certbot
-
-# Reload systemd daemon to pick up changes
-systemctl daemon-reload

@@ -4,10 +4,11 @@
 .zed/
 .vs/
 
-# builds and generated code
+# generated files
 build/
 db/
-
-# misc
-.env*
+tmp/
 *.db
+
+# secrets
+.env*

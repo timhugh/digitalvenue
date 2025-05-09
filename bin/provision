@@ -24,7 +24,7 @@ fi
 
 if [ -z ${DV_DROPLET_IP} ]; then
   echo "creating new droplet"
-  doctl compute droplet create "digital-venue-${DV_ENV}" \
+  doctl compute droplet create "${DV_DO_DROPLET_NAME}" \
     --image "${DV_DO_IMAGE}" \
     --size "${DV_DO_SIZE}" \
     --region "${DV_DO_REGION}" \
