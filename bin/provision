@@ -3,7 +3,7 @@
 set -ex
 source bin/_common.sh
 
-required_vars=(DV_DO_SSH_KEY_FINGERPRINT)
+required_vars=(DV_DO_SSH_KEY_FINGERPRINT DV_DO_SSH_KEY_PATH DV_ROUTE53_HOSTED_ZONE)
 missing_vars=()
 for var in "${required_vars[@]}"; do
   if [ -z "${!var}" ]; then
@@ -78,18 +78,18 @@ while ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_
   sleep 5
 done
 
-echo "installing deployment scripts"
+echo "installing provisioning script"
 scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" \
-  "${REMOTE_SCRIPTS_DIR}/*" \
-  root@${DV_DROPLET_IP}:/opt/
+  provision/* \
+  root@${DV_DROPLET_IP}:${DV_REMOTE_ROOT}
 
-echo "executing remote provisioning script"
+echo "executing provisioning script"
 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" \
   root@${DV_DROPLET_IP} \
   "IP_ADDRESS=${DV_DROPLET_IP} \
   ENVIRONMENT=${DV_ENV} \
   DOMAIN_NAME=${DOMAIN} \
   APP_VERSION=${DV_VERSION} \
-  bash /opt/provision.sh"
+  bash ${DV_REMOTE_ROOT}/provision.sh"
 
 echo "provisioning complete!"

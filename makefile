@@ -1,11 +1,11 @@
 .PHONY: build
 build:
 	sqlc generate
-	go build -o build/dvserver ./cmd/dvserver
+	go build -o build/ ./...
 
 .PHONY: run-server
 run-server: build
-	go run ./cmd/server
+	go run ./cmd/dvserver
 
 .PHONY: test
 test: build
@@ -15,3 +15,8 @@ test: build
 .PHONY: migrate
 migrate:
 	goose postgres "$(DV_DATABASE_URL)" up
+
+.PHONY: clean
+clean:
+	rm -rf build/
+	rm -rf db/

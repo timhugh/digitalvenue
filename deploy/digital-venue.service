@@ -3,9 +3,9 @@ Description=Digital Venue Server
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/dvserver/current
-ExecStart=/opt/dvserver/current/server
-EnvironmentFile=/opt/dvserver/.env
+WorkingDirectory=/opt/digitalvenue/current
+ExecStart=/opt/digitalvenue/current/dvserver
+EnvironmentFile=/opt/digitalvenue/current/.env
 SuccessExitStatus=143
 TimeoutStopSec=10
 Restart=on-failure

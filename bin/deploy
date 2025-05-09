@@ -5,15 +5,19 @@ source bin/_common.sh
 
 DV_DROPLET_IP=$(get_droplet_ip)
 
+if [! -f ".env.$DV_ENV" ]; then
+  echo ".env.$DV_ENV does not exist! please create before deploying"
+  exit 1
+fi
+
+remote_dest=${DV_REMOTE_ROOT}/versions/${DV_VERSION}
+
 echo "building application"
 make build
-tar czvf release.tar.gz build/*
 
 echo "installing application files"
-scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" \
-  release.tar.gz \
-  root@${DV_DROPLET_IP}:/opt/dvserver/versions/${DV_VERSION}.tar.gz
-scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}"
+ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" root@${DV_DROPLET_IP} "mkdir -p ${remote_dest}"
+scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" build/* deploy/* .env.$DV_ENV root@${DV_DROPLET_IP}:${remote_dest}/
 
-ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" \
-  root@${DV_DROPLET_IP} "bash /opt/deploy.sh ${DV_VERSION}"
+echo "executing remote deploy script"
+ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" root@${DV_DROPLET_IP} "bash ${remote_dest}/deploy.sh ${DV_VERSION}"
