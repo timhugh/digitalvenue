@@ -16,6 +16,18 @@ done
 # Wait for cloud-init to finish
 cloud-init status --wait || true
 
+# create swapfile
+if swapon --show | grep -q '/swapfile'; then
+  echo "swap file already exists; skipping"
+else
+  echo "creating swap file"
+  fallocate -l 4G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
 # Install nginx
 apt-get update
 apt-get install -y nginx
