@@ -1,11 +1,6 @@
 .PHONY: build
-build: db
-
-db: migrations query.sql
+build:
 	sqlc generate
-
-dvserver: build/dvserver
-build/dvserver: build
 	go build -o build/dvserver ./cmd/dvserver
 
 .PHONY: run-server

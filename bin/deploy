@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -ex
+source bin/_common.sh
+
+DV_DROPLET_IP=$(get_droplet_ip)
+
+echo "building application"
+make build
+tar czvf release.tar.gz build/*
+
+echo "installing application files"
+scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" \
+  release.tar.gz \
+  root@${DV_DROPLET_IP}:/opt/dvserver/versions/${DV_VERSION}.tar.gz
+scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}"
+
+ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" \
+  root@${DV_DROPLET_IP} "bash /opt/deploy.sh ${DV_VERSION}"
