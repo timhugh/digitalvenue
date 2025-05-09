@@ -28,6 +28,12 @@ else
   echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
 
+ufw allow http
+ufw allow https
+ufw allow ssh
+ufw --force enable
+ufw status
+
 # Install nginx
 apt-get update
 apt-get install -y nginx
