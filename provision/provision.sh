@@ -40,7 +40,7 @@ apt-get install -y \
   nginx \
   python3-certbot-nginx
 
-echo "setting up users and file permissions"
+echo "setting up users"
 # create server user
 # TODO: this assumes all failures are because the user already exists. It would be better to explicitly check before creating
 # so we aren't swallowing other potential errors

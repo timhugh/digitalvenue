@@ -18,14 +18,14 @@ if [ ! -d ${version_root} ]; then
   exit 1
 fi
 
+echo "setting ${VERSION} as current"
+rm -f ${current_root}
+ln -sf ${version_root} ${current_root}
+
 echo "setting file permissions"
 chown -R digitalvenue:digitalvenue /opt/digitalvenue
 find /opt/digitalvenue -type d -exec chmod 750 {} \;
 find /opt/digitalvenue -type f -exec chmod 640 {} \;
-
-echo "deploying ${VERSION}"
-rm -f ${current_root}
-ln -sf ${version_root} ${current_root}
 
 echo "enabling and starting service"
 ln -sf ${current_root}/dvserver.service /etc/systemd/system/dvserver.service
