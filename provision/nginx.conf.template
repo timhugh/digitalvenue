@@ -11,7 +11,7 @@ server {
     }
 
     location / {
-        root /opt/digitilvenue/current/web;
+        root /opt/digitalvenue/current/web;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
