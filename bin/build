@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -ex
+source bin/_common.sh
+
+sqlc generate
+go build -o build/development/ ./...

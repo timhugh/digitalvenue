@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+bin/build
+
+go test ./...
+golangci-lint run

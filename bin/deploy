@@ -5,8 +5,8 @@ source bin/_common.sh
 
 DV_DROPLET_IP=$(get_droplet_ip)
 
-if [! -f ".env.$DV_ENV" ]; then
-  echo ".env.$DV_ENV does not exist! please create before deploying"
+if [! -f ".env.$DV_DEPLOY_ENV" ]; then
+  echo ".env.$DV_DEPLOY_ENV does not exist! please create before deploying"
   exit 1
 fi
 
@@ -19,11 +19,11 @@ export CGO_ENABLED=0
 make build
 
 echo "creating deploy package"
-package_dir="tmp/$DV_ENV/$DV_VERSION"
+package_dir="tmp/$DV_DEPLOY_ENV/$DV_VERSION"
 mkdir -p "${package_dir}"
 cp build/* "${package_dir}"
 cp deploy/* "${package_dir}"
-cp .env.$DV_ENV "${package_dir}"/env
+cp .env.$DV_DEPLOY_ENV "${package_dir}"/env
 
 echo "installing application files"
 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" root@${DV_DROPLET_IP} "mkdir -p ${remote_dest}"

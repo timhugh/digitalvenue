@@ -39,11 +39,11 @@ if [ -z ${DV_DROPLET_IP} ]; then
   fi
 fi
 
-if [ "${DV_ENV}" == "prod" ]; then
+if [ "${DV_DEPLOY_ENV}" == "prod" ]; then
   DOMAIN="digital-venue.net"
   TTL=3600
 else
-  DOMAIN="${DV_ENV}.digital-venue.net"
+  DOMAIN="${DV_DEPLOY_ENV}.digital-venue.net"
   TTL=30
 fi
 
@@ -87,7 +87,7 @@ echo "executing provisioning script"
 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" \
   root@${DV_DROPLET_IP} \
   "IP_ADDRESS=${DV_DROPLET_IP} \
-  ENVIRONMENT=${DV_ENV} \
+  ENVIRONMENT=${DV_DEPLOY_ENV} \
   DOMAIN_NAME=${DOMAIN} \
   APP_VERSION=${DV_VERSION} \
   bash ${DV_REMOTE_ROOT}/provision.sh"

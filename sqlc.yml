@@ -5,6 +5,15 @@ sql:
     schema: "migrations"
     gen:
       go:
-        package: "db"
-        out: "db"
+        package: "queries"
+        out: "db/queries"
         sql_package: "pgx/v5"
+        overrides:
+          - column: square_merchants.ticketable_categories
+            go_type:
+              type: "string"
+              slice: true
+          - column: square_merchants.location_ids
+            go_type:
+              type: "string"
+              slice: true

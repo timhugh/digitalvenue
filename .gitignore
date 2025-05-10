@@ -6,7 +6,7 @@
 
 # generated files
 build/
-db/
+db/queries/
 tmp/
 *.db
 
