@@ -41,7 +41,6 @@ apt-get install -y \
   python3-certbot-nginx
 
 echo "setting up users"
-# create server user
 # TODO: this assumes all failures are because the user already exists. It would be better to explicitly check before creating
 # so we aren't swallowing other potential errors
 adduser --disabled-password \
@@ -50,6 +49,11 @@ adduser --disabled-password \
         --gecos "" \
         digitalvenue || true
 usermod -aG digitalvenue www-data
+
+echo "installing bashrc for digitalvenue user"
+ln -sf /opt/digitalvenue/digitalvenue.bashrc /opt/digitalvenue/.bashrc
+
+echo "setting up file permissions"
 chown -R digitalvenue:digitalvenue /opt/digitalvenue
 find /opt/digitalvenue -type d -exec chmod 750 {} \;
 find /opt/digitalvenue -type f -exec chmod 640 {} \;
