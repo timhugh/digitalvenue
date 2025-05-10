@@ -3,6 +3,8 @@ Description=Digital Venue Server
 After=network.target
 
 [Service]
+User=digitalvenue
+Group=digitalvenue
 WorkingDirectory=/opt/digitalvenue/current
 ExecStart=/opt/digitalvenue/current/dvserver
 EnvironmentFile=/opt/digitalvenue/current/env

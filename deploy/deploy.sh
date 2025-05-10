@@ -18,6 +18,11 @@ if [ ! -d ${version_root} ]; then
   exit 1
 fi
 
+echo "setting file permissions"
+chown -R digitalvenue:digitalvenue /opt/digitalvenue
+find /opt/digitalvenue -type d -exec chmod 750 {} \;
+find /opt/digitalvenue -type f -exec chmod 640 {} \;
+
 echo "deploying ${VERSION}"
 rm -f ${current_root}
 ln -sf ${version_root} ${current_root}

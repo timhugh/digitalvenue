@@ -40,6 +40,20 @@ apt-get install -y \
   nginx \
   python3-certbot-nginx
 
+echo "setting up users and file permissions"
+# create server user
+# TODO: this assumes all failures are because the user already exists. It would be better to explicitly check before creating
+# so we aren't swallowing other potential errors
+adduser --disabled-password \
+        --disabled-login \
+        --home /opt/digitalvenue \
+        --gecos "" \
+        digitalvenue || true
+usermod -aG digitalvenue www-data
+chown -R digitalvenue:digitalvenue /opt/digitalvenue
+find /opt/digitalvenue -type d -exec chmod 750 {} \;
+find /opt/digitalvenue -type f -exec chmod 640 {} \;
+
 echo "installing nginx configuration"
 envsubst '${DOMAIN_NAME} ${IP_ADDRESS}' < /opt/digitalvenue/nginx.conf.template > /etc/nginx/sites-available/digital-venue
 ln -sf /etc/nginx/sites-available/digital-venue /etc/nginx/sites-enabled/digital-venue
