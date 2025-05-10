@@ -46,7 +46,8 @@ func run(ctx context.Context) error {
 		}()
 	}
 
-	fmt.Println("start request sent to all workers; waiting for shutdown")
+	fmt.Println("start request sent to all workers")
+	fmt.Println("main loop waiting for stop")
 	<-ctx.Done()
 	fmt.Printf("shutdown request received, stopping workers within %d seconds\n", workerShutdownTimeoutSeconds)
 
