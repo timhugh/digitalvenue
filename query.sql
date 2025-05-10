@@ -10,17 +10,6 @@ INSERT INTO tenants (tenant_uuid, name)
 VALUES ($1, $2)
 RETURNING *;
 
--- name: UpdateTenant :one
-UPDATE tenants
-SET name = $2
-WHERE tenant_uuid = $1
-RETURNING *;
-
--- name: DeleteTenant :one
-DELETE FROM tenants
-WHERE tenant_uuid = $1
-RETURNING *;
-
 -- name: GetUser :one
 SELECT * FROM users
 WHERE user_uuid = $1 LIMIT 1;
@@ -30,13 +19,63 @@ INSERT INTO users (user_uuid, username, name, password_hash)
 VALUES ($1, $2, $3, $4)
 RETURNING *;
 
--- name: UpdateUser :one
-UPDATE users
-SET username = $2, name = $3, password_hash = $4
-WHERE user_uuid = $1
+-- name: GetSquareMerchant :one
+SELECT * FROM square_merchants
+WHERE square_merchant_id = $1 LIMIT 1;
+
+-- name: CreateSquareMerchant :one
+INSERT INTO square_merchants (tenant_uuid, square_merchant_id, square_api_token, square_webhook_signature_key, ticketable_categories, location_ids)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
--- name: DeleteUser :one
-DELETE FROM users
-WHERE user_uuid = $1
+-- name: GetSquarePayment :one
+SELECT * FROM square_payments
+WHERE square_payment_id = $1 LIMIT 1;
+
+-- name: CreateSquarePayment :one
+INSERT INTO square_payments (square_merchant_id, square_payment_id, square_order_id, square_customer_id)
+VALUES ($1, $2, $3, $4)
+RETURNING *;
+
+-- name: GetCustomer :one
+SELECT * FROM customers
+WHERE customer_uuid = $1 LIMIT 1;
+
+-- name: CreateCustomer :one
+INSERT INTO customers (tenant_uuid, customer_uuid, first_name, last_name, email, phone)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING *;
+
+-- name: ListCustomers :many
+SELECT * FROM customers
+WHERE tenant_uuid = $1;
+
+-- name: GetSquareCustomer :one
+SELECT * FROM square_customers
+WHERE square_customer_id = $1 LIMIT 1;
+
+-- name: CreateSquareCustomer :one
+INSERT INTO square_customers (square_merchant_id, square_customer_id, first_name, last_name, email, phone)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING *;
+
+-- name: UpdateSquareCustomer :one
+UPDATE square_customers
+SET first_name = $2, last_name = $3, email = $4, phone = $5, customer_uuid = $6
+WHERE square_customer_id = $1
+RETURNING *;
+
+-- name: CreateOrder :one
+INSERT INTO orders (tenant_uuid, customer_uuid, order_uuid)
+VALUES ($1, $2, $3)
+RETURNING *;
+
+-- name: CreateOrderItem :one
+INSERT INTO order_items (tenant_uuid, order_uuid, order_item_uuid, name)
+VALUES ($1, $2, $3, $4)
+RETURNING *;
+
+-- name: CreateTicket :one
+INSERT INTO tickets (tenant_uuid, order_item_uuid, ticket_uuid, qr_code_url)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
