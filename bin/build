@@ -8,4 +8,4 @@ sqlc generate
 go build -o build/${DV_ENV}/ ./...
 
 echo "building frontend"
-npm --previx app run build
+npm --prefix app run build

@@ -20,14 +20,15 @@ bin/build
 
 echo "creating deploy package"
 package_dir="tmp/$DV_DEPLOY_ENV/$DV_VERSION"
-mkdir -p "${package_dir}"
+mkdir -p "${package_dir}/web"
+cp -R app/dist/* "${package_dir}/web"
 cp build/${DV_ENV}/* "${package_dir}"
 cp deploy/* "${package_dir}"
 cp .env.$DV_DEPLOY_ENV "${package_dir}"/env
 
 echo "installing application files"
 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" root@${DV_DROPLET_IP} "mkdir -p ${remote_dest}"
-scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" "${package_dir}"/* root@${DV_DROPLET_IP}:${remote_dest}/
+scp -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" -r "${package_dir}"/* root@${DV_DROPLET_IP}:${remote_dest}/
 
 echo "executing remote deploy script"
 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i "${DV_DO_SSH_KEY_PATH}" root@${DV_DROPLET_IP} "bash ${remote_dest}/deploy.sh ${DV_VERSION}"
