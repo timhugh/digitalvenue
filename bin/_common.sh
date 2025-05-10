@@ -6,7 +6,7 @@ DV_DO_REGION=${DV_DO_REGION:-sfo3}
 DV_VERSION=$(git rev-parse --short HEAD)
 DV_DO_TAG="env:${DV_DEPLOY_ENV}"
 DV_REMOTE_ROOT=/opt/digitalvenue
-DV_DO_DROPLET_NAME=dv-${DV_DEPLOYDV_DEPLOY_ENV}
+DV_DO_DROPLET_NAME=dv-${DV_DEPLOY_ENV}
 
 get_droplet_ip() {
   doctl compute droplet list --tag-name "${DV_DO_TAG}" --format PublicIPv4 --no-header

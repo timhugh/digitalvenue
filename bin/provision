@@ -39,7 +39,7 @@ if [ -z ${DV_DROPLET_IP} ]; then
   fi
 fi
 
-if [ "${DV_DEPLOY_ENV}" == "prod" ]; then
+if [ "${DV_DEPLOY_ENV}" == "production" ]; then
   DOMAIN="digital-venue.net"
   TTL=3600
 else

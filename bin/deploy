@@ -16,12 +16,12 @@ echo "building application"
 export GOOS=linux
 export GOARCH=amd64
 export CGO_ENABLED=0
-make build
+bin/build
 
 echo "creating deploy package"
 package_dir="tmp/$DV_DEPLOY_ENV/$DV_VERSION"
 mkdir -p "${package_dir}"
-cp build/* "${package_dir}"
+cp build/${DV_ENV}/* "${package_dir}"
 cp deploy/* "${package_dir}"
 cp .env.$DV_DEPLOY_ENV "${package_dir}"/env
 
