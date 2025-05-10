@@ -35,7 +35,7 @@ func (w *Worker) Run(ctx context.Context) error {
 		ReadTimeout: time.Duration(5 * time.Second),
 	}
 
-	fmt.Printf("starting web server at %s:%s", serverAddress, serverPort)
+	fmt.Printf("starting web server at %s:%s\n", serverAddress, serverPort)
 	if err := w.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("http server encountered error: %s", err)
 	}
