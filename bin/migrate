@@ -3,13 +3,13 @@
 set -ex
 source bin/_common.sh
 
-database_name=$(basename ${DV_DATABASE_URL})
-pg_db_url=$(echo $DV_DATABASE_URL | sed "s|/${database_name}\$|/postgres|")
+database_name=$(echo "$DV_DATABASE_URL" | sed -E 's|.*/([^/?]+)(\?.*)?$|\1|')
+pg_db_url=$(echo $DV_DATABASE_URL | sed "s|/${database_name}.*|/postgres|")
 
 if ! psql "${pg_db_url}" -tAc "SELECT 1 FROM pg_database WHERE datname='${database_name}'" | grep -q 1; then
   echo "creating postgres database '${database_name}'"
   psql "${pg_db_url}" -c "CREATE DATABASE ${database_name};"
 fi
 
-echo "running all migrations"
-goose postgres "${DV_DATABASE_URL}" up
+echo "executing dvmigrate"
+go run ./cmd/dvmigrate
