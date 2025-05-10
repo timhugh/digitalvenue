@@ -57,6 +57,7 @@ echo "setting up file permissions"
 chown -R digitalvenue:digitalvenue /opt/digitalvenue
 find /opt/digitalvenue -type d -exec chmod 750 {} \;
 find /opt/digitalvenue -type f -exec chmod 640 {} \;
+[ -d /opt/digitalvenue/current ] && find /opt/digitalvenue/current/bin -type f -exec chmod 750 {} \;
 
 echo "installing nginx configuration"
 envsubst '${DOMAIN_NAME} ${IP_ADDRESS}' < /opt/digitalvenue/nginx.conf.template > /etc/nginx/sites-available/digital-venue
