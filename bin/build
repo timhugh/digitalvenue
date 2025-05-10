@@ -3,5 +3,9 @@
 set -ex
 source bin/_common.sh
 
+echo "building backend"
 sqlc generate
 go build -o build/${DV_ENV}/ ./...
+
+echo "building frontend"
+npm --previx app run build
