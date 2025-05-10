@@ -30,6 +30,7 @@ func HandleWebhookEvents() http.Handler {
 			if err != nil {
 				w.WriteHeader(http.StatusUnprocessableEntity)
 				fmt.Fprint(w, "unable to read request body") //nolint:errcheck
+				return
 			}
 
 			fmt.Printf("body: %s", string(bodyBytes))
@@ -41,6 +42,7 @@ func HandleWebhookEvents() http.Handler {
 				// we write success because we don't want square to retry
 				// and we also don't want people to brute force signatures
 				w.WriteHeader(http.StatusOK)
+				return
 			}
 
 			// TODO: check event type
