@@ -31,6 +31,7 @@ func panicIfErr(err error) {
 }
 
 func createDbIfNotExists(dbURI string) error {
+	defaultDbURI := os.Getenv("DV_DEFAULT_DATABASE_URL")
 	URI, err := url.Parse(dbURI)
 	if err != nil {
 		return fmt.Errorf("failed to parse database URI: %w", err)
@@ -41,9 +42,7 @@ func createDbIfNotExists(dbURI string) error {
 		return fmt.Errorf("failed to extract db name from connection string: %w", err)
 	}
 
-	URI.Path = "/postgres"
-
-	pgdb, err := db.New(URI.String())
+	pgdb, err := db.New(defaultDbURI)
 	if err != nil {
 		return fmt.Errorf("failed to connect to postgres database: %w", err)
 	}
@@ -66,10 +65,10 @@ func createDbIfNotExists(dbURI string) error {
 }
 
 func main() {
-	dbURI := os.Getenv("DV_DATABASE_URL")
-	panicIfErr(createDbIfNotExists(dbURI))
+	appDbURI := os.Getenv("DV_DATABASE_URL")
+	panicIfErr(createDbIfNotExists(appDbURI))
 
-	db, err := db.New(dbURI)
+	db, err := db.New(appDbURI)
 	panicIfErr(err)
 	defer db.Close()
 
