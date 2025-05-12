@@ -14,9 +14,13 @@ RETURNING *;
 SELECT * FROM users
 WHERE user_uuid = $1 LIMIT 1;
 
+-- name: GetUserByUsername :one
+SELECT * FROM users
+WHERE username = $1 LIMIT 1;
+
 -- name: CreateUser :one
-INSERT INTO users (user_uuid, username, name, password_hash)
-VALUES ($1, $2, $3, $4)
+INSERT INTO users (user_uuid, username, name, password_hash, password_salt)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: GetSquareMerchant :one
@@ -42,7 +46,7 @@ SELECT * FROM customers
 WHERE customer_uuid = $1 LIMIT 1;
 
 -- name: CreateCustomer :one
-INSERT INTO customers (tenant_uuid, customer_uuid, first_name, last_name, email, phone)
+INSERT INTO customers (tenant_uuid, customer_uuid, given_name, family_name, email_address, phone_number)
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
@@ -55,13 +59,13 @@ SELECT * FROM square_customers
 WHERE square_customer_id = $1 LIMIT 1;
 
 -- name: CreateSquareCustomer :one
-INSERT INTO square_customers (square_merchant_id, square_customer_id, first_name, last_name, email, phone)
+INSERT INTO square_customers (square_merchant_id, square_customer_id, given_name, family_name, email_address, phone_number)
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: UpdateSquareCustomer :one
 UPDATE square_customers
-SET first_name = $2, last_name = $3, email = $4, phone = $5, customer_uuid = $6
+SET given_name = $2, family_name = $3, email_address = $4, phone_number = $5, customer_uuid = $6
 WHERE square_customer_id = $1
 RETURNING *;
 

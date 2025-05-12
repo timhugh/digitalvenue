@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE square_merchants (
-  tenant_uuid UUID REFERENCES tenants (tenant_uuid),
+  tenant_uuid UUID NOT NULL REFERENCES tenants (tenant_uuid),
   square_merchant_id TEXT PRIMARY KEY,
   square_api_token TEXT NOT NULL,
   square_webhook_signature_key TEXT NOT NULL,

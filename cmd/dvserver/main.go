@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"sync"
 	"time"
 
 	"github.com/timhugh/digitalvenue/cmd/dvserver/api"
-	"github.com/timhugh/digitalvenue/cmd/dvserver/test"
+	"github.com/timhugh/digitalvenue/db"
+	"github.com/timhugh/digitalvenue/db/queries"
 	"github.com/timhugh/digitalvenue/util/events"
+	"github.com/timhugh/digitalvenue/util/logger"
 )
 
 type worker interface {
@@ -20,15 +23,23 @@ type worker interface {
 
 const workerShutdownTimeoutSeconds = 10
 
-func run(ctx context.Context) error {
+func run(ctx context.Context, out io.Writer, errOut io.Writer) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
+	logLevel := os.Getenv("DV_LOG_LEVEL")
+	log := logger.New(out, errOut, logLevel)
+
 	eventsBus := events.NewBus()
+	dbURI := os.Getenv("DV_DATABASE_URL")
+	db, err := db.New(dbURI)
+	if err != nil {
+		return fmt.Errorf("failed to connect to database %s: %w", dbURI, err)
+	}
+	queries := queries.New(db)
 
 	workers := make([]worker, 0)
-	workers = append(workers, api.NewWorker(eventsBus))
-	workers = append(workers, test.NewWorker(eventsBus))
+	workers = append(workers, api.NewWorker(eventsBus, queries, log))
 
 	fmt.Printf("booting %d workers...\n", len(workers))
 	var wg sync.WaitGroup
@@ -67,7 +78,7 @@ func run(ctx context.Context) error {
 
 func main() {
 	ctx := context.Background()
-	if err := run(ctx); err != nil {
+	if err := run(ctx, os.Stdout, os.Stderr); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}

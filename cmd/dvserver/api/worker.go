@@ -8,18 +8,24 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/timhugh/digitalvenue/common"
+	"github.com/timhugh/digitalvenue/db/queries"
 	"github.com/timhugh/digitalvenue/util/events"
 )
 
-func NewWorker(bus *events.Bus) *Worker {
+func NewWorker(bus *events.Bus, queries *queries.Queries, log common.Logger) *Worker {
 	return &Worker{
-		bus: bus,
+		log:     log,
+		bus:     bus,
+		queries: queries,
 	}
 }
 
 type Worker struct {
 	httpServer http.Server
+	log        common.Logger
 	bus        *events.Bus
+	queries    *queries.Queries
 }
 
 const serverAddress = "0.0.0.0"
@@ -27,15 +33,17 @@ const serverPort = "8080"
 
 func (w *Worker) Run(ctx context.Context) error {
 	mux := http.NewServeMux()
-	addRoutes(mux, w.bus)
+	addRoutes(mux, w.log, w.bus, w.queries)
+
+	stack := LoggingMiddleware(w.log)(mux)
 
 	w.httpServer = http.Server{
 		Addr:        net.JoinHostPort(serverAddress, serverPort),
-		Handler:     mux,
+		Handler:     stack,
 		ReadTimeout: time.Duration(5 * time.Second),
 	}
 
-	fmt.Printf("starting web server at %s:%s\n", serverAddress, serverPort)
+	w.log.Info("starting web server at %s:%s", serverAddress, serverPort)
 	if err := w.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("http server encountered error: %s", err)
 	}

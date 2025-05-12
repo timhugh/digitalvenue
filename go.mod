@@ -8,11 +8,13 @@ tool github.com/sqlc-dev/sqlc/cmd/sqlc
 
 require (
 	github.com/go-test/deep v1.1.1
-	github.com/jackc/pgx/v5 v5.7.4
 	github.com/lib/pq v1.10.9
 )
 
-require go.opentelemetry.io/otel/metric v1.35.0 // indirect
+require (
+	github.com/jackc/pgx/v5 v5.7.4 // indirect
+	go.opentelemetry.io/otel/metric v1.35.0 // indirect
+)
 
 require (
 	cel.dev/expr v0.19.1 // indirect
@@ -31,7 +33,7 @@ require (
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/go-sql-driver/mysql v1.9.2 // indirect
 	github.com/google/cel-go v0.24.1 // indirect
-	github.com/google/uuid v1.6.0 // indirect
+	github.com/google/uuid v1.6.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

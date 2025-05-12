@@ -46,7 +46,7 @@ func createDbIfNotExists(dbURI string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to postgres database: %w", err)
 	}
-	defer pgdb.Close()
+	defer pgdb.Close() //nolint:errcheck
 
 	res, err := pgdb.Exec("SELECT 1 FROM pg_database WHERE datname=$1", dbName)
 	if err != nil {
@@ -54,6 +54,9 @@ func createDbIfNotExists(dbURI string) error {
 	}
 
 	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to inspect affected rows: %w", err)
+	}
 	if rows == 0 {
 		fmt.Printf("database %s does not exist yet, creating\n", dbName)
 		if _, err := pgdb.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName)); err != nil {
@@ -70,7 +73,7 @@ func main() {
 
 	db, err := db.New(appDbURI)
 	panicIfErr(err)
-	defer db.Close()
+	defer db.Close() //nolint:errcheck
 
 	goose.SetBaseFS(embedMigrations)
 	panicIfErr(goose.SetDialect("postgres"))

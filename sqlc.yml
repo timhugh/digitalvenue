@@ -7,7 +7,7 @@ sql:
       go:
         package: "queries"
         out: "db/queries"
-        sql_package: "pgx/v5"
+        sql_package: "database/sql"
         overrides:
           - column: square_merchants.ticketable_categories
             go_type:

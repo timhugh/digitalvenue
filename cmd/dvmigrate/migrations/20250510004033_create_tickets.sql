@@ -1,8 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE tickets (
-  tenant_uuid UUID REFERENCES tenants (tenant_uuid),
-  order_item_uuid UUID REFERENCES order_items (order_item_uuid),
+  tenant_uuid UUID NOT NULL REFERENCES tenants (tenant_uuid),
+  order_item_uuid UUID NOT NULL REFERENCES order_items (order_item_uuid),
   ticket_uuid UUID PRIMARY KEY,
   qr_code_url TEXT NOT NULL,
   checked_in BOOLEAN NOT NULL DEFAULT FALSE,
