@@ -29,8 +29,6 @@ func (rw *responseWriterWrapper) WriteHeader(code int) {
 	rw.status = code
 	rw.ResponseWriter.WriteHeader(code)
 	rw.wroteHeader = true
-
-	return
 }
 
 func LoggingMiddleware(log common.Logger) func(http.Handler) http.Handler {

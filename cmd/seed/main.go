@@ -7,7 +7,6 @@ import (
 	"os/signal"
 
 	"github.com/google/uuid"
-	"github.com/timhugh/digitalvenue/db"
 	dvDB "github.com/timhugh/digitalvenue/db"
 	"github.com/timhugh/digitalvenue/db/queries"
 )
@@ -17,7 +16,7 @@ func main() {
 	defer cancel()
 
 	dbURI := os.Getenv("DV_DATABASE_URL")
-	dbClient, err := db.New(dbURI)
+	dbClient, err := dvDB.New(dbURI)
 	if err != nil {
 		panic(fmt.Errorf("failed to connect to database: %w", err))
 	}

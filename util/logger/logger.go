@@ -50,7 +50,7 @@ func (l *Logger) Debug(msg string, params ...any) {
 	if l.level > DebugLevel {
 		return
 	}
-	fmt.Fprintf(l.out, "%s: %s\n", DebugLevel, fmt.Sprintf(msg, params...))
+	fmt.Fprintf(l.out, "%s: %s\n", DebugLevel, fmt.Sprintf(msg, params...)) //nolint:errcheck
 }
 
 func (l *Logger) Info(msg string, params ...any) {
@@ -59,7 +59,7 @@ func (l *Logger) Info(msg string, params ...any) {
 	if l.level > InfoLevel {
 		return
 	}
-	fmt.Fprintf(l.out, "%s: %s\n", InfoLevel, fmt.Sprintf(msg, params...))
+	fmt.Fprintf(l.out, "%s: %s\n", InfoLevel, fmt.Sprintf(msg, params...)) //nolint:errcheck
 }
 
 func (l *Logger) Warn(msg string, params ...any) {
@@ -68,7 +68,7 @@ func (l *Logger) Warn(msg string, params ...any) {
 	if l.level > WarnLevel {
 		return
 	}
-	fmt.Fprintf(l.out, "%s: %s\n", WarnLevel, fmt.Sprintf(msg, params...))
+	fmt.Fprintf(l.out, "%s: %s\n", WarnLevel, fmt.Sprintf(msg, params...)) //nolint:errcheck
 }
 
 func (l *Logger) Error(msg string, params ...any) {
@@ -77,5 +77,5 @@ func (l *Logger) Error(msg string, params ...any) {
 	if l.level > ErrorLevel {
 		return
 	}
-	fmt.Fprintf(l.err, "%s: %s\n", ErrorLevel, fmt.Sprintf(msg, params...))
+	fmt.Fprintf(l.err, "%s: %s\n", ErrorLevel, fmt.Sprintf(msg, params...)) //nolint:errcheck
 }

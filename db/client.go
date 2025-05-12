@@ -47,6 +47,9 @@ func AuthUser(ctx context.Context, db authUserDB, username string, password stri
 	}
 
 	hash, _, err := common.HashPassword(password, salt)
+	if err != nil {
+		return queries.User{}, fmt.Errorf("failed to generate password hash")
+	}
 	if hash != expectedHash {
 		return queries.User{}, fmt.Errorf("failed to authenticate user")
 	}
